@@ -443,6 +443,28 @@ html[data-theme="dark"] .navbar .dropdown-menu .dropdown-item:hover {
     transition: color 0.3s;
 }
 
+.sync-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #0b5d1e;
+    background: #d9fbe6;
+    border: 1px solid #9de6b6;
+}
+
+.tarjeta-departamento {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.tarjeta-departamento:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 22px rgba(0, 43, 91, 0.18);
+}
+
 @media (min-width: 992px) {
     .card:hover {
         transform: translateY(-10px) scale(1.02);
