@@ -23,11 +23,9 @@ body {
 /* =========================================================
    NAVBAR
 ========================================================= */
-/* Cambio los colores de la barra superior para que tenga un tono diferente.
-   También hago la sombra más suave. */
 .mi-navbar {
-    background: linear-gradient(135deg, #244b74 0%, #3f7cac 55%, #7dbbc3 100%);
-    box-shadow: 0 6px 18px rgba(36, 75, 116, 0.18);
+    background: linear-gradient(135deg, #E5B181 0%, #004aad 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     padding: 1rem 0;
     position: sticky;
     top: 0;
@@ -288,43 +286,12 @@ html[data-theme="dark"] .navbar .dropdown-menu .dropdown-item:hover {
     justify-content: center;
 }
 
-/* Fondo de la cabecera principal */
-/* Quiero que la imagen principal destaque más.
-   Le añado un borde azul, más sombra y efecto al pasar el ratón. */
 .hero-image-container {
-    border-radius: 24px;
+    width: 100%;
+    position: relative;
     overflow: hidden;
-    margin-bottom: 2.5rem;
-    box-shadow: 0 14px 30px rgba(0, 43, 91, 0.18);
-    border: 3px solid #6eaeb7;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.hero-image-container:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 18px 36px rgba(0, 43, 91, 0.24);
-}
-
-/* Título "Departamentos" */
-/* Hago el título de "Departamentos" más grande y llamativo
-   para que sea uno de los elementos principales de la portada. */
-h2 {
-    color: #0b3d6d;
-    font-weight: 800;
-    font-size: 2.4rem;
-    letter-spacing: 0.8px;
-    margin-bottom: 0.5rem;
-}
-
-/* Caja de la fecha */
-.text-muted.fs-5 {
-    background: linear-gradient(135deg, #7dbbc3, #5ca7b1);
-    color: white !important;
-    padding: 0.75rem 1.4rem;
-    border-radius: 999px;
-    font-weight: 700;
-    font-size: 1rem;
-    box-shadow: 0 4px 12px rgba(93, 167, 177, 0.3);
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .hero-image {
@@ -448,32 +415,26 @@ h2 {
    TARJETAS
 ========================================================= */
 
-/* Modifico las tarjetas para que tengan un aspecto distinto.
-   También añado una línea azul arriba */
 .card {
     border: none;
-    border-radius: 20px;
+    border-radius: 16px;
     overflow: hidden;
-    background: linear-gradient(to bottom, #ffffff, #f4f9fc);
-    box-shadow: 0 8px 18px rgba(0, 43, 91, 0.12);
     transition: all 0.3s ease;
-    position: relative;
+    background: #7DBBC3;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    max-width: 100%;
 }
 
-.card::before {
-    content: "";
-    display: block;
-    height: 6px;
+.card-img-top {
     width: 100%;
-    background: linear-gradient(90deg, #3f7cac, #7dbbc3);
+    height: auto;
+    object-fit: cover;
+    transition: transform 0.3s ease;
 }
 
-
-
-.card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 16px 28px rgba(0, 43, 91, 0.2);
-    background: linear-gradient(to bottom, #ffffff, #eef8fa);
+.card-body {
+    text-align: center;
+    padding: 1.5rem;
 }
 
 
@@ -592,13 +553,12 @@ h2 {
 /* =========================================================
    FOOTER
 ========================================================= */
-/* Cambio el color del pie de página para que compagine con la barra superior. */
 .mi-footer {
-    background: linear-gradient(135deg, #244b74, #3f7cac);
-    color: #eef6fb;
+    background: #7DBBC3;
+    color: rgb(210, 59, 59);
     text-align: center;
-    padding: 1.2rem 0;
-    font-size: 0.95rem;
+    padding: 1rem 0;
+    font-size: 0.9rem;
     margin-top: auto;
 }
 
