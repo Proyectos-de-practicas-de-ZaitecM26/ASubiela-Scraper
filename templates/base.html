@@ -414,7 +414,7 @@ Define la estructura general de la aplicación:
 
       function readStorage(key) {
         try {
-          return localStorage.getItem(key);
+          return sessionStorage.getItem(key);
         } catch (_) {
           return null;
         }
@@ -422,7 +422,7 @@ Define la estructura general de la aplicación:
 
       function writeStorage(key, value) {
         try {
-          localStorage.setItem(key, value);
+          sessionStorage.setItem(key, value);
         } catch (_) {
           // Ignorar errores de almacenamiento (modo privado, cuota, etc.)
         }
@@ -430,7 +430,7 @@ Define la estructura general de la aplicación:
 
       function removeStorage(key) {
         try {
-          localStorage.removeItem(key);
+          sessionStorage.removeItem(key);
         } catch (_) {
           // Ignorar errores de almacenamiento
         }
@@ -575,12 +575,12 @@ Define la estructura general de la aplicación:
       }
 
       if (speakToggleBtn) {
-        if (!hasTTS) {
+        /*if (!hasTTS) {
           ttsEnabled = false;
           speakToggleBtn.disabled = true;
           speakToggleBtn.title = 'Lectura por voz no compatible en este navegador';
           speakToggleBtn.setAttribute('aria-pressed', 'false');
-        }
+        }*/
 
         speakToggleBtn.addEventListener('click', function () {
           ttsEnabled = !ttsEnabled;
