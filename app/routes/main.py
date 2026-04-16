@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from flask import Blueprint, render_template, flash, redirect, url_for, request, jsonify, current_app
 from flask_login import current_user, login_required
-from groq import Groq
+from ..chatbot import chatbot
 
 from .. import limiter
 from ..db import get_boe_db, get_users_db
@@ -28,30 +28,8 @@ def chatbot_api():
     if len(user_message) > 1200:
         return jsonify({"ok": False, "error": "Mensaje demasiado largo (máx. 1200 caracteres)."}), 400
 
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
-        return jsonify({"ok": False, "error": "Falta configurar GROQ_API_KEY en el servidor."}), 503
-
     try:
-        client = Groq(api_key=api_key)
-        completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            temperature=0.3,
-            max_tokens=450,
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "Eres un asistente para una web de oposiciones del BOE en Espana. "
-                        "Responde en espanol de forma clara, breve y util. "
-                        "Ayuda con busqueda, filtros, provincias, fechas y lectura de convocatorias."
-                    ),
-                },
-                {"role": "user", "content": user_message},
-            ],
-        )
-
-        answer = completion.choices[0].message.content or "No tengo respuesta ahora mismo."
+        answer = chatbot(user_message)
         return jsonify({"ok": True, "answer": answer})
     except Exception as exc:
         current_app.logger.exception("Error en /api/chatbot: %s", exc)
