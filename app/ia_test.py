@@ -7,3 +7,14 @@ response = client.models.generate_content(
     model="gemini-3-flash-preview", contents="Explain how AI works in a few words"
 )
 print(response.text)
+
+from google import genai
+
+client = genai.Client()
+
+interaction =  client.interactions.create(
+    model="gemini-3-flash-preview",
+    input="Tell me a short joke about programming."
+)
+
+print(interaction.outputs[-1].text)
