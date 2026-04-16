@@ -28,7 +28,7 @@ def chatbot_api():
     if len(user_message) > 1200:
         return jsonify({"ok": False, "error": "Mensaje demasiado largo (máx. 1200 caracteres)."}), 400
 
-    api_key = os.getenv("GROQ_API_KEY")
+    api_key = os.getenv("GROK_KEY")
     if not api_key:
         return jsonify({"ok": False, "error": "Falta configurar GROQ_API_KEY en el servidor."}), 503
 
