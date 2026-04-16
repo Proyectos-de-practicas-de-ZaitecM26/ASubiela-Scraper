@@ -2,6 +2,7 @@
 Flask==3.0.2 # principal web
 Flask-Login==0.6.3 # Manejo de sesiones, login, logout, usuarios
 Flask-Mail==0.9.1 # Envío de emails
+Flask-Limiter==3.8.0 # Rate limit para endpoints API
 Werkzeug==3.0.1 # Hash de contraseñas, utilities
 requests==2.31.0 # Scraping (peticiones HTTP al BOE)
 beautifulsoup4==4.12.2 # Parsear el XML/HTML del BOE
@@ -10,3 +11,7 @@ itsdangerous==2.1.2 # Requerido por Flask internamente
 Jinja2==3.1.3 # Motor de plantillas
 click==8.1.7 # Necesario para el CLI de Flask
 MarkupSafe==2.1.5 # Lo usa Jinja
+<<<<<<< Updated upstream
+=======
+groq==0.20.0 # SDK IA Groq
+>>>>>>> Stashed changes
