@@ -156,24 +156,28 @@ Define la estructura general de la aplicación:
       });
     });
   </script>
-  <script> // Script para gestionar el filtro de departamentos en las alertas por correo
-    document.addEventListener("DOMContentLoaded", function () {
-      const hiddenInput = document.getElementById("departamento_filtro");
-      const checkboxes = document.querySelectorAll(".dept-check");
+ <script> 
+document.addEventListener("DOMContentLoaded", function () {
+  const hiddenInput = document.getElementById("departamento_filtro");
+  const checkboxes = document.querySelectorAll(".dept-check");
 
-      function updateHidden() {
-        const values = [...checkboxes]
-          .filter(c => c.checked)
-          .map(c => c.value);
+  // 👉 EVITA ERROR SI NO EXISTE
+  if (!hiddenInput) return;
 
-        hiddenInput.value = JSON.stringify(values);
-      }
+  function updateHidden() {
+    const values = [...checkboxes]
+      .filter(c => c.checked)
+      .map(c => c.value);
 
-      checkboxes.forEach(cb => cb.addEventListener("change", updateHidden));
+    hiddenInput.value = JSON.stringify(values);
+  }
 
-      updateHidden(); // Inicializar
-    });
-  </script>
+  checkboxes.forEach(cb => cb.addEventListener("change", updateHidden));
+
+  updateHidden();
+});
+</script>
+
   <script> // Script para actualizar el texto del botón de filtro de departamentos en vigentes y favoritas
     (function () {
       const btn = document.getElementById('departamentosFiltroBtn');
@@ -358,6 +362,21 @@ Define la estructura general de la aplicación:
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- ===== BOTÓN FLOTANTE ===== -->
+<div id="chat-toggle">💬</div>
+
+<!-- ===== CHATBOT ===== -->
+<div id="chatbot" class="hidden">
+    <div id="chat-header">Chat IA</div>
+    <div id="messages"></div>
+
+    <div id="input-area">
+        <input type="text" id="input" placeholder="Escribe aquí..." autocomplete="off" />
+        <button id="send-btn">Enviar</button>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
 </body>
 
 </html>

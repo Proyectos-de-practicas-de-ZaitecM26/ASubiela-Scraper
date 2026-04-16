@@ -1280,3 +1280,126 @@ html[data-theme="dark"] .form-select {
 html[data-theme="dark"] .dropdown-menu,
 html[data-theme="dark"] .dropdown-menu[style] { background:#2c2f47 !important; color:#e5e7eb !important; border-color:#3b3f54 !important; }
 html[data-theme="dark"] .dropdown-menu .form-check-input { accent-color:#60a5fa !important; background:transparent !important; border-color:#4b5166 !important; }
+
+
+/* ===== BOTÓN FLOTANTE ===== */
+#chat-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #004aad;
+    color: white;
+    font-size: 24px;
+    padding: 15px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* ===== CHATBOX ===== */
+#chatbot {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 300px;
+    height: 400px;
+    background: white;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+/* Oculto */
+.hidden {
+    display: none;
+}
+
+#chat-header {
+    background: #004aad;
+    color: white;
+    padding: 10px;
+    text-align: center;
+}
+
+#messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+#input-area {
+    display: flex;
+}
+
+#input {
+    flex: 1;
+    padding: 10px;
+}
+
+#send-btn {
+    background: #004aad;
+    color: white;
+    border: none;
+    padding: 10px;
+}
+/* BOTÓN */
+#chat-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #004aad;
+    color: white;
+    font-size: 24px;
+    padding: 15px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* CHATBOX */
+#chatbot {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 300px;
+    height: 400px;
+    background: white;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+/* 🔴 CLAVE: empieza oculto */
+.hidden {
+    display: none !important;
+}
+
+#chat-header {
+    background: #004aad;
+    color: white;
+    padding: 10px;
+    text-align: center;
+}
+
+#messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+#input-area {
+    display: flex;
+}
+
+#input {
+    flex: 1;
+    padding: 10px;
+}
+
+#send-btn {
+    background: #004aad;
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+}
