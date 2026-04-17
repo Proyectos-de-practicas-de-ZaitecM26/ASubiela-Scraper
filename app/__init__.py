@@ -1,35 +1,26 @@
 import os
 from flask import Flask, session, request, redirect, url_for
-<<<<<<< HEAD
 from flask_login import current_user
-=======
-from flask_mail import Mail
-from flask_login import LoginManager, current_user
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
->>>>>>> c84da6d277e13b67fcb1f07be7bf4620ae7c4144
 
 from .config import Config
 from .db import init_boe_db, init_users_db, migrate_users_db, teardown_appcontext
 
-<<<<<<< HEAD
+from datetime import timedelta
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from .extensions import mail, login_manager
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=[],
+)
+
 from app.routes.main import main_bp
 from app.routes.auth import auth_bp
 from app.routes.user import user_bp
 from app.routes.chat import chat_bp
 
-from .extensions import mail, login_manager
-from app.models import User   # 👈 NECESARIO PARA user_loader
-=======
-from datetime import timedelta
-
-mail = Mail()
-login_manager = LoginManager()
-limiter = Limiter(
-    key_func=get_remote_address,
-    default_limits=[],
-)
->>>>>>> c84da6d277e13b67fcb1f07be7bf4620ae7c4144
+from app.models import User
 
 
 def create_app():

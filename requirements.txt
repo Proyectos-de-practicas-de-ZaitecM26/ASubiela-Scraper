@@ -14,3 +14,4 @@ MarkupSafe==2.1.5 # Lo usa Jinja
 google-genai==1.72.0 #SDK IA Gemini
 openrouter==0.8.1 # sdk openrouter (elephant, chatgpt, nvidia, etc)
 groq==0.20.0 # SDK IA Groq
+python-dotenv>=1.0.0 # Variables de entorno desde .env
