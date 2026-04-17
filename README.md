@@ -83,26 +83,26 @@ cd I_S25_Web_Scraping-1/I_S25_Web_Scraping
 bash bootstrap.sh
 ```
 
-El script crea/activa `venv`, instala dependencias y garantiza la carpeta `static/uploads/profiles`.
+El script crea/activa `.venv`, instala dependencias y garantiza la carpeta `static/uploads/profiles`.
 
 #### 3. Activar el entorno virtual (si no usaste el bootstrap)
 
 **Windows:**
 ```powershell
-venv\Scripts\activate.bat
+.venv\Scripts\activate.bat
 pip install -r requirements.txt
 ```
 
 **Linux / macOS:**
 ```bash
-source venv/bin/activate
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
 #### 4. Ejecutar la aplicación
 
 ```bash
-python run.py
+.venv/bin/python run.py
 ```
 
 Por defecto se levanta en `http://127.0.0.1:5000/`.
