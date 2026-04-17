@@ -18,9 +18,16 @@ def _build_system_prompt(extra_instructions=None):
 
 
 def chatbot(user_message, extra_instructions=None):
-    api_key = os.getenv("GROK_KEY")
+    api_key = (
+        os.getenv("GROQ_API_KEY")
+        or os.getenv("GROQ_KEY")
+        or os.getenv("GROK_KEY")
+    )
     if not api_key:
-        raise ValueError("Falta configurar API Key en el servidor.")
+        raise ValueError(
+            "Falta configurar API Key en el servidor. "
+            "Define GROQ_API_KEY (o GROQ_KEY)."
+        )
 
     try:
         client = Groq(api_key=api_key)
