@@ -2,8 +2,7 @@ import os
 from datetime import datetime
 from flask import Blueprint, render_template, flash, redirect, url_for, request, jsonify, current_app
 from flask_login import current_user, login_required
-from ..chatbot import chatbot
-from ..services.chat_skills import get_chat_skill_decision
+from ..services.chatbot import chatbot
 
 from .. import limiter
 from ..db import get_boe_db, get_users_db
@@ -30,13 +29,11 @@ def chatbot_api():
         return jsonify({"ok": False, "error": "Mensaje demasiado largo (máx. 1200 caracteres)."}), 400
 
     try:
-        decision = get_chat_skill_decision(user_message)
-
-        if decision.blocked:
-            return jsonify({"ok": True, "answer": decision.block_message})
-
-        answer = chatbot(user_message, extra_instructions=decision.extra_instructions)
+        answer = chatbot(user_message)
         return jsonify({"ok": True, "answer": answer})
+    except ValueError as exc:
+        current_app.logger.exception("Error en /api/chatbot: %s", exc)
+        return jsonify({"ok": False, "error": str(exc)}), 500
     except Exception as exc:
         current_app.logger.exception("Error en /api/chatbot: %s", exc)
         return jsonify({"ok": False, "error": "No se pudo generar respuesta en este momento."}), 500

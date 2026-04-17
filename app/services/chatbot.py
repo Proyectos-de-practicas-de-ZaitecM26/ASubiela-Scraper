@@ -1,4 +1,5 @@
 import os
+from .chat_skills import get_chat_skill_decision
 from groq import Groq
 
 BASE_SYSTEM_PROMPT = """
@@ -17,14 +18,19 @@ def _build_system_prompt(extra_instructions=None):
     return BASE_SYSTEM_PROMPT
 
 
-def chatbot(user_message, extra_instructions=None):
+def chatbot(user_message):
     api_key = os.getenv("GROK_KEY")
     if not api_key:
-        raise ValueError("Falta configurar API Key en el servidor.")
+        raise KeyError("Falta configurar API Key en el servidor.")
 
+    #decision = get_chat_skill_decision(user_message)
+
+    #if decision.blocked:
+       #raise ValueError(decision.block_message)
+    
     try:
         client = Groq(api_key=api_key)
-        system_prompt = _build_system_prompt(extra_instructions)
+        system_prompt = _build_system_prompt()
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             temperature=0.3,
