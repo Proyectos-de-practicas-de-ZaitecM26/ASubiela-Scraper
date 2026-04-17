@@ -78,7 +78,7 @@ def mostrar_departamento(nombre):
     por_pagina = 10
     offset = (page - 1) * por_pagina
 
-    # 🔥 SOLO oposiciones de hoy
+    # SOLO oposiciones de hoy
     sql = "SELECT * FROM oposiciones WHERE departamento = ? AND fecha = ?"
     params = [nombre, hoy]
 
