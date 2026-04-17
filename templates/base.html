@@ -105,6 +105,70 @@ Define la estructura general de la aplicación:
     <p>© 2025 Oposiciones BOE</p>
   </footer>
 
+  <button id="a11yToggle" class="a11y-toggle" aria-label="Abrir opciones de accesibilidad" aria-expanded="false"
+    aria-controls="a11yPanel">
+    <i class="bi bi-universal-access"></i>
+  </button>
+
+  <section id="a11yPanel" class="a11y-panel" aria-hidden="true">
+    <header class="a11y-panel-header">
+      <h2>Accesibilidad visual</h2>
+      <button id="a11yClose" type="button" class="a11y-close" aria-label="Cerrar panel de accesibilidad">×</button>
+    </header>
+
+    <div class="a11y-controls">
+      <p class="a11y-help">Ajustes para mejorar legibilidad y contraste.</p>
+      <div class="a11y-row" role="group" aria-label="Tamaño de texto">
+        <button id="a11yDecreaseText" type="button" class="a11y-btn">A-</button>
+        <span id="a11yTextStatus" class="a11y-status" aria-live="polite">Texto 100%</span>
+        <button id="a11yIncreaseText" type="button" class="a11y-btn">A+</button>
+      </div>
+      <button id="a11yContrast" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false">Alto
+        contraste</button>
+      <button id="a11yGrayscale" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false">Escala de
+        grises</button>
+      <button id="a11yCursor" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false">Puntero
+        grande</button>
+      <button id="a11yColorBlind" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false">Lectura apta
+        para daltonismo</button>
+      <button id="a11yMotion" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false">Reducir
+        animaciones</button>
+      <p class="a11y-help a11y-note">El modo para daltonismo usa una paleta segura y refuerza elementos que antes se distinguían solo por color.</p>
+      <button id="a11yReset" type="button" class="a11y-btn a11y-btn-block a11y-reset">Restablecer ajustes</button>
+    </div>
+  </section>
+
+  <button id="chatbotToggle" class="chatbot-toggle" aria-label="Abrir asistente" aria-expanded="false">
+    <i class="bi bi-chat-dots-fill"></i>
+  </button>
+
+  <section id="chatbotPanel" class="chatbot-panel" aria-hidden="true">
+    <header class="chatbot-header">
+      <div class="chatbot-title">Asistente BOE</div>
+      <div class="chatbot-header-actions">
+        <button id="chatbotSpeakToggle" type="button" class="chatbot-a11y-btn" aria-label="Activar o desactivar lectura" aria-pressed="true" title="Lectura activada">
+          <i class="bi bi-volume-up-fill"></i>
+        </button>
+        <button id="chatbotReplayBtn" type="button" class="chatbot-a11y-btn" aria-label="Repetir ultima respuesta" title="Repetir última respuesta">
+          <i class="bi bi-arrow-repeat"></i>
+        </button>
+        <button id="chatbotClose" type="button" class="chatbot-close" aria-label="Cerrar asistente">×</button>
+      </div>
+    </header>
+
+    <div id="chatbotMessages" class="chatbot-messages">
+      <div class="chatbot-msg bot">Hola. Soy tu asistente para resolver dudas sobre oposiciones y filtros del BOE.</div>
+    </div>
+
+    <form id="chatbotForm" class="chatbot-form">
+      <input id="chatbotInput" type="text" maxlength="1200" placeholder="Escribe tu pregunta..." autocomplete="off" required>
+      <button id="chatbotVoiceBtn" type="button" class="chatbot-voice" aria-label="Dictado por voz" title="Hablar">
+        <i class="bi bi-mic-fill"></i>
+      </button>
+      <button type="submit" class="chatbot-send">Enviar</button>
+    </form>
+  </section>
+
   <script> // Script para el toggle del navbar en móvil y gestión del dropdown
     document.addEventListener("DOMContentLoaded", function () {
       const toggler = document.getElementById('navToggler');
@@ -358,6 +422,584 @@ document.addEventListener("DOMContentLoaded", function () {
         });
       });
 
+    });
+  </script>
+
+  <script> // Chatbot frontend conectado a /api/chatbot con persistencia local
+    document.addEventListener('DOMContentLoaded', function () {
+      const toggleBtn = document.getElementById('chatbotToggle');
+      const closeBtn = document.getElementById('chatbotClose');
+      const speakToggleBtn = document.getElementById('chatbotSpeakToggle');
+      const replayBtn = document.getElementById('chatbotReplayBtn');
+      const panel = document.getElementById('chatbotPanel');
+      const form = document.getElementById('chatbotForm');
+      const input = document.getElementById('chatbotInput');
+      const voiceBtn = document.getElementById('chatbotVoiceBtn');
+      const messages = document.getElementById('chatbotMessages');
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const hasTTS = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+      const STORAGE_MESSAGES_KEY = 'boe_chat_messages_v1';
+      const STORAGE_DRAFT_KEY = 'boe_chat_draft_v1';
+      const STORAGE_TTS_KEY = 'boe_chat_tts_enabled_v1';
+      const fallbackWelcome = 'Hola. Soy tu asistente para resolver dudas sobre oposiciones y filtros del BOE.';
+      let recognition = null;
+      let isListening = false;
+      let ttsEnabled = hasTTS;
+      let lastBotAnswer = '';
+
+      if (!toggleBtn || !panel || !form || !input || !messages) return;
+
+      function readStorage(key) {
+        try {
+          return sessionStorage.getItem(key);
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function writeStorage(key, value) {
+        try {
+          sessionStorage.setItem(key, value);
+        } catch (_) {
+          // Ignorar errores de almacenamiento (modo privado, cuota, etc.)
+        }
+      }
+
+      function removeStorage(key) {
+        try {
+          sessionStorage.removeItem(key);
+        } catch (_) {
+          // Ignorar errores de almacenamiento
+        }
+      }
+
+      function getHistoryFromDOM() {
+        return Array.from(messages.querySelectorAll('.chatbot-msg'))
+          .map((node) => ({
+            role: node.classList.contains('user') ? 'user' : 'bot',
+            text: (node.textContent || '').trim()
+          }))
+          .filter((item) => item.text);
+      }
+
+      function persistHistory() {
+        const history = getHistoryFromDOM().slice(-80);
+        writeStorage(STORAGE_MESSAGES_KEY, JSON.stringify(history));
+      }
+
+      function appendMessage(text, role) {
+        const div = document.createElement('div');
+        div.className = role === 'user' ? 'chatbot-msg user' : 'chatbot-msg bot';
+        div.textContent = text;
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      function addMessage(text, role, persist = true) {
+        appendMessage(text, role);
+        if (persist) {
+          persistHistory();
+        }
+      }
+
+      function restoreHistory() {
+        const raw = readStorage(STORAGE_MESSAGES_KEY);
+        if (!raw) {
+          persistHistory();
+          return;
+        }
+
+        try {
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed) || parsed.length === 0) {
+            persistHistory();
+            return;
+          }
+
+          messages.innerHTML = '';
+          parsed.forEach((item) => {
+            if (!item || (item.role !== 'user' && item.role !== 'bot') || !item.text) return;
+            addMessage(item.text, item.role, false);
+          });
+          messages.scrollTop = messages.scrollHeight;
+        } catch (_) {
+          messages.innerHTML = '';
+          addMessage(fallbackWelcome, 'bot', false);
+          persistHistory();
+        }
+      }
+
+      function refreshLastBotAnswer() {
+        const history = getHistoryFromDOM();
+        const lastBot = [...history].reverse().find((item) => item.role === 'bot');
+        lastBotAnswer = lastBot ? lastBot.text : '';
+      }
+
+      function setVoiceListeningState(listening) {
+        isListening = listening;
+        if (!voiceBtn) return;
+        voiceBtn.classList.toggle('listening', listening);
+        voiceBtn.setAttribute('aria-label', listening ? 'Detener dictado' : 'Dictado por voz');
+        voiceBtn.title = listening ? 'Detener' : 'Hablar';
+      }
+
+      function openPanel() {
+        panel.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+        toggleBtn.setAttribute('aria-expanded', 'true');
+        input.focus();
+      }
+
+      function closePanel() {
+        panel.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        toggleBtn.setAttribute('aria-expanded', 'false');
+      }
+
+      function stopSpeaking() {
+        if (hasTTS) {
+          window.speechSynthesis.cancel();
+        }
+      }
+
+      function pickSpanishVoice() {
+        if (!hasTTS) return null;
+        const voices = window.speechSynthesis.getVoices() || [];
+        return voices.find(v => v.lang && v.lang.toLowerCase().startsWith('es')) || null;
+      }
+
+      function speakText(text) {
+        if (!hasTTS || !ttsEnabled || !text) return;
+        stopSpeaking();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'es-ES';
+        utterance.rate = 1;
+        utterance.pitch = 1;
+        const voice = pickSpanishVoice();
+        if (voice) utterance.voice = voice;
+        window.speechSynthesis.speak(utterance);
+      }
+
+      restoreHistory();
+      refreshLastBotAnswer();
+
+      const storedDraft = readStorage(STORAGE_DRAFT_KEY);
+      if (storedDraft) {
+        input.value = storedDraft;
+      }
+
+      const storedTTS = readStorage(STORAGE_TTS_KEY);
+      if (hasTTS && (storedTTS === '0' || storedTTS === '1')) {
+        ttsEnabled = storedTTS === '1';
+      }
+
+      input.addEventListener('input', function () {
+        const value = input.value.trim();
+        if (!value) {
+          removeStorage(STORAGE_DRAFT_KEY);
+          return;
+        }
+        writeStorage(STORAGE_DRAFT_KEY, value);
+      });
+
+      toggleBtn.addEventListener('click', function () {
+        if (panel.classList.contains('open')) closePanel();
+        else openPanel();
+      });
+
+      if (closeBtn) {
+        closeBtn.addEventListener('click', closePanel);
+      }
+
+      if (speakToggleBtn) {
+        /*if (!hasTTS) {
+          ttsEnabled = false;
+          speakToggleBtn.disabled = true;
+          speakToggleBtn.title = 'Lectura por voz no compatible en este navegador';
+          speakToggleBtn.setAttribute('aria-pressed', 'false');
+        }*/
+
+        speakToggleBtn.addEventListener('click', function () {
+          ttsEnabled = !ttsEnabled;
+          writeStorage(STORAGE_TTS_KEY, ttsEnabled ? '1' : '0');
+          speakToggleBtn.classList.toggle('active', ttsEnabled);
+          speakToggleBtn.setAttribute('aria-pressed', ttsEnabled ? 'true' : 'false');
+
+          if (ttsEnabled) {
+            speakToggleBtn.title = 'Lectura activada';
+            speakText('Lectura activada.');
+          } else {
+            speakToggleBtn.title = 'Lectura desactivada';
+            stopSpeaking();
+          }
+        });
+
+        speakToggleBtn.classList.toggle('active', ttsEnabled);
+        speakToggleBtn.setAttribute('aria-pressed', ttsEnabled ? 'true' : 'false');
+        speakToggleBtn.title = ttsEnabled ? 'Lectura activada' : 'Lectura desactivada';
+      }
+
+      if (replayBtn) {
+        if (!hasTTS) {
+          replayBtn.disabled = true;
+          replayBtn.title = 'No disponible en este navegador';
+        }
+
+        replayBtn.addEventListener('click', function () {
+          if (!lastBotAnswer) {
+            addMessage('Todavia no tengo una respuesta para leer.', 'bot');
+            return;
+          }
+          speakText(lastBotAnswer);
+        });
+      }
+
+      if (hasTTS) {
+        window.speechSynthesis.onvoiceschanged = function () {
+          pickSpanishVoice();
+        };
+      }
+
+      if (voiceBtn) {
+        if (!SpeechRecognition) {
+          voiceBtn.disabled = true;
+          voiceBtn.title = 'Reconocimiento de voz no compatible en este navegador';
+        } else {
+          recognition = new SpeechRecognition();
+          recognition.lang = 'es-ES';
+          recognition.interimResults = true;
+          recognition.continuous = false;
+
+          recognition.onresult = function (event) {
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              transcript += event.results[i][0].transcript;
+            }
+            input.value = transcript.trim();
+            writeStorage(STORAGE_DRAFT_KEY, input.value);
+          };
+
+          recognition.onerror = function () {
+            addMessage('No pude acceder al microfono. Revisa permisos del navegador.', 'bot');
+            refreshLastBotAnswer();
+            setVoiceListeningState(false);
+          };
+
+          recognition.onend = function () {
+            setVoiceListeningState(false);
+          };
+
+          voiceBtn.addEventListener('click', function () {
+            if (!recognition) return;
+
+            if (isListening) {
+              recognition.stop();
+              return;
+            }
+
+            try {
+              recognition.start();
+              setVoiceListeningState(true);
+              input.focus();
+            } catch (_) {
+              addMessage('No se pudo iniciar el dictado por voz.', 'bot');
+              refreshLastBotAnswer();
+              setVoiceListeningState(false);
+            }
+          });
+        }
+      }
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+
+        if (recognition && isListening) {
+          recognition.stop();
+        }
+
+        addMessage(text, 'user');
+        input.value = '';
+        removeStorage(STORAGE_DRAFT_KEY);
+        input.disabled = true;
+
+        const typing = document.createElement('div');
+        typing.className = 'chatbot-msg bot';
+        typing.textContent = 'Escribiendo...';
+        messages.appendChild(typing);
+        messages.scrollTop = messages.scrollHeight;
+
+        try {
+          const res = await fetch('/api/chatbot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text })
+          });
+
+          const data = await res.json();
+          typing.remove();
+
+          if (!res.ok || !data.ok) {
+            const errText = data.error || 'No pude responder ahora mismo.';
+            addMessage(errText, 'bot');
+            lastBotAnswer = errText;
+            speakText(errText);
+          } else {
+            addMessage(data.answer, 'bot');
+            lastBotAnswer = data.answer;
+            speakText(data.answer);
+          }
+        } catch (error) {
+          typing.remove();
+          const errText = 'Error de conexión con el asistente.';
+          addMessage(errText, 'bot');
+          lastBotAnswer = errText;
+          speakText(errText);
+        } finally {
+          input.disabled = false;
+          input.focus();
+        }
+      });
+    });
+  </script>
+
+  <script> // Panel de accesibilidad global para visión reducida
+    document.addEventListener('DOMContentLoaded', function () {
+      const root = document.documentElement;
+      const toggle = document.getElementById('a11yToggle');
+      const panel = document.getElementById('a11yPanel');
+      const closeBtn = document.getElementById('a11yClose');
+      const increaseBtn = document.getElementById('a11yIncreaseText');
+      const decreaseBtn = document.getElementById('a11yDecreaseText');
+      const contrastBtn = document.getElementById('a11yContrast');
+      const grayscaleBtn = document.getElementById('a11yGrayscale');
+      const cursorBtn = document.getElementById('a11yCursor');
+      const colorBlindBtn = document.getElementById('a11yColorBlind');
+      const motionBtn = document.getElementById('a11yMotion');
+      const resetBtn = document.getElementById('a11yReset');
+      const textStatus = document.getElementById('a11yTextStatus');
+
+      if (!toggle || !panel) return;
+
+      const STORAGE_KEY = 'boe_a11y_settings_v1';
+      const MIN_SIZE = 90;
+      const MAX_SIZE = 130;
+      const DEFAULT_SIZE = 100;
+
+      function readSettings() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return null;
+          return JSON.parse(raw);
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function saveSettings(settings) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        } catch (_) {
+          // Ignore storage errors
+        }
+      }
+
+      function clampSize(size) {
+        return Math.min(MAX_SIZE, Math.max(MIN_SIZE, size));
+      }
+
+      function setTextSize(size) {
+        const safeSize = clampSize(size);
+        root.style.fontSize = safeSize + '%';
+        if (textStatus) {
+          textStatus.textContent = 'Texto ' + safeSize + '%';
+        }
+        return safeSize;
+      }
+
+      function setContrast(enabled) {
+        root.classList.toggle('a11y-high-contrast', enabled);
+        if (contrastBtn) {
+          contrastBtn.classList.toggle('active', enabled);
+          contrastBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+        }
+      }
+
+      function setGrayscale(enabled) {
+        root.classList.toggle('a11y-grayscale', enabled);
+        if (grayscaleBtn) {
+          grayscaleBtn.classList.toggle('active', enabled);
+          grayscaleBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+        }
+      }
+
+      function setLargeCursor(enabled) {
+        root.classList.toggle('a11y-large-cursor', enabled);
+        if (cursorBtn) {
+          cursorBtn.classList.toggle('active', enabled);
+          cursorBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+        }
+      }
+
+      function setColorBlindMode(enabled) {
+        root.classList.toggle('a11y-colorblind', enabled);
+        if (colorBlindBtn) {
+          colorBlindBtn.classList.toggle('active', enabled);
+          colorBlindBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+        }
+      }
+
+      function setReducedMotion(enabled) {
+        root.classList.toggle('a11y-reduced-motion', enabled);
+        if (motionBtn) {
+          motionBtn.classList.toggle('active', enabled);
+          motionBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+        }
+      }
+
+      function applySettings(settings) {
+        const base = settings || {};
+        const textSize = setTextSize(Number(base.textSize) || DEFAULT_SIZE);
+        const highContrast = !!base.highContrast;
+        const grayscale = !!base.grayscale;
+        const largeCursor = !!base.largeCursor;
+        const colorBlindMode = !!base.colorBlindMode;
+        const reducedMotion = !!base.reducedMotion;
+
+        setContrast(highContrast);
+        setGrayscale(grayscale);
+        setLargeCursor(largeCursor);
+        setColorBlindMode(colorBlindMode);
+        setReducedMotion(reducedMotion);
+
+        return {
+          textSize,
+          highContrast,
+          grayscale,
+          largeCursor,
+          colorBlindMode,
+          reducedMotion
+        };
+      }
+
+      let state = applySettings(readSettings());
+
+      function persistAndApply(nextState) {
+        state = applySettings(nextState);
+        saveSettings(state);
+      }
+
+      function openPanel() {
+        panel.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+        toggle.setAttribute('aria-expanded', 'true');
+      }
+
+      function closePanel() {
+        panel.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+
+      toggle.addEventListener('click', function () {
+        if (panel.classList.contains('open')) closePanel();
+        else openPanel();
+      });
+
+      if (closeBtn) {
+        closeBtn.addEventListener('click', closePanel);
+      }
+
+      if (increaseBtn) {
+        increaseBtn.addEventListener('click', function () {
+          persistAndApply({
+            ...state,
+            textSize: state.textSize + 10
+          });
+        });
+      }
+
+      if (decreaseBtn) {
+        decreaseBtn.addEventListener('click', function () {
+          persistAndApply({
+            ...state,
+            textSize: state.textSize - 10
+          });
+        });
+      }
+
+      if (contrastBtn) {
+        contrastBtn.addEventListener('click', function () {
+          persistAndApply({
+            ...state,
+            highContrast: !state.highContrast
+          });
+        });
+      }
+
+      if (grayscaleBtn) {
+        grayscaleBtn.addEventListener('click', function () {
+          persistAndApply({
+            ...state,
+            grayscale: !state.grayscale
+          });
+        });
+      }
+
+      if (cursorBtn) {
+        cursorBtn.addEventListener('click', function () {
+          persistAndApply({
+            ...state,
+            largeCursor: !state.largeCursor
+          });
+        });
+      }
+
+      if (colorBlindBtn) {
+        colorBlindBtn.addEventListener('click', function () {
+          persistAndApply({
+            ...state,
+            colorBlindMode: !state.colorBlindMode
+          });
+        });
+      }
+
+      if (motionBtn) {
+        motionBtn.addEventListener('click', function () {
+          persistAndApply({
+            ...state,
+            reducedMotion: !state.reducedMotion
+          });
+        });
+      }
+
+      if (resetBtn) {
+        resetBtn.addEventListener('click', function () {
+          persistAndApply({
+            textSize: DEFAULT_SIZE,
+            highContrast: false,
+            grayscale: false,
+            largeCursor: false,
+            colorBlindMode: false,
+            reducedMotion: false
+          });
+        });
+      }
+
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && panel.classList.contains('open')) {
+          closePanel();
+          toggle.focus();
+        }
+      });
+
+      document.addEventListener('click', function (event) {
+        const target = event.target;
+        if (!panel.classList.contains('open')) return;
+        if (panel.contains(target) || toggle.contains(target)) return;
+        closePanel();
+      });
     });
   </script>
 
