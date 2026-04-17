@@ -1,10 +1,18 @@
 import os
 from flask import Flask, session, request, redirect, url_for
+<<<<<<< HEAD
 from flask_login import current_user
+=======
+from flask_mail import Mail
+from flask_login import LoginManager, current_user
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+>>>>>>> c84da6d277e13b67fcb1f07be7bf4620ae7c4144
 
 from .config import Config
 from .db import init_boe_db, init_users_db, migrate_users_db, teardown_appcontext
 
+<<<<<<< HEAD
 from app.routes.main import main_bp
 from app.routes.auth import auth_bp
 from app.routes.user import user_bp
@@ -12,6 +20,16 @@ from app.routes.chat import chat_bp
 
 from .extensions import mail, login_manager
 from app.models import User   # 👈 NECESARIO PARA user_loader
+=======
+from datetime import timedelta
+
+mail = Mail()
+login_manager = LoginManager()
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=[],
+)
+>>>>>>> c84da6d277e13b67fcb1f07be7bf4620ae7c4144
 
 
 def create_app():
@@ -23,10 +41,16 @@ def create_app():
 
     # Config
     app.config.from_object(Config)
+    app.config.update(
+        SESSION_COOKIE_HTTPONLY=True, 
+        SESSION_COOKIE_SAMESITE='Lax',
+        PERMANENT_SESSION_LIFETIME=timedelta(minutes=30)
+    )
 
     # Extensiones
     mail.init_app(app)
     login_manager.init_app(app)
+    limiter.init_app(app)
     login_manager.login_view = "auth.login"
 
     # 🔥 FIX IMPORTANTE: user_loader de Flask-Login
