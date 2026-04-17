@@ -35,6 +35,9 @@ def chatbot_api():
         if decision.blocked:
             return jsonify({"ok": True, "answer": decision.block_message})
 
+        if decision.direct_answer:
+            return jsonify({"ok": True, "answer": decision.direct_answer})
+
         answer = chatbot(user_message, extra_instructions=decision.extra_instructions)
         return jsonify({"ok": True, "answer": answer})
     except Exception as exc:
