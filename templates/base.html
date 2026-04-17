@@ -105,6 +105,39 @@ Define la estructura general de la aplicación:
     <p>© 2025 Oposiciones BOE</p>
   </footer>
 
+  <button id="a11yToggle" class="a11y-toggle" aria-label="Abrir opciones de accesibilidad" aria-expanded="false"
+    aria-controls="a11yPanel">
+    <i class="bi bi-universal-access"></i>
+  </button>
+
+  <section id="a11yPanel" class="a11y-panel" aria-hidden="true">
+    <header class="a11y-panel-header">
+      <h2>Accesibilidad visual</h2>
+      <button id="a11yClose" type="button" class="a11y-close" aria-label="Cerrar panel de accesibilidad">×</button>
+    </header>
+
+    <div class="a11y-controls">
+      <p class="a11y-help">Ajustes para mejorar legibilidad y contraste.</p>
+      <div class="a11y-row" role="group" aria-label="Tamaño de texto">
+        <button id="a11yDecreaseText" type="button" class="a11y-btn">A-</button>
+        <span id="a11yTextStatus" class="a11y-status" aria-live="polite">Texto 100%</span>
+        <button id="a11yIncreaseText" type="button" class="a11y-btn">A+</button>
+      </div>
+      <button id="a11yContrast" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false">Alto
+        contraste</button>
+      <button id="a11yGrayscale" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false">Escala de
+        grises</button>
+      <button id="a11yCursor" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false">Puntero
+        grande</button>
+      <button id="a11yColorBlind" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false">Lectura apta
+        para daltonismo</button>
+      <button id="a11yMotion" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false">Reducir
+        animaciones</button>
+      <p class="a11y-help a11y-note">El modo para daltonismo usa una paleta segura y refuerza elementos que antes se distinguían solo por color.</p>
+      <button id="a11yReset" type="button" class="a11y-btn a11y-btn-block a11y-reset">Restablecer ajustes</button>
+    </div>
+  </section>
+
   <button id="chatbotToggle" class="chatbot-toggle" aria-label="Abrir asistente" aria-expanded="false">
     <i class="bi bi-chat-dots-fill"></i>
   </button>
@@ -723,6 +756,245 @@ Define la estructura general de la aplicación:
           input.disabled = false;
           input.focus();
         }
+      });
+    });
+  </script>
+
+  <script> // Panel de accesibilidad global para visión reducida
+    document.addEventListener('DOMContentLoaded', function () {
+      const root = document.documentElement;
+      const toggle = document.getElementById('a11yToggle');
+      const panel = document.getElementById('a11yPanel');
+      const closeBtn = document.getElementById('a11yClose');
+      const increaseBtn = document.getElementById('a11yIncreaseText');
+      const decreaseBtn = document.getElementById('a11yDecreaseText');
+      const contrastBtn = document.getElementById('a11yContrast');
+      const grayscaleBtn = document.getElementById('a11yGrayscale');
+      const cursorBtn = document.getElementById('a11yCursor');
+      const colorBlindBtn = document.getElementById('a11yColorBlind');
+      const motionBtn = document.getElementById('a11yMotion');
+      const resetBtn = document.getElementById('a11yReset');
+      const textStatus = document.getElementById('a11yTextStatus');
+
+      if (!toggle || !panel) return;
+
+      const STORAGE_KEY = 'boe_a11y_settings_v1';
+      const MIN_SIZE = 90;
+      const MAX_SIZE = 130;
+      const DEFAULT_SIZE = 100;
+
+      function readSettings() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return null;
+          return JSON.parse(raw);
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function saveSettings(settings) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        } catch (_) {
+          // Ignore storage errors
+        }
+      }
+
+      function clampSize(size) {
+        return Math.min(MAX_SIZE, Math.max(MIN_SIZE, size));
+      }
+
+      function setTextSize(size) {
+        const safeSize = clampSize(size);
+        root.style.fontSize = safeSize + '%';
+        if (textStatus) {
+          textStatus.textContent = 'Texto ' + safeSize + '%';
+        }
+        return safeSize;
+      }
+
+      function setContrast(enabled) {
+        root.classList.toggle('a11y-high-contrast', enabled);
+        if (contrastBtn) {
+          contrastBtn.classList.toggle('active', enabled);
+          contrastBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+        }
+      }
+
+      function setGrayscale(enabled) {
+        root.classList.toggle('a11y-grayscale', enabled);
+        if (grayscaleBtn) {
+          grayscaleBtn.classList.toggle('active', enabled);
+          grayscaleBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+        }
+      }
+
+      function setLargeCursor(enabled) {
+        root.classList.toggle('a11y-large-cursor', enabled);
+        if (cursorBtn) {
+          cursorBtn.classList.toggle('active', enabled);
+          cursorBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+        }
+      }
+
+      function setColorBlindMode(enabled) {
+        root.classList.toggle('a11y-colorblind', enabled);
+        if (colorBlindBtn) {
+          colorBlindBtn.classList.toggle('active', enabled);
+          colorBlindBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+        }
+      }
+
+      function setReducedMotion(enabled) {
+        root.classList.toggle('a11y-reduced-motion', enabled);
+        if (motionBtn) {
+          motionBtn.classList.toggle('active', enabled);
+          motionBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+        }
+      }
+
+      function applySettings(settings) {
+        const base = settings || {};
+        const textSize = setTextSize(Number(base.textSize) || DEFAULT_SIZE);
+        const highContrast = !!base.highContrast;
+        const grayscale = !!base.grayscale;
+        const largeCursor = !!base.largeCursor;
+        const colorBlindMode = !!base.colorBlindMode;
+        const reducedMotion = !!base.reducedMotion;
+
+        setContrast(highContrast);
+        setGrayscale(grayscale);
+        setLargeCursor(largeCursor);
+        setColorBlindMode(colorBlindMode);
+        setReducedMotion(reducedMotion);
+
+        return {
+          textSize,
+          highContrast,
+          grayscale,
+          largeCursor,
+          colorBlindMode,
+          reducedMotion
+        };
+      }
+
+      let state = applySettings(readSettings());
+
+      function persistAndApply(nextState) {
+        state = applySettings(nextState);
+        saveSettings(state);
+      }
+
+      function openPanel() {
+        panel.classList.add('open');
+        panel.setAttribute('aria-hidden', 'false');
+        toggle.setAttribute('aria-expanded', 'true');
+      }
+
+      function closePanel() {
+        panel.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+
+      toggle.addEventListener('click', function () {
+        if (panel.classList.contains('open')) closePanel();
+        else openPanel();
+      });
+
+      if (closeBtn) {
+        closeBtn.addEventListener('click', closePanel);
+      }
+
+      if (increaseBtn) {
+        increaseBtn.addEventListener('click', function () {
+          persistAndApply({
+            ...state,
+            textSize: state.textSize + 10
+          });
+        });
+      }
+
+      if (decreaseBtn) {
+        decreaseBtn.addEventListener('click', function () {
+          persistAndApply({
+            ...state,
+            textSize: state.textSize - 10
+          });
+        });
+      }
+
+      if (contrastBtn) {
+        contrastBtn.addEventListener('click', function () {
+          persistAndApply({
+            ...state,
+            highContrast: !state.highContrast
+          });
+        });
+      }
+
+      if (grayscaleBtn) {
+        grayscaleBtn.addEventListener('click', function () {
+          persistAndApply({
+            ...state,
+            grayscale: !state.grayscale
+          });
+        });
+      }
+
+      if (cursorBtn) {
+        cursorBtn.addEventListener('click', function () {
+          persistAndApply({
+            ...state,
+            largeCursor: !state.largeCursor
+          });
+        });
+      }
+
+      if (colorBlindBtn) {
+        colorBlindBtn.addEventListener('click', function () {
+          persistAndApply({
+            ...state,
+            colorBlindMode: !state.colorBlindMode
+          });
+        });
+      }
+
+      if (motionBtn) {
+        motionBtn.addEventListener('click', function () {
+          persistAndApply({
+            ...state,
+            reducedMotion: !state.reducedMotion
+          });
+        });
+      }
+
+      if (resetBtn) {
+        resetBtn.addEventListener('click', function () {
+          persistAndApply({
+            textSize: DEFAULT_SIZE,
+            highContrast: false,
+            grayscale: false,
+            largeCursor: false,
+            colorBlindMode: false,
+            reducedMotion: false
+          });
+        });
+      }
+
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && panel.classList.contains('open')) {
+          closePanel();
+          toggle.focus();
+        }
+      });
+
+      document.addEventListener('click', function (event) {
+        const target = event.target;
+        if (!panel.classList.contains('open')) return;
+        if (panel.contains(target) || toggle.contains(target)) return;
+        closePanel();
       });
     });
   </script>
