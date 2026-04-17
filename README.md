@@ -8,7 +8,7 @@
 
 
 Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones), la guarda en SQLite y ofrece un panel para que cada usuario pueda filtrar oportunidades, marcarlas como favoritas o visitadas, configurar alertas por email y mantener su perfil actualizado.
-
+---
 ---
 
 ## 📑 Tabla de Contenidos

@@ -1798,3 +1798,107 @@ html[data-theme="dark"] .form-select {
 html[data-theme="dark"] .dropdown-menu,
 html[data-theme="dark"] .dropdown-menu[style] { background:#2c2f47 !important; color:#e5e7eb !important; border-color:#3b3f54 !important; }
 html[data-theme="dark"] .dropdown-menu .form-check-input { accent-color:#60a5fa !important; background:transparent !important; border-color:#4b5166 !important; }
+/* ========================= CHATBOT WIDGET ========================= */
+#chatbot-widget {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 320px;
+  height: 420px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 9999;
+  font-family: Arial, sans-serif;
+}
+
+/* Header */
+#chatbot-header {
+  background: linear-gradient(135deg, #004aad, #002b5b);
+  color: white;
+  padding: 10px;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Body */
+#chatbot-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* NUEVO: evita que se rompa el layout */
+}
+
+/* Mensajes */
+#chatbot-messages {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  font-size: 14px;
+
+  min-height: 0; /* NUEVO: permite scroll real en flex */
+}
+
+/* NUEVO: scrollbar visible y bonito */
+#chatbot-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+#chatbot-messages::-webkit-scrollbar-thumb {
+  background: #004aad;
+  border-radius: 10px;
+}
+
+#chatbot-messages::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* mensajes */
+.msg {
+  padding: 8px 10px;
+  margin: 5px 0;
+  border-radius: 10px;
+  max-width: 85%;
+}
+
+.msg.user {
+  background: #004aad;
+  color: white;
+  align-self: flex-end;
+}
+
+.msg.bot {
+  background: #f1f1f1;
+  color: #333;
+  align-self: flex-start;
+}
+
+/* input */
+.chatbot-input-area {
+  display: flex;
+  border-top: 1px solid #ddd;
+
+  flex-shrink: 0; /* NUEVO: evita que desaparezca */
+}
+
+.chatbot-input-area input {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  outline: none;
+}
+
+.chatbot-input-area button {
+  background: #004aad;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  cursor: pointer;
+}
+
+.chatbot-input-area button:hover {
+  background: #00327a;
+}
