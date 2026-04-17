@@ -8,6 +8,8 @@ from flask_limiter.util import get_remote_address
 from .config import Config
 from .db import init_boe_db, init_users_db, migrate_users_db
 
+from datetime import timedelta
+
 mail = Mail()
 login_manager = LoginManager()
 limiter = Limiter(
@@ -23,6 +25,11 @@ def create_app():
         static_folder=os.path.join(os.path.dirname(__file__), "..", "static"),
     )
     app.config.from_object(Config)
+    app.config.update(
+        SESSION_COOKIE_HTTPONLY=True, 
+        SESSION_COOKIE_SAMESITE='Lax',
+        PERMANENT_SESSION_LIFETIME=timedelta(minutes=30)
+    )
 
     # Inicializar extensiones
     mail.init_app(app)
