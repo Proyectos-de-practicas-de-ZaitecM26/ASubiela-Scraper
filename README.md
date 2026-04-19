@@ -30,6 +30,7 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
     - [Gestión de usuarios](#gestión-de-usuarios)
     - [Subida de fotos de perfil](#subida-de-fotos-de-perfil)
     - [Envío de emails](#envío-de-emails)
+  - [🍪 Banner de política de cookies](#-banner-de-política-de-cookies)
   - [🛠️ Scripts útiles](#️-scripts-útiles)
   - [📁 Estructura de archivos](#-estructura-de-archivos)
   - [🔮 Próximos pasos recomendados](#-próximos-pasos-recomendados)
@@ -49,6 +50,7 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
 - **📧 Alertas y newsletters**: Configuración de alertas diarias o por favoritos y envío de emails con `Flask-Mail`.
 - **📊 Seguimiento de actividad**: Cada click marca visitas y favoritos para personalizar las tarjetas.
 - **🎨 Tema claro/oscuro** y subida de foto de perfil almacenada en `static/uploads/profiles`.
+- **🍪 Banner de cookies**: Aviso de política de cookies con preferencias granulares, persistido en `localStorage`.
 
 ---
 
@@ -178,6 +180,36 @@ requirements.txt       # Dependencias de Python.
 `app/email_utils.py` monta un HTML sencillo y usa `Flask-Mail`. Configura `MAIL_USERNAME` y `MAIL_PASSWORD` con un app password de Gmail o un SMTP propio antes de enviar correos reales.
 
 ---
+
+## 🍪 Banner de política de cookies
+
+La aplicación muestra un banner en la parte inferior de todas las páginas la primera vez que un usuario visita el sitio, cumpliendo con la normativa europea de cookies (RGPD/LSSI).
+
+**Comportamiento:**
+
+- El banner aparece únicamente si el usuario **no ha guardado previamente** una preferencia (se comprueba contra `localStorage` bajo la clave `boe_cookie_consent`).
+- Una vez elegida una opción, el banner no vuelve a mostrarse en visitas posteriores desde el mismo navegador.
+
+**Opciones disponibles:**
+
+| Botón | Acción |
+|---|---|
+| **Aceptar todas** | Activa cookies esenciales, analíticas y de personalización. |
+| **Solo esenciales** | Activa únicamente las cookies imprescindibles para el funcionamiento. |
+| **Configurar** | Abre un modal con toggles individuales por categoría. |
+
+**Categorías de cookies:**
+
+- **Esenciales** – Siempre activas; necesarias para sesiones y autenticación.
+- **Analíticas** – Permiten medir el uso de la web (desactivadas por defecto al elegir «Solo esenciales»).
+- **Personalización** – Recuerdan preferencias como el tema claro/oscuro (desactivadas por defecto al elegir «Solo esenciales»).
+
+**Implementación técnica:**
+
+- HTML y lógica JS incluidos en `templates/base.html` (sin dependencias externas).
+- Estilos integrados en `static/css/style.css` con soporte completo de **tema oscuro**.
+- Accesible: roles ARIA (`dialog`, `aria-modal`), cierre con tecla `Escape` y gestión de foco.
+- El enlace «Más información» apunta a `/politica-cookies`.
 
 ---
 

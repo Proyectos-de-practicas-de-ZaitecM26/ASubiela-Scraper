@@ -1000,6 +1000,161 @@ Define la estructura general de la aplicación:
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Banner de política de cookies -->
+  <div id="cookieBanner" class="cookie-banner" role="dialog" aria-label="Aviso de cookies" aria-live="polite" hidden>
+    <div class="cookie-banner-content">
+      <div class="cookie-banner-text">
+        <p>
+          Usamos cookies propias y de terceros para mejorar tu experiencia, analizar el tráfico y personalizar el contenido.
+          Puedes aceptarlas todas, configurar tus preferencias o rechazar las no esenciales.
+          <a href="/politica-cookies" class="cookie-link">Más información</a>
+        </p>
+      </div>
+      <div class="cookie-banner-actions">
+        <button id="cookieAcceptAll" class="cookie-btn cookie-btn-primary">Aceptar todas</button>
+        <button id="cookieRejectOptional" class="cookie-btn cookie-btn-secondary">Solo esenciales</button>
+        <button id="cookieSettings" class="cookie-btn cookie-btn-outline">Configurar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de configuración de cookies -->
+  <div id="cookieModal" class="cookie-modal" role="dialog" aria-modal="true" aria-labelledby="cookieModalTitle" hidden>
+    <div class="cookie-modal-box">
+      <div class="cookie-modal-header">
+        <h2 id="cookieModalTitle">Configuración de cookies</h2>
+        <button id="cookieModalClose" class="cookie-modal-close" aria-label="Cerrar">&times;</button>
+      </div>
+      <div class="cookie-modal-body">
+        <div class="cookie-option">
+          <div>
+            <strong>Cookies esenciales</strong>
+            <p>Necesarias para el funcionamiento básico de la web. No se pueden desactivar.</p>
+          </div>
+          <label class="cookie-toggle disabled" title="Siempre activas">
+            <input type="checkbox" checked disabled>
+            <span class="cookie-slider"></span>
+          </label>
+        </div>
+        <div class="cookie-option">
+          <div>
+            <strong>Cookies analíticas</strong>
+            <p>Nos ayudan a entender cómo usas el sitio para mejorar la experiencia.</p>
+          </div>
+          <label class="cookie-toggle">
+            <input type="checkbox" id="cookieAnalytics">
+            <span class="cookie-slider"></span>
+          </label>
+        </div>
+        <div class="cookie-option">
+          <div>
+            <strong>Cookies de personalización</strong>
+            <p>Permiten recordar tus preferencias y personalizar el contenido.</p>
+          </div>
+          <label class="cookie-toggle">
+            <input type="checkbox" id="cookiePersonalization">
+            <span class="cookie-slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="cookie-modal-footer">
+        <button id="cookieSaveSettings" class="cookie-btn cookie-btn-primary">Guardar preferencias</button>
+      </div>
+    </div>
+  </div>
+
+  <script> // Gestión del banner de política de cookies
+    (function () {
+      const COOKIE_KEY = 'boe_cookie_consent';
+
+      function getConsent() {
+        try { return JSON.parse(localStorage.getItem(COOKIE_KEY)); } catch (_) { return null; }
+      }
+
+      function saveConsent(data) {
+        try { localStorage.setItem(COOKIE_KEY, JSON.stringify(data)); } catch (_) {}
+      }
+
+      function hideBanner() {
+        const banner = document.getElementById('cookieBanner');
+        if (banner) banner.hidden = true;
+      }
+
+      function showBanner() {
+        const banner = document.getElementById('cookieBanner');
+        if (banner) banner.hidden = false;
+      }
+
+      function hideModal() {
+        const modal = document.getElementById('cookieModal');
+        if (modal) modal.hidden = true;
+      }
+
+      function showModal() {
+        const modal = document.getElementById('cookieModal');
+        if (modal) {
+          modal.hidden = false;
+          document.getElementById('cookieModalClose').focus();
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        if (!getConsent()) showBanner();
+
+        document.getElementById('cookieAcceptAll').addEventListener('click', function () {
+          saveConsent({ essential: true, analytics: true, personalization: true });
+          hideBanner();
+        });
+
+        document.getElementById('cookieRejectOptional').addEventListener('click', function () {
+          saveConsent({ essential: true, analytics: false, personalization: false });
+          hideBanner();
+        });
+
+        document.getElementById('cookieSettings').addEventListener('click', function () {
+          hideBanner();
+          showModal();
+        });
+
+        document.getElementById('cookieModalClose').addEventListener('click', function () {
+          hideModal();
+          if (!getConsent()) showBanner();
+        });
+
+        document.getElementById('cookieSaveSettings').addEventListener('click', function () {
+          const analytics = document.getElementById('cookieAnalytics').checked;
+          const personalization = document.getElementById('cookiePersonalization').checked;
+          saveConsent({ essential: true, analytics, personalization });
+          hideModal();
+        });
+
+        // Cerrar modal al hacer click fuera
+        document.getElementById('cookieModal').addEventListener('click', function (e) {
+          if (e.target === this) {
+            hideModal();
+            if (!getConsent()) showBanner();
+          }
+        });
+
+        // Cerrar modal con Escape
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && !document.getElementById('cookieModal').hidden) {
+            hideModal();
+            if (!getConsent()) showBanner();
+          }
+        });
+
+        // Cargar preferencias guardadas en el modal
+        const consent = getConsent();
+        if (consent) {
+          if (document.getElementById('cookieAnalytics')) document.getElementById('cookieAnalytics').checked = !!consent.analytics;
+          if (document.getElementById('cookiePersonalization')) document.getElementById('cookiePersonalization').checked = !!consent.personalization;
+        }
+      });
+    })();
+  </script>
+
 </body>
 
 </html>
