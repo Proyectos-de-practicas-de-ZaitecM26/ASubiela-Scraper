@@ -31,6 +31,7 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
     - [Subida de fotos de perfil](#subida-de-fotos-de-perfil)
     - [Envío de emails](#envío-de-emails)
   - [🍪 Banner de política de cookies](#-banner-de-política-de-cookies)
+  - [🌐 Selector de idioma (ES / EN)](#-selector-de-idioma-es--en)
   - [🛠️ Scripts útiles](#️-scripts-útiles)
   - [📁 Estructura de archivos](#-estructura-de-archivos)
   - [🔮 Próximos pasos recomendados](#-próximos-pasos-recomendados)
@@ -51,6 +52,7 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
 - **📊 Seguimiento de actividad**: Cada click marca visitas y favoritos para personalizar las tarjetas.
 - **🎨 Tema claro/oscuro** y subida de foto de perfil almacenada en `static/uploads/profiles`.
 - **🍪 Banner de cookies**: Aviso de política de cookies con preferencias granulares, persistido en `localStorage`.
+- **🌐 Selector de idioma**: Botón EN / ES en la cabecera que traduce toda la interfaz estática al instante sin recargar la página.
 
 ---
 
@@ -210,6 +212,34 @@ La aplicación muestra un banner en la parte inferior de todas las páginas la p
 - Estilos integrados en `static/css/style.css` con soporte completo de **tema oscuro**.
 - Accesible: roles ARIA (`dialog`, `aria-modal`), cierre con tecla `Escape` y gestión de foco.
 - El enlace «Más información» apunta a `/politica-cookies`.
+
+---
+
+## 🌐 Selector de idioma (ES / EN)
+
+Botón visible en la cabecera de navegación que permite cambiar el idioma de toda la interfaz entre español e inglés sin recargar la página.
+
+**Comportamiento:**
+
+- La preferencia se guarda en `localStorage` bajo la clave `boe_lang_v1` y se aplica automáticamente en cada visita.
+- El botón muestra `EN` cuando el idioma activo es español, y `ES` cuando es inglés.
+
+**Elementos traducidos:**
+
+| Zona | Textos traducidos |
+|---|---|
+| Navbar | Menú de usuario, login, registro, cerrar sesión |
+| Panel de accesibilidad | Título, descripciones y todos los botones |
+| Chatbot | Título, saludo de bienvenida, placeholder y botón Enviar |
+| Banner de cookies | Texto informativo, botones y modal de configuración |
+
+**Implementación técnica:**
+
+- Sistema i18n 100% client-side en `templates/base.html` (sin librerías externas).
+- Los elementos a traducir llevan el atributo `data-i18n="clave"` (o `data-i18n-placeholder` para inputs).
+- El diccionario de traducciones vive en un objeto JS con las claves `es` y `en`.
+- El atributo `lang` del elemento `<html>` se actualiza automáticamente al cambiar de idioma.
+- El contenido dinámico (oposiciones del BOE) permanece en español al provenir de la base de datos.
 
 ---
 
