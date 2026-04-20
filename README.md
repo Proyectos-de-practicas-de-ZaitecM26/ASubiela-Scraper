@@ -32,6 +32,8 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
     - [Envío de emails](#envío-de-emails)
   - [🍪 Banner de política de cookies](#-banner-de-política-de-cookies)
   - [🌐 Selector de idioma (ES / EN)](#-selector-de-idioma-es--en)
+  - [♿ Panel de accesibilidad visual](#-panel-de-accesibilidad-visual)
+  - [🤖 Chatbot asistente BOE](#-chatbot-asistente-boe)
   - [🛠️ Scripts útiles](#️-scripts-útiles)
   - [📁 Estructura de archivos](#-estructura-de-archivos)
   - [🔮 Próximos pasos recomendados](#-próximos-pasos-recomendados)
@@ -53,6 +55,8 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
 - **🎨 Tema claro/oscuro** y subida de foto de perfil almacenada en `static/uploads/profiles`.
 - **🍪 Banner de cookies**: Aviso de política de cookies con preferencias granulares, persistido en `localStorage`.
 - **🌐 Selector de idioma**: Botón EN / ES en la cabecera que traduce toda la interfaz estática al instante sin recargar la página.
+- **♿ Panel de accesibilidad visual**: Botón flotante que despliega controles para ajustar tamaño de texto, contraste y otros filtros visuales; persistidos en `localStorage`.
+- **🤖 Chatbot asistente BOE**: Asistente conversacional integrado con Groq (LLaMA 3.3 70B), con voz (TTS/STT), historial persistente y habilidades especializadas en búsqueda y filtrado del BOE.
 
 ---
 
@@ -136,17 +140,24 @@ app/
   db.py                # Conexiones y migraciones SQLite.
   models.py            # Modelo User (Flask-Login).
   email_utils.py       # Helpers para enviar newsletters.
+  chatbot.py           # Función principal del chatbot (llama a Groq API).
   scraping/
     boe_scraper.py     # Lógica de scraping y sincronización del BOE.
   routes/
     main.py            # Landing, sincronización y estadísticas.
-    auth.py            # Registro, login, logout y cambio de contraseña.
+    auth.py            # Autenticación (login, registro, logout).
     user.py            # Panel del usuario, filtros, favoritos y perfil.
+    chat.py            # Endpoint /chatbot/api y ruta /chat.
+  services/
+    ai_client.py       # Cliente unificado de IA (Groq + proveedores alternativos).
+    chat_skills.py     # Habilidades del chatbot: detección de intención y búsqueda en BD.
 static/                # CSS, imágenes y uploads de perfiles.
-templates/             # Base + vistas (index, login, registro, user_* ...).
+templates/             # Base + vistas (index, login, registro, user_*, chat ...).
 run.py                 # Punto de entrada (crea la app y lanza Flask).
 bootstrap.(bat|sh)     # Scripts para preparar el entorno.
 requirements.txt       # Dependencias de Python.
+tests/
+  test_chat_skills.py  # Pruebas unitarias de las habilidades del chatbot.
 ```
 
 ---
@@ -243,6 +254,80 @@ Botón visible en la cabecera de navegación que permite cambiar el idioma de to
 
 ---
 
+## ♿ Panel de accesibilidad visual
+
+Botón flotante con icono de accesibilidad universal, visible en todas las páginas, que despliega un panel lateral con herramientas de ajuste visual pensadas para personas con dificultades visuales.
+
+**Controles disponibles:**
+
+| Control | Descripción |
+|---|---|
+| **Tamaño de texto** | Botones `A-`, `A` (reset) y `A+` para reducir, restaurar o ampliar la tipografía base. |
+| **Alto contraste** | Aplica una paleta de alto contraste sobre toda la interfaz. |
+| **Escala de grises** | Desactiva el color de la página para personas con daltonismo o fotosensibilidad. |
+| **Subrayar enlaces** | Fuerza el subrayado de todos los hipervínculos para facilitar su identificación. |
+| **Espacio entre letras** | Aumenta el espaciado de caracteres para mejorar la legibilidad. |
+| **Restablecer todo** | Revierte todos los ajustes a los valores por defecto. |
+
+**Implementación técnica:**
+
+- HTML, CSS y JS incluidos en `templates/base.html` y `static/css/style.css`, sin dependencias externas.
+- Las preferencias se persisten en `localStorage` bajo la clave `boe_a11y_prefs` y se aplican al cargar cada página.
+- Totalmente accesible: roles ARIA (`region`, `group`), cierre con `Escape` y gestión de foco al abrir/cerrar.
+- Soporte completo de **tema oscuro** y diseño **responsive**.
+- Traducible mediante el sistema i18n integrado (atributos `data-i18n`).
+
+---
+
+## 🤖 Chatbot asistente BOE
+
+Asistente conversacional flotante especializado en el contenido del BOE, accesible desde cualquier página de la aplicación.
+
+**Características:**
+
+- **Motor de IA**: Groq API con el modelo `llama-3.3-70b-versatile` (temperatura 0.3, máx. 450 tokens).
+- **Habilidades integradas** (`app/services/chat_skills.py`): El chatbot detecta la intención del usuario y puede ejecutar búsquedas reales contra la base de datos local antes de pasar la consulta al modelo de lenguaje:
+  - Búsqueda por provincia
+  - Búsqueda por departamento / ministerio
+  - Listado de oposiciones recientes
+  - Consulta de estadísticas (total de registros, etc.)
+- **Filtrado de temas**: Responde únicamente preguntas relacionadas con el BOE; rechaza cualquier otra temática.
+- **Voz (TTS / STT)**: Lectura en voz alta de las respuestas (Web Speech API) y dictado por voz para escribir preguntas.
+- **Historial persistente**: El hilo de conversación se guarda en `localStorage` (`boe_chat_messages_v1`) y se restaura al reabrir el chat.
+- **Borrador automático**: El texto en curso se guarda en `localStorage` (`boe_chat_draft_v1`) para no perderlo si se cierra el panel.
+- **Vista dedicada**: Página completa del chat disponible en `/chat` (`templates/chat.html`).
+
+**Arquitectura del chatbot:**
+
+```
+app/
+  chatbot.py               # Función principal que llama a Groq API
+  services/
+    ai_client.py           # Cliente unificado (Groq + fallback a otros proveedores)
+    chat_skills.py         # Habilidades: búsqueda en BD, detección de intención, filtrado
+  routes/
+    chat.py                # Blueprint /chatbot/api (POST) y ruta /chat (GET)
+templates/
+  chat.html                # Vista de pantalla completa del chatbot
+tests/
+  test_chat_skills.py      # Pruebas unitarias de las habilidades del chatbot
+```
+
+**Variable de entorno requerida:**
+
+| Variable | Descripción |
+|---|---|
+| `GROQ_API_KEY` | API key de [Groq](https://console.groq.com/). También se acepta `GROQ_KEY`. |
+
+**Proveedores de IA alternativos incluidos** (disponibles pero no activos por defecto):
+
+- `app/gemini_chat.py` – Google Gemini
+- `app/nvidia_chat.py` – NVIDIA NIM
+- `app/elephant_chat.py` – ElephantSQL / modelos propios
+- `app/groq_chat.py` – Wrapper alternativo de Groq
+
+---
+
 ## 🛠️ Scripts útiles
 
 - **`bootstrap.bat` / `bootstrap.sh`**: Crea venv, instala dependencias y carpetas necesarias.
@@ -260,11 +345,17 @@ I_S25_Web_Scraping/
 │   ├── db.py                # Gestión de bases de datos SQLite
 │   ├── models.py            # Modelo User (Flask-Login)
 │   ├── email_utils.py       # Utilidades para envío de emails
+│   ├── chatbot.py           # Función principal del chatbot (Groq API)
 │   ├── routes/
 │   │   ├── __init__.py
 │   │   ├── main.py          # Rutas principales (index, scraping)
 │   │   ├── auth.py          # Autenticación (login, registro, logout)
-│   │   └── user.py          # Panel de usuario (perfil, favoritos, alertas)
+│   │   ├── user.py          # Panel de usuario (perfil, favoritos, alertas)
+│   │   └── chat.py          # Endpoint /chatbot/api y vista /chat
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── ai_client.py     # Cliente unificado de IA
+│   │   └── chat_skills.py   # Habilidades del chatbot y detección de intención
 │   └── scraping/
 │       ├── __init__.py
 │       └── boe_scraper.py   # Lógica de scraping del BOE
@@ -275,7 +366,7 @@ I_S25_Web_Scraping/
 │   └── uploads/
 │       └── profiles/        # Fotos de perfil de usuarios
 ├── templates/
-│   ├── base.html            # Plantilla base
+│   ├── base.html            # Plantilla base (navbar, chatbot, accesibilidad, cookies, i18n)
 │   ├── index.html           # Página principal
 │   ├── login.html           # Formulario de login
 │   ├── register.html        # Formulario de registro
@@ -284,14 +375,17 @@ I_S25_Web_Scraping/
 │   ├── user_oposiciones.html
 │   ├── user_newsletter.html
 │   ├── tarjeta.html         # Vista de oposiciones por departamento
+│   ├── chat.html            # Vista de pantalla completa del chatbot
 │   └── emails/
 │       └── nuevas_oposiciones.html
+├── tests/
+│   └── test_chat_skills.py  # Pruebas unitarias de las habilidades del chatbot
 ├── bootstrap.bat            # Script de bootstrap (Windows)
 ├── bootstrap.sh             # Script de bootstrap (Linux/macOS)
 ├── run.py                   # Punto de entrada de la aplicación
 ├── requirements.txt         # Dependencias Python
-├── oposiciones.db          # Base de datos de oposiciones
-└── usuarios.db             # Base de datos de usuarios
+├── oposiciones.db           # Base de datos de oposiciones
+└── usuarios.db              # Base de datos de usuarios
 ```
 
 ---
