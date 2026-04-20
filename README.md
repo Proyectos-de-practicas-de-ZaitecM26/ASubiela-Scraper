@@ -25,6 +25,7 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
       - [4. Ejecutar la aplicación](#4-ejecutar-la-aplicación)
     - [Configuración y variables de entorno](#configuración-y-variables-de-entorno)
   - [🏗️ Arquitectura del proyecto](#️-arquitectura-del-proyecto)
+  - [🧪 Guía corta: probar el chatbot en local](#-guía-corta-probar-el-chatbot-en-local)
   - [⚙️ Funcionalidades](#️-funcionalidades)
     - [Flujo de scraping](#flujo-de-scraping)
     - [Gestión de usuarios](#gestión-de-usuarios)
@@ -118,8 +119,40 @@ Puedes sobrescribir los valores definidos en `app/config.py`:
 | `BOE_DB_PATH`       | Ruta al SQLite con oposiciones                          | `oposiciones.db`              |
 | `MAIL_USERNAME`     | Cuenta SMTP para `Flask-Mail`                           | `notificaciones.scraper@...`  |
 | `MAIL_PASSWORD`     | Password o app-password del SMTP                        | `sqoj zfue ovcf dlhz`         |
+| `GROQ_API_KEY`      | API Key para respuestas IA del endpoint `/api/chatbot` | *(sin valor por defecto)*     |
 
 **⚠️ IMPORTANTE:** En producción define estas variables antes de arrancar (`set VAR=...` en Windows o `export VAR=...` en Linux/macOS).
+
+---
+
+## 🧪 Guía corta: probar el chatbot en local
+
+El chatbot usa siempre el prompt completo del BOE. Cada compañero solo necesita su propia `GROQ_API_KEY` para hacer pruebas locales.
+
+1. **Activa el entorno virtual** y arranca la app:
+
+```powershell
+venv\Scripts\activate
+ $env:GROQ_API_KEY="tu_api_key"
+python run.py
+```
+
+2. **Haz una prueba rápida al endpoint**:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:5000/api/chatbot" -ContentType "application/json" -Body '{"message":"resumen del boe-a-2026-8444"}'
+```
+
+3. **Verifica comportamiento esperado**:
+- Tema BOE: responde normalmente.
+- Fuera de BOE: bloquea/redirige al dominio BOE.
+- Si falta contexto: aplica fallback y no inventa datos.
+
+4. **Casos recomendados de validación rápida**:
+- `como hacer una paella?` -> bloqueo por fuera de dominio.
+- `resumen del boe-a-2026-8444` -> respuesta directa orientada a resumen de referencia.
+- `Busca oposiciones en Madrid para hoy` -> respuesta IA (requiere `GROQ_API_KEY`).
+- `resumen del artículo 5 de esa norma` -> no bloquea y aplica fallback si falta contexto.
 
 ---
 
@@ -128,9 +161,12 @@ Puedes sobrescribir los valores definidos en `app/config.py`:
 ```
 app/
   __init__.py          # Crea la app, registra blueprints, filtros y temas.
+  chatbot.py           # Cliente Groq + selector de system prompt (v1/v2).
   config.py            # Configuración centralizada.
   db.py                # Conexiones y migraciones SQLite.
   models.py            # Modelo User (Flask-Login).
+  services/
+    chat_skills.py     # Capa de skills: bloqueo de dominio + ruteo de intención.
   email_utils.py       # Helpers para enviar newsletters.
   scraping/
     boe_scraper.py     # Lógica de scraping y sincronización del BOE.
@@ -176,6 +212,16 @@ requirements.txt       # Dependencias de Python.
 ### Envío de emails
 
 `app/email_utils.py` monta un HTML sencillo y usa `Flask-Mail`. Configura `MAIL_USERNAME` y `MAIL_PASSWORD` con un app password de Gmail o un SMTP propio antes de enviar correos reales.
+
+### Asistente IA BOE
+
+- Endpoint backend: `POST /api/chatbot` en `app/routes/main.py`.
+- Prompt único y completo en `app/chatbot.py`.
+- Skills de control en `app/services/chat_skills.py`:
+  - bloqueo de temas fuera de BOE,
+  - detección de referencias BOE,
+  - soporte de preguntas de seguimiento legal (`artículo`, `norma`, `disposición`, `fecha límite`, etc.).
+- Frontend: se dejó solo el chat nuevo integrado en `templates/base.html` (se retiró el chat legacy para pruebas).
 
 ---
 
