@@ -52,34 +52,35 @@ Define la estructura general de la aplicación:
               </a>
               <ul class="user-dropdown" role="menu" aria-labelledby="userMenuDropdown">
                 <li>
-                  <a class="user-dropdown-item" href="{{ url_for('user.oposiciones_vigentes') }}">📚 Oposiciones
-                    vigentes</a>
+                  <a class="user-dropdown-item" href="{{ url_for('user.oposiciones_vigentes') }}" data-i18n="nav.vigentes">📚 Oposiciones vigentes</a>
                 </li>
                 <li>
-                  <a class="user-dropdown-item" href="{{ url_for('user.oposiciones_favoritas') }}">⭐ Mis Favoritas</a>
+                  <a class="user-dropdown-item" href="{{ url_for('user.oposiciones_favoritas') }}" data-i18n="nav.favoritas">⭐ Mis Favoritas</a>
                 </li>
                 <li>
-                  <a class="user-dropdown-item" href="{{ url_for('user.newsletter_prefs') }}">🔔 Alertas por correo</a>
+                  <a class="user-dropdown-item" href="{{ url_for('user.newsletter_prefs') }}" data-i18n="nav.alertas">🔔 Alertas por correo</a>
                 </li>
                 <li class="dropdown-sep"></li>
                 <li>
-                  <a class="user-dropdown-item" href="{{ url_for('user.configuracion_cuenta') }}">⚙️ Configuración</a>
+                  <a class="user-dropdown-item" href="{{ url_for('user.configuracion_cuenta') }}" data-i18n="nav.config">⚙️ Configuración</a>
                 </li>
               </ul>
             </li>
             <li class="nav-item">
-              <a href="{{ url_for('auth.logout') }}" class="btn-logout">🔓 Salir</a>
+              <a href="{{ url_for('auth.logout') }}" class="btn-logout" data-i18n="nav.salir">🔓 Salir</a>
             </li>
             {% else %}
             <li class="nav-item">
-              <a href="{{ url_for('auth.login') }}" class="btn-login">Iniciar sesión</a>
+              <a href="{{ url_for('auth.login') }}" class="btn-login" data-i18n="nav.login">Iniciar sesión</a>
             </li>
             <li class="nav-item">
-              <a href="{{ url_for('auth.register') }}" class="btn-register">Registrarse</a>
+              <a href="{{ url_for('auth.register') }}" class="btn-register" data-i18n="nav.register">Registrarse</a>
             </li>
             {% endif %}
           </ul>
         </div>
+
+        <button id="langToggle" class="btn-lang-toggle" aria-label="Cambiar idioma" title="Switch to English">EN</button>
 
         <a href="{{ url_for('toggle_theme') }}" class="btn-toggle-theme" aria-label="Toggle theme">
           {% if theme == 'dark' %}🔆{% else %}🌓{% endif %}
@@ -102,7 +103,7 @@ Define la estructura general de la aplicación:
   </main>
 
   <footer class="mi-footer">
-    <p>© 2025 Oposiciones BOE</p>
+    <p>© 2026 Oposiciones BOE</p>
   </footer>
 
   <button id="a11yToggle" class="a11y-toggle" aria-label="Abrir opciones de accesibilidad" aria-expanded="false"
@@ -112,29 +113,24 @@ Define la estructura general de la aplicación:
 
   <section id="a11yPanel" class="a11y-panel" aria-hidden="true">
     <header class="a11y-panel-header">
-      <h2>Accesibilidad visual</h2>
+      <h2 data-i18n="a11y.title">Accesibilidad visual</h2>
       <button id="a11yClose" type="button" class="a11y-close" aria-label="Cerrar panel de accesibilidad">×</button>
     </header>
 
     <div class="a11y-controls">
-      <p class="a11y-help">Ajustes para mejorar legibilidad y contraste.</p>
+      <p class="a11y-help" data-i18n="a11y.help">Ajustes para mejorar legibilidad y contraste.</p>
       <div class="a11y-row" role="group" aria-label="Tamaño de texto">
         <button id="a11yDecreaseText" type="button" class="a11y-btn">A-</button>
         <span id="a11yTextStatus" class="a11y-status" aria-live="polite">Texto 100%</span>
         <button id="a11yIncreaseText" type="button" class="a11y-btn">A+</button>
       </div>
-      <button id="a11yContrast" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false">Alto
-        contraste</button>
-      <button id="a11yGrayscale" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false">Escala de
-        grises</button>
-      <button id="a11yCursor" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false">Puntero
-        grande</button>
-      <button id="a11yColorBlind" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false">Lectura apta
-        para daltonismo</button>
-      <button id="a11yMotion" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false">Reducir
-        animaciones</button>
-      <p class="a11y-help a11y-note">El modo para daltonismo usa una paleta segura y refuerza elementos que antes se distinguían solo por color.</p>
-      <button id="a11yReset" type="button" class="a11y-btn a11y-btn-block a11y-reset">Restablecer ajustes</button>
+      <button id="a11yContrast" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false" data-i18n="a11y.contrast">Alto contraste</button>
+      <button id="a11yGrayscale" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false" data-i18n="a11y.grayscale">Escala de grises</button>
+      <button id="a11yCursor" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false" data-i18n="a11y.cursor">Puntero grande</button>
+      <button id="a11yColorBlind" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false" data-i18n="a11y.colorblind">Lectura apta para daltonismo</button>
+      <button id="a11yMotion" type="button" class="a11y-btn a11y-btn-block" aria-pressed="false" data-i18n="a11y.motion">Reducir animaciones</button>
+      <p class="a11y-help a11y-note" data-i18n="a11y.note">El modo para daltonismo usa una paleta segura y refuerza elementos que antes se distinguían solo por color.</p>
+      <button id="a11yReset" type="button" class="a11y-btn a11y-btn-block a11y-reset" data-i18n="a11y.reset">Restablecer ajustes</button>
     </div>
   </section>
 
@@ -144,7 +140,7 @@ Define la estructura general de la aplicación:
 
   <section id="chatbotPanel" class="chatbot-panel" aria-hidden="true">
     <header class="chatbot-header">
-      <div class="chatbot-title">Asistente BOE</div>
+      <div class="chatbot-title" data-i18n="chatbot.title">Asistente BOE</div>
       <div class="chatbot-header-actions">
         <button id="chatbotSpeakToggle" type="button" class="chatbot-a11y-btn" aria-label="Activar o desactivar lectura" aria-pressed="true" title="Lectura activada">
           <i class="bi bi-volume-up-fill"></i>
@@ -157,15 +153,15 @@ Define la estructura general de la aplicación:
     </header>
 
     <div id="chatbotMessages" class="chatbot-messages">
-      <div class="chatbot-msg bot">Hola. Soy tu asistente para resolver dudas sobre oposiciones y filtros del BOE.</div>
+      <div class="chatbot-msg bot" data-i18n="chatbot.welcome">Hola. Soy tu asistente para resolver dudas sobre oposiciones y filtros del BOE.</div>
     </div>
 
     <form id="chatbotForm" class="chatbot-form">
-      <input id="chatbotInput" type="text" maxlength="1200" placeholder="Escribe tu pregunta..." autocomplete="off" required>
+      <input id="chatbotInput" type="text" maxlength="1200" placeholder="Escribe tu pregunta..." data-i18n-placeholder="chatbot.placeholder" autocomplete="off" required>
       <button id="chatbotVoiceBtn" type="button" class="chatbot-voice" aria-label="Dictado por voz" title="Hablar">
         <i class="bi bi-mic-fill"></i>
       </button>
-      <button type="submit" class="chatbot-send">Enviar</button>
+      <button type="submit" class="chatbot-send" data-i18n="chatbot.send">Enviar</button>
     </form>
   </section>
 
@@ -813,7 +809,8 @@ document.addEventListener("DOMContentLoaded", function () {
         const safeSize = clampSize(size);
         root.style.fontSize = safeSize + '%';
         if (textStatus) {
-          textStatus.textContent = 'Texto ' + safeSize + '%';
+          const label = window._i18nTextLabel || 'Texto';
+          textStatus.textContent = label + ' ' + safeSize + '%';
         }
         return safeSize;
       }
@@ -1004,6 +1001,304 @@ document.addEventListener("DOMContentLoaded", function () {
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script> // Sistema de internacionalización (ES / EN)
+    (function () {
+      const LANG_KEY = 'boe_lang_v1';
+
+      const translations = {
+        es: {
+          'nav.vigentes':          '📚 Oposiciones vigentes',
+          'nav.favoritas':         '⭐ Mis Favoritas',
+          'nav.alertas':           '🔔 Alertas por correo',
+          'nav.config':            '⚙️ Configuración',
+          'nav.salir':             '🔓 Salir',
+          'nav.login':             'Iniciar sesión',
+          'nav.register':          'Registrarse',
+          'a11y.title':            'Accesibilidad visual',
+          'a11y.help':             'Ajustes para mejorar legibilidad y contraste.',
+          'a11y.contrast':         'Alto contraste',
+          'a11y.grayscale':        'Escala de grises',
+          'a11y.cursor':           'Puntero grande',
+          'a11y.colorblind':       'Lectura apta para daltonismo',
+          'a11y.motion':           'Reducir animaciones',
+          'a11y.note':             'El modo para daltonismo usa una paleta segura y refuerza elementos que antes se distinguían solo por color.',
+          'a11y.reset':            'Restablecer ajustes',
+          'a11y.textlabel':        'Texto',
+          'chatbot.title':         'Asistente BOE',
+          'chatbot.placeholder':   'Escribe tu pregunta...',
+          'chatbot.send':          'Enviar',
+          'chatbot.welcome':       'Hola. Soy tu asistente para resolver dudas sobre oposiciones y filtros del BOE.',
+          'cookie.text':           'Usamos cookies propias y de terceros para mejorar tu experiencia, analizar el tráfico y personalizar el contenido. Puedes aceptarlas todas, configurar tus preferencias o rechazar las no esenciales.',
+          'cookie.morelink':       'Más información',
+          'cookie.accept':         'Aceptar todas',
+          'cookie.reject':         'Solo esenciales',
+          'cookie.configure':      'Configurar',
+          'cookie.modal.title':    'Configuración de cookies',
+          'cookie.essential.title':'Cookies esenciales',
+          'cookie.essential.desc': 'Necesarias para el funcionamiento básico de la web. No se pueden desactivar.',
+          'cookie.analytics.title':'Cookies analíticas',
+          'cookie.analytics.desc': 'Nos ayudan a entender cómo usas el sitio para mejorar la experiencia.',
+          'cookie.personal.title': 'Cookies de personalización',
+          'cookie.personal.desc':  'Permiten recordar tus preferencias y personalizar el contenido.',
+          'cookie.save':           'Guardar preferencias',
+        },
+        en: {
+          'nav.vigentes':          '📚 Current vacancies',
+          'nav.favoritas':         '⭐ My Favourites',
+          'nav.alertas':           '🔔 Email alerts',
+          'nav.config':            '⚙️ Settings',
+          'nav.salir':             '🔓 Log out',
+          'nav.login':             'Log in',
+          'nav.register':          'Sign up',
+          'a11y.title':            'Visual accessibility',
+          'a11y.help':             'Settings to improve readability and contrast.',
+          'a11y.contrast':         'High contrast',
+          'a11y.grayscale':        'Greyscale',
+          'a11y.cursor':           'Large cursor',
+          'a11y.colorblind':       'Colour-blind friendly',
+          'a11y.motion':           'Reduce animations',
+          'a11y.note':             'Colour-blind mode uses a safe palette and reinforces elements previously distinguished by colour only.',
+          'a11y.reset':            'Reset settings',
+          'a11y.textlabel':        'Text',
+          'chatbot.title':         'BOE Assistant',
+          'chatbot.placeholder':   'Type your question...',
+          'chatbot.send':          'Send',
+          'chatbot.welcome':       'Hello. I am your assistant for questions about public job vacancies and BOE filters.',
+          'cookie.text':           'We use first- and third-party cookies to improve your experience, analyse traffic, and personalise content. You can accept all of them, configure your preferences, or reject non-essential ones.',
+          'cookie.morelink':       'More information',
+          'cookie.accept':         'Accept all',
+          'cookie.reject':         'Essential only',
+          'cookie.configure':      'Configure',
+          'cookie.modal.title':    'Cookie settings',
+          'cookie.essential.title':'Essential cookies',
+          'cookie.essential.desc': 'Required for the basic functioning of the website. Cannot be disabled.',
+          'cookie.analytics.title':'Analytical cookies',
+          'cookie.analytics.desc': 'Help us understand how you use the site to improve the experience.',
+          'cookie.personal.title': 'Personalisation cookies',
+          'cookie.personal.desc':  'Allow us to remember your preferences and personalise content.',
+          'cookie.save':           'Save preferences',
+        }
+      };
+
+      function getLang() {
+        try { return localStorage.getItem(LANG_KEY) || 'es'; } catch (_) { return 'es'; }
+      }
+
+      function setLang(lang) {
+        try { localStorage.setItem(LANG_KEY, lang); } catch (_) {}
+      }
+
+      function applyLang(lang) {
+        const dict = translations[lang] || translations.es;
+
+        // data-i18n → textContent
+        document.querySelectorAll('[data-i18n]').forEach(function (el) {
+          const key = el.getAttribute('data-i18n');
+          if (dict[key] !== undefined) el.textContent = dict[key];
+        });
+
+        // data-i18n-placeholder → placeholder
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+          const key = el.getAttribute('data-i18n-placeholder');
+          if (dict[key] !== undefined) el.placeholder = dict[key];
+        });
+
+        // Etiqueta dinámica del tamaño de texto en el panel de accesibilidad
+        window._i18nTextLabel = dict['a11y.textlabel'] || 'Texto';
+        const textStatus = document.getElementById('a11yTextStatus');
+        if (textStatus) {
+          const current = textStatus.textContent.replace(/[^0-9]/g, '') || '100';
+          textStatus.textContent = window._i18nTextLabel + ' ' + current + '%';
+        }
+
+        // Atributo lang del documento
+        document.documentElement.lang = lang;
+
+        // Botón de idioma
+        const btn = document.getElementById('langToggle');
+        if (btn) {
+          if (lang === 'es') {
+            btn.textContent = 'EN';
+            btn.title = 'Switch to English';
+            btn.setAttribute('aria-label', 'Switch to English');
+          } else {
+            btn.textContent = 'ES';
+            btn.title = 'Cambiar a español';
+            btn.setAttribute('aria-label', 'Cambiar a español');
+          }
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        const current = getLang();
+        applyLang(current);
+
+        const btn = document.getElementById('langToggle');
+        if (btn) {
+          btn.addEventListener('click', function () {
+            const next = getLang() === 'es' ? 'en' : 'es';
+            setLang(next);
+            applyLang(next);
+          });
+        }
+      });
+    })();
+  </script>
+
+  <!-- Banner de política de cookies -->
+  <div id="cookieBanner" class="cookie-banner" role="dialog" aria-label="Aviso de cookies" aria-live="polite" hidden>
+    <div class="cookie-banner-content">
+      <div class="cookie-banner-text">
+        <p>
+          <span data-i18n="cookie.text">Usamos cookies propias y de terceros para mejorar tu experiencia, analizar el tráfico y personalizar el contenido. Puedes aceptarlas todas, configurar tus preferencias o rechazar las no esenciales.</span>
+          <a href="/politica-cookies" class="cookie-link" data-i18n="cookie.morelink">Más información</a>
+        </p>
+      </div>
+      <div class="cookie-banner-actions">
+        <button id="cookieAcceptAll" class="cookie-btn cookie-btn-primary" data-i18n="cookie.accept">Aceptar todas</button>
+        <button id="cookieRejectOptional" class="cookie-btn cookie-btn-secondary" data-i18n="cookie.reject">Solo esenciales</button>
+        <button id="cookieSettings" class="cookie-btn cookie-btn-outline" data-i18n="cookie.configure">Configurar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de configuración de cookies -->
+  <div id="cookieModal" class="cookie-modal" role="dialog" aria-modal="true" aria-labelledby="cookieModalTitle" hidden>
+    <div class="cookie-modal-box">
+      <div class="cookie-modal-header">
+        <h2 id="cookieModalTitle" data-i18n="cookie.modal.title">Configuración de cookies</h2>
+        <button id="cookieModalClose" class="cookie-modal-close" aria-label="Cerrar">&times;</button>
+      </div>
+      <div class="cookie-modal-body">
+        <div class="cookie-option">
+          <div>
+            <strong data-i18n="cookie.essential.title">Cookies esenciales</strong>
+            <p data-i18n="cookie.essential.desc">Necesarias para el funcionamiento básico de la web. No se pueden desactivar.</p>
+          </div>
+          <label class="cookie-toggle disabled" title="Siempre activas">
+            <input type="checkbox" checked disabled>
+            <span class="cookie-slider"></span>
+          </label>
+        </div>
+        <div class="cookie-option">
+          <div>
+            <strong data-i18n="cookie.analytics.title">Cookies analíticas</strong>
+            <p data-i18n="cookie.analytics.desc">Nos ayudan a entender cómo usas el sitio para mejorar la experiencia.</p>
+          </div>
+          <label class="cookie-toggle">
+            <input type="checkbox" id="cookieAnalytics">
+            <span class="cookie-slider"></span>
+          </label>
+        </div>
+        <div class="cookie-option">
+          <div>
+            <strong data-i18n="cookie.personal.title">Cookies de personalización</strong>
+            <p data-i18n="cookie.personal.desc">Permiten recordar tus preferencias y personalizar el contenido.</p>
+          </div>
+          <label class="cookie-toggle">
+            <input type="checkbox" id="cookiePersonalization">
+            <span class="cookie-slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="cookie-modal-footer">
+        <button id="cookieSaveSettings" class="cookie-btn cookie-btn-primary" data-i18n="cookie.save">Guardar preferencias</button>
+      </div>
+    </div>
+  </div>
+
+  <script> // Gestión del banner de política de cookies
+    (function () {
+      const COOKIE_KEY = 'boe_cookie_consent';
+
+      function getConsent() {
+        try { return JSON.parse(localStorage.getItem(COOKIE_KEY)); } catch (_) { return null; }
+      }
+
+      function saveConsent(data) {
+        try { localStorage.setItem(COOKIE_KEY, JSON.stringify(data)); } catch (_) {}
+      }
+
+      function hideBanner() {
+        const banner = document.getElementById('cookieBanner');
+        if (banner) banner.hidden = true;
+      }
+
+      function showBanner() {
+        const banner = document.getElementById('cookieBanner');
+        if (banner) banner.hidden = false;
+      }
+
+      function hideModal() {
+        const modal = document.getElementById('cookieModal');
+        if (modal) modal.hidden = true;
+      }
+
+      function showModal() {
+        const modal = document.getElementById('cookieModal');
+        if (modal) {
+          modal.hidden = false;
+          document.getElementById('cookieModalClose').focus();
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        if (!getConsent()) showBanner();
+
+        document.getElementById('cookieAcceptAll').addEventListener('click', function () {
+          saveConsent({ essential: true, analytics: true, personalization: true });
+          hideBanner();
+        });
+
+        document.getElementById('cookieRejectOptional').addEventListener('click', function () {
+          saveConsent({ essential: true, analytics: false, personalization: false });
+          hideBanner();
+        });
+
+        document.getElementById('cookieSettings').addEventListener('click', function () {
+          hideBanner();
+          showModal();
+        });
+
+        document.getElementById('cookieModalClose').addEventListener('click', function () {
+          hideModal();
+          if (!getConsent()) showBanner();
+        });
+
+        document.getElementById('cookieSaveSettings').addEventListener('click', function () {
+          const analytics = document.getElementById('cookieAnalytics').checked;
+          const personalization = document.getElementById('cookiePersonalization').checked;
+          saveConsent({ essential: true, analytics, personalization });
+          hideModal();
+        });
+
+        // Cerrar modal al hacer click fuera
+        document.getElementById('cookieModal').addEventListener('click', function (e) {
+          if (e.target === this) {
+            hideModal();
+            if (!getConsent()) showBanner();
+          }
+        });
+
+        // Cerrar modal con Escape
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && !document.getElementById('cookieModal').hidden) {
+            hideModal();
+            if (!getConsent()) showBanner();
+          }
+        });
+
+        // Cargar preferencias guardadas en el modal
+        const consent = getConsent();
+        if (consent) {
+          if (document.getElementById('cookieAnalytics')) document.getElementById('cookieAnalytics').checked = !!consent.analytics;
+          if (document.getElementById('cookiePersonalization')) document.getElementById('cookiePersonalization').checked = !!consent.personalization;
+        }
+      });
+    })();
+  </script>
+
 </body>
 
 </html>

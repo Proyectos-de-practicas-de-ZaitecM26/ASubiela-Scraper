@@ -3,7 +3,11 @@ import os
 from groq import Groq
 
 client = Groq(
-    api_key=os.environ.get("GROK_KEY"),
+    api_key=(
+        os.environ.get("GROQ_API_KEY")
+        or os.environ.get("GROQ_KEY")
+        or os.environ.get("GROK_KEY")
+    ),
 )
 
 chat_completion = client.chat.completions.create(

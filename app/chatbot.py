@@ -1,5 +1,9 @@
-import os
-from groq import Groq
+# =========================================================
+# Refactorización: Desacoplo el chatbot del proveedor de IA
+# =========================================================
+
+from app.services.ai_client import ask_ai
+
 
 BASE_SYSTEM_PROMPT_V2 = """
 Eres Asistente BOE, un asistente informativo especializado exclusivamente en el análisis de documentos del Boletín Oficial del Estado (BOE) de España.
@@ -104,27 +108,20 @@ def _build_system_prompt(extra_instructions=None):
     return base_prompt
 
 
+# =========================================================
+# Función principal del chatbot
+# =========================================================
 def chatbot(user_message, extra_instructions=None):
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
-        raise ValueError("Falta configurar API Key en el servidor.")
+    system_prompt = _build_system_prompt(extra_instructions)
 
     try:
-        client = Groq(api_key=api_key)
-        system_prompt = _build_system_prompt(extra_instructions)
-        completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            temperature=0.3,
-            max_tokens=450,
-            messages=[
-                {
-                    "role": "system",
-                    "content": system_prompt,
-                },
-                {"role": "user", "content": user_message},
-            ],
+        response = ask_ai(
+            message=user_message,
+            provider="groq",
+            system_prompt=system_prompt,
         )
 
-        return completion.choices[0].message.content or "No tengo respuesta ahora mismo."
-    except:
+        return response or "No tengo respuesta ahora mismo."
+
+    except Exception:
         raise ValueError("El chatbot no está disponible en este momento")

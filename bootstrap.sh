@@ -5,21 +5,21 @@ set -e
 echo "🚀 Iniciando bootstrap del proyecto BOE Oposiciones..."
 
 # 1. Crear venv si no existe
-if [ ! -d "venv" ]; then
-  echo "📦 Creando entorno virtual 'venv'..."
+if [ ! -d ".venv" ]; then
+  echo "📦 Creando entorno virtual '.venv'..."
   if command -v python3 &>/dev/null; then
-    python3 -m venv venv
+    python3 -m venv .venv
   else
-    python -m venv venv
+    python -m venv .venv
   fi
 else
-  echo "✅ Entorno virtual 'venv' ya existe."
+  echo "✅ Entorno virtual '.venv' ya existe."
 fi
 
 # 2. Activar venv
 echo "🧪 Activando entorno virtual..."
 # shellcheck disable=SC1091
-source venv/bin/activate
+source .venv/bin/activate
 
 # 3. Instalar dependencias
 if [ -f "requirements.txt" ]; then
@@ -39,5 +39,5 @@ mkdir -p static/uploads/profiles
 echo "✅ Bootstrap completado."
 echo
 echo "Para arrancar la aplicación:"
-echo "1) Activar la venv: source venv/bin/activate"
-echo "2) Ejecutar: python run.py"
+echo "1) Activar la venv: source .venv/bin/activate"
+echo "2) Ejecutar: .venv/bin/python run.py"
