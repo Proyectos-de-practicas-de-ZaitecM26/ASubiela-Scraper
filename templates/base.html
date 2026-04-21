@@ -103,7 +103,14 @@ Define la estructura general de la aplicación:
   </main>
 
   <footer class="mi-footer">
-    <p>© 2026 Oposiciones BOE</p>
+    <p class="mb-1">© 2026 Oposiciones BOE</p>
+    <p class="mb-0">
+      <a href="{{ url_for('main.politica_cookies') }}">Politica de Cookies</a>
+      ·
+      <a href="{{ url_for('main.politica_privacidad') }}">Politica de Privacidad</a>
+      ·
+      <a href="{{ url_for('main.aviso_legal') }}">Aviso Legal</a>
+    </p>
   </footer>
 
   <button id="a11yToggle" class="a11y-toggle" aria-label="Abrir opciones de accesibilidad" aria-expanded="false"

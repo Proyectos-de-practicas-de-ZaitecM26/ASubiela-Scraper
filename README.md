@@ -31,6 +31,7 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
     - [Subida de fotos de perfil](#subida-de-fotos-de-perfil)
     - [Envío de emails](#envío-de-emails)
   - [🍪 Banner de política de cookies](#-banner-de-política-de-cookies)
+  - [⚖️ Páginas legales y enlaces en footer](#️-páginas-legales-y-enlaces-en-footer)
   - [🌐 Selector de idioma (ES / EN)](#-selector-de-idioma-es--en)
   - [♿ Panel de accesibilidad visual](#-panel-de-accesibilidad-visual)
   - [🤖 Chatbot asistente BOE](#-chatbot-asistente-boe)
@@ -54,6 +55,7 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
 - **📊 Seguimiento de actividad**: Cada click marca visitas y favoritos para personalizar las tarjetas.
 - **🎨 Tema claro/oscuro** y subida de foto de perfil almacenada en `static/uploads/profiles`.
 - **🍪 Banner de cookies**: Aviso de política de cookies con preferencias granulares, persistido en `localStorage`.
+- **⚖️ Cumplimiento legal básico**: Enlaces permanentes en footer a política de cookies, política de privacidad y aviso legal.
 - **🌐 Selector de idioma**: Botón EN / ES en la cabecera que traduce toda la interfaz estática al instante sin recargar la página.
 - **♿ Panel de accesibilidad visual**: Botón flotante que despliega controles para ajustar tamaño de texto, contraste y otros filtros visuales; persistidos en `localStorage`.
 - **🤖 Chatbot asistente BOE**: Asistente conversacional integrado con Groq (LLaMA 3.3 70B), con voz (TTS/STT), historial persistente y habilidades especializadas en búsqueda y filtrado del BOE.
@@ -144,7 +146,7 @@ app/
   scraping/
     boe_scraper.py     # Lógica de scraping y sincronización del BOE.
   routes/
-    main.py            # Landing, sincronización y estadísticas.
+    main.py            # Landing, scraping, estadísticas y páginas legales.
     auth.py            # Autenticación (login, registro, logout).
     user.py            # Panel del usuario, filtros, favoritos y perfil.
     chat.py            # Endpoint /chatbot/api y ruta /chat.
@@ -223,6 +225,31 @@ La aplicación muestra un banner en la parte inferior de todas las páginas la p
 - Estilos integrados en `static/css/style.css` con soporte completo de **tema oscuro**.
 - Accesible: roles ARIA (`dialog`, `aria-modal`), cierre con tecla `Escape` y gestión de foco.
 - El enlace «Más información» apunta a `/politica-cookies`.
+
+---
+
+## ⚖️ Páginas legales y enlaces en footer
+
+Además del banner de cookies, la aplicación incorpora páginas legales accesibles desde el pie de página global.
+
+**Enlaces visibles en el footer:**
+
+- `Politica de Cookies` → `/politica-cookies`
+- `Politica de Privacidad` → `/politica-privacidad`
+- `Aviso Legal` → `/aviso-legal`
+
+**Implementación técnica:**
+
+- Los enlaces se renderizan desde `templates/base.html` para estar disponibles en todas las vistas.
+- Las rutas están definidas en `app/routes/main.py`.
+- Las plantillas correspondientes son:
+  - `templates/politica_cookies.html`
+  - `templates/politica_privacidad.html`
+  - `templates/aviso_legal.html`
+
+**Nota:**
+
+El contenido actual de estas páginas está pensado como base informativa. Antes de publicar en producción, conviene revisarlo con asesoría legal para adaptarlo a los datos reales del titular y al tratamiento efectivo de datos/cookies.
 
 ---
 
@@ -348,7 +375,7 @@ I_S25_Web_Scraping/
 │   ├── chatbot.py           # Función principal del chatbot (Groq API)
 │   ├── routes/
 │   │   ├── __init__.py
-│   │   ├── main.py          # Rutas principales (index, scraping)
+│   │   ├── main.py          # Rutas principales (index, scraping, estadísticas y legales)
 │   │   ├── auth.py          # Autenticación (login, registro, logout)
 │   │   ├── user.py          # Panel de usuario (perfil, favoritos, alertas)
 │   │   └── chat.py          # Endpoint /chatbot/api y vista /chat
@@ -376,6 +403,9 @@ I_S25_Web_Scraping/
 │   ├── user_newsletter.html
 │   ├── tarjeta.html         # Vista de oposiciones por departamento
 │   ├── chat.html            # Vista de pantalla completa del chatbot
+│   ├── politica_cookies.html
+│   ├── politica_privacidad.html
+│   ├── aviso_legal.html
 │   └── emails/
 │       └── nuevas_oposiciones.html
 ├── tests/
