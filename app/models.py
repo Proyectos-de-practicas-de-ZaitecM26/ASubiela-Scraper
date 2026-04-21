@@ -1,21 +1,11 @@
 from flask_login import UserMixin
-from . import login_manager
 from .db import get_users_db
 
 
 class User(UserMixin):
-    def __init__(
-        self,
-        id,
-        email,
-        name,
-        apellidos,
-        age,
-        telefono=None,
-        foto_perfil=None,
-        nivel_estudios=None,
-        titulacion=None,
-    ):
+    def __init__(self, id, email, name, apellidos, age,
+                 telefono=None, foto_perfil=None,
+                 nivel_estudios=None, titulacion=None):
         self.id = id
         self.email = email
         self.name = name
@@ -32,11 +22,12 @@ class User(UserMixin):
         row = db.execute(
             """
             SELECT id, email, name, apellidos, age, telefono, foto_perfil,
-                nivel_estudios, titulacion
+                   nivel_estudios, titulacion
             FROM users WHERE id = ?
             """,
             (user_id,),
         ).fetchone()
+
         if row:
             return User(
                 row["id"],
@@ -50,8 +41,3 @@ class User(UserMixin):
                 row["titulacion"],
             )
         return None
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.get(user_id)

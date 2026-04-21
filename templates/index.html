@@ -2,7 +2,8 @@
 {% block title %}Oposiciones del día - BOE{% endblock %}
 
 {% block content %}
-<!-- Hero/Portada con imagen responsive -->
+
+<!-- Hero -->
 <div class="hero-image-container">
   <img src="{{ url_for('static', filename='img/hero-oposiciones.avif') }}" alt="Oposiciones BOE" class="hero-image"
     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
@@ -11,18 +12,13 @@
   </div>
 </div>
 
-<!-- Contenedor principal con tarjetas de departamentos -->
-
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
   <h2 class="mb-0">Departamentos</h2>
-  
+
   <span class="text-muted fs-5">
     📅 Oposiciones del {{ fecha_hoy }}
   </span>
 </div>
-
-
-
 
 <div class="row g-4">
   {% for dep in departamentos %}
@@ -40,5 +36,5 @@
   </div>
   {% endfor %}
 </div>
-</div>
+
 {% endblock %}

@@ -1,6 +1,6 @@
 from flask_mail import Message
 from flask import url_for, render_template
-from . import mail
+from app.extensions import mail
 from .db import get_users_db
 from itsdangerous import URLSafeTimedSerializer
 import os

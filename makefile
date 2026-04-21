@@ -1,5 +1,5 @@
 # Nombre del entorno virtual
-VENV_DIR=venv
+VENV_DIR=.venv
 PYTHON=$(VENV_DIR)/bin/python
 PIP=$(VENV_DIR)/bin/pip
 
