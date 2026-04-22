@@ -51,16 +51,123 @@ def index():
     db = get_boe_db()
     hoy = datetime.today().strftime("%Y%m%d")
     fecha_mostrar = datetime.today().strftime("%d/%m/%Y")
-    deps = db.execute(
+    opos = db.execute(
         """
-        SELECT DISTINCT departamento
+        SELECT *
         FROM oposiciones
-        WHERE departamento IS NOT NULL AND fecha = ?
-        ORDER BY departamento
+        WHERE fecha = ?
+        ORDER BY fecha desc
+        LIMIT 4
         """,
         (hoy,),
     ).fetchall()
-    return render_template("index.html", departamentos=deps, fecha_hoy=fecha_mostrar)
+    
+    provincias = db.execute(
+        "SELECT DISTINCT provincia FROM oposiciones "
+        "WHERE provincia IS NOT NULL ORDER BY provincia"
+    ).fetchall()
+    
+    return render_template(
+        "index.html", 
+        oposiciones=opos, 
+        fecha_hoy=fecha_mostrar, 
+        provincias=provincias
+    )
+
+@main_bp.route("/resultados")
+def resultados_de_busqueda():
+    boe_db = get_boe_db()
+    users_db = get_users_db()
+
+    user = current_user
+    busqueda = request.args.get("busqueda", "")
+    provincia = request.args.get("provincia", "")
+    orden = request.args.get("orden", "fecha_desc")
+    page = int(request.args.get("page", 1))
+    por_pagina = 10
+    offset = (page - 1) * por_pagina
+
+    # SOLO oposiciones de hoy
+    sql = "SELECT * FROM oposiciones "
+    sql_count = "SELECT count(*) FROM oposiciones "
+    params = []
+    params_count = []
+    filter_prefix = " WHERE"
+
+    # Filtro de búsqueda (opcional)
+    if busqueda:
+        like = f"%{busqueda}%"
+        sql +=  filter_prefix + " (titulo LIKE ? OR identificador LIKE ? OR control LIKE ? OR departamento LIKE ?)"
+        sql_count += filter_prefix + " (titulo LIKE ? OR identificador LIKE ? OR control LIKE ? OR departamento LIKE ?)"
+        filter_prefix = " AND"
+        params += [like, like, like, like]
+        params_count += [like, like, like, like]
+
+    # Filtro por provincia (opcional)
+    if provincia:
+        sql += filter_prefix + " provincia = ?"
+        params.append(provincia) 
+        sql_count += filter_prefix + " provincia = ?"
+        params_count.append(provincia) 
+        
+    # Orden + paginación
+    if orden == "fecha_asc":
+        order_direction = "ASC"
+    elif orden == "fecha_desc":
+        order_direction = "DESC"
+    else:
+        # Compatibilidad con valores antiguos
+        order_direction = "DESC" if orden == "desc" else "ASC"
+    
+    sql += f" ORDER BY fecha {order_direction} LIMIT ? OFFSET ?"
+    params += [por_pagina, offset]
+
+    rows = boe_db.execute(sql, params).fetchall()
+
+    # Total
+    total = boe_db.execute(sql_count, params_count).fetchone()[0]
+
+    total_pages = (total + por_pagina - 1) // por_pagina
+
+    # Provincias disponibles
+    provincias = boe_db.execute(
+        "SELECT DISTINCT provincia FROM oposiciones "
+        "WHERE provincia IS NOT NULL ORDER BY provincia"
+    ).fetchall()
+
+    # Visitadas / Favoritas
+    visitadas = []
+    favoritas = []
+
+    if user.is_authenticated:
+        visitadas = [
+            row["oposicion_id"]
+            for row in users_db.execute(
+                "SELECT oposicion_id FROM visitas WHERE user_id = ?",
+                (user.id,),
+            ).fetchall()
+        ]
+        favoritas = [
+            row["oposicion_id"]
+            for row in users_db.execute(
+                "SELECT oposicion_id FROM favoritas WHERE user_id = ?",
+                (user.id,),
+            ).fetchall()
+        ]
+
+    return render_template(
+        "resultados.html",
+        rows=rows,
+        page=page,
+        total_pages=total_pages,
+        provincias=provincias,
+        busqueda=busqueda,
+        provincia_filtro=provincia,
+        orden=orden,
+        visitadas=visitadas,
+        favoritas=favoritas,
+        total=total
+    )    
 
 
 @main_bp.route("/departamento/<nombre>")
