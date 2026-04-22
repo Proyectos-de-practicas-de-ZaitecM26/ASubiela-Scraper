@@ -1,27 +1,36 @@
 import os
 from flask import Flask, session, request, redirect, url_for
-from flask_mail import Mail
-from flask_login import LoginManager, current_user
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+from flask_login import current_user
 
 from .config import Config
-from .db import init_boe_db, init_users_db, migrate_users_db
+from .db import init_boe_db, init_users_db, migrate_users_db, teardown_appcontext
 
-from datetime import timedelta
+from datetime import datetime, date, timedelta
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from .extensions import mail, login_manager
 
-mail = Mail()
-login_manager = LoginManager()
 limiter = Limiter(
     key_func=get_remote_address,
     default_limits=[],
 )
+
+from app.routes.main import main_bp
+from app.routes.auth import auth_bp
+from app.routes.user import user_bp
+from app.routes.chat import chat_bp
+
+from app.models import User
+
+
 def create_app():
     app = Flask(
         __name__,
         template_folder=os.path.join(os.path.dirname(__file__), "..", "templates"),
         static_folder=os.path.join(os.path.dirname(__file__), "..", "static"),
     )
+
+    # Config
     app.config.from_object(Config)
     app.config.update(
         SESSION_COOKIE_HTTPONLY=True, 
@@ -29,28 +38,34 @@ def create_app():
         PERMANENT_SESSION_LIFETIME=timedelta(minutes=30)
     )
 
-    # Inicializar extensiones
+    # Extensiones
     mail.init_app(app)
     login_manager.init_app(app)
     limiter.init_app(app)
     login_manager.login_view = "auth.login"
 
-    # Crear directorio para fotos de perfil
-    upload_folder = os.path.join(app.static_folder, "uploads", "profiles")
-    os.makedirs(upload_folder, exist_ok=True)
-    app.config["UPLOAD_FOLDER"] = upload_folder
+    # 🔥 FIX IMPORTANTE: user_loader de Flask-Login
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.get(user_id)
 
-    # Inicializar BBDD
+    # Blueprints
+    app.register_blueprint(main_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(user_bp)
+    app.register_blueprint(chat_bp)
+
+    # DB init
     with app.app_context():
         init_boe_db()
         init_users_db()
         migrate_users_db()
 
-    from .db import teardown_appcontext
-
     app.teardown_appcontext(teardown_appcontext)
 
-    # ==== Tema claro / oscuro ====
+    # =========================
+    # THEME
+    # =========================
     @app.before_request
     def ensure_theme():
         if "theme" not in session:
@@ -62,7 +77,6 @@ def create_app():
         session["theme"] = "dark" if current == "light" else "light"
         return redirect(request.referrer or url_for("main.index"))
 
-    # ==== Context processors ====
     @app.context_processor
     def inject_theme():
         return {"theme": session.get("theme", "light")}
@@ -72,7 +86,6 @@ def create_app():
         return {"user": current_user}
 
     # ==== Filtros Jinja ====
-    from datetime import datetime, date
 
     @app.template_filter("format_date")
     def format_date_filter(date_str):
@@ -156,13 +169,5 @@ def create_app():
 
         return resultado
 
-    # Registrar blueprints
-    from .routes.main import main_bp
-    from .routes.auth import auth_bp
-    from .routes.user import user_bp
-
-    app.register_blueprint(main_bp)
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(user_bp)
 
     return app

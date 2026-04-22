@@ -60,12 +60,12 @@
   <div class="col-md-4 col-lg-3">
       <div class="card h-100 shadow-sm tarjeta-departamento">
         <div class="card-body text-left d-flex flex-column gap-2">
-          <!-- <div class="caption">{{ opo['fecha']|format_date }}</div> -->
+          <div class="caption">{{ opo['fecha']|format_date }}</div>
           <h5 class="card-title">{{ opo['identificador'] }}</h5>
           <div class="caption font-bold">{{ opo['departamento'] }}</div>
           <div class="line-clamp">{{ opo['titulo'] }}</div>
           <div>
-            <a href="{{ opo['url_html'] }}" 
+            <a href="{{ opo['url_html'] }}"
                target="_blank">Leer más</a>
           </div>
         </div>
