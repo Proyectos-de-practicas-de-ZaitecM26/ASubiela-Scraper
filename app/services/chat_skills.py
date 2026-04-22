@@ -6,6 +6,7 @@ from ..scraping.boe_scraper import extraer_provincia
 
 
 BLOCK_MESSAGE = "Pregunta algo relacionado con el BOE, por favor"
+BOE_REFERENCE_RE = re.compile(r"\bboe[-\s]?a[-\s]?(\d{4})[-\s]?(\d{1,6})\b", re.IGNORECASE)
 
 TOPIC_HINTS = (
     "boe",
@@ -198,6 +199,7 @@ STRICT_DOMAIN_INTENTS = {
     "boe_topic",
     "oep_topic",
     "selection_list_topic",
+    "boe_reference_intent",
 }
 
 SEARCH_INTENTS = {"search_intent"}
@@ -212,6 +214,7 @@ class ChatSkillDecision:
     block_message: str | None = None
     skill_name: str | None = None
     extra_instructions: str | None = None
+    direct_answer: str | None = None
 
 
 def _normalize_text(text):
@@ -226,6 +229,15 @@ def _contains_any(text, phrases):
     return any(phrase in text for phrase in phrases)
 
 
+def _extract_boe_reference(text):
+    match = BOE_REFERENCE_RE.search(text or "")
+    if not match:
+        return None
+
+    year, number = match.groups()
+    return f"BOE-A-{year}-{number}"
+
+
 def _extract_intent_context(normalized_text, raw_text):
     context = set()
 
@@ -235,6 +247,9 @@ def _extract_intent_context(normalized_text, raw_text):
 
     if extraer_provincia(raw_text):
         context.add("province_name")
+
+    if _extract_boe_reference(raw_text):
+        context.add("boe_reference_intent")
 
     return context
 
@@ -321,10 +336,26 @@ def province_department_focus_skill(intent_context):
 
 def get_chat_skill_decision(user_message):
     normalized_message = _normalize_text(user_message)
+    boe_reference = _extract_boe_reference(user_message)
     intent_context = _extract_intent_context(normalized_message, user_message)
 
     if not _has_boe_domain_clue(intent_context):
         return ChatSkillDecision(blocked=True, block_message=BLOCK_MESSAGE, skill_name="scope_blocker")
+
+    if boe_reference:
+        return ChatSkillDecision(
+            blocked=False,
+            skill_name="boe_reference_summary",
+            extra_instructions=(
+                f"El usuario pide un resumen de la referencia {boe_reference}. "
+                "Resume de forma clara y breve solo sobre esa disposición. "
+                "No inventes contenido: si no tienes texto suficiente, pide el enlace o contenido del BOE para resumirlo con precisión."
+            ),
+            direct_answer=(
+                f"Puedo ayudarte con el resumen de {boe_reference}. "
+                "Para hacerlo con precisión, comparte el enlace del BOE o el texto de la disposición y te preparo un resumen claro en puntos clave."
+            ),
+        )
 
     for skill in (
         boe_search_and_filter_skill,
