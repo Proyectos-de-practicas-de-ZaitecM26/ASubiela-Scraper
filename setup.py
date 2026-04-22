@@ -21,7 +21,6 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            # Para poder ejecutar con: `boe-oposiciones`
             "boe-oposiciones = run:app.run",
         ]
     },

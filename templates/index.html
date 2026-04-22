@@ -2,7 +2,8 @@
 {% block title %}Oposiciones del día - BOE{% endblock %}
 
 {% block content %}
-<!-- Hero/Portada con imagen responsive -->
+
+<!-- Hero -->
 <div class="hero-image-container">
   <img src="{{ url_for('static', filename='img/hero-oposiciones.avif') }}" alt="Oposiciones BOE" class="hero-image"
     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
@@ -73,5 +74,5 @@
   </div>
   {% endfor %}
 </div>
-</div>
+
 {% endblock %}

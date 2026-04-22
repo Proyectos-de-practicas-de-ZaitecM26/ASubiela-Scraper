@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 
 from app import create_app
+from app.chatbot import _build_system_prompt
 from app.services.chat_skills import get_chat_skill_decision
 
 
@@ -38,6 +39,16 @@ class ChatSkillsDecisionTests(unittest.TestCase):
 
         self.assertFalse(decision.blocked)
         self.assertEqual(decision.skill_name, "latest_updates")
+
+    def test_detects_boe_reference_summary(self):
+        decision = get_chat_skill_decision("resumen del boe-a-2026-8444")
+
+        self.assertFalse(decision.blocked)
+        self.assertEqual(decision.skill_name, "boe_reference_summary")
+        self.assertIsNotNone(decision.extra_instructions)
+        self.assertIn("BOE-A-2026-8444", decision.extra_instructions)
+        self.assertIsNotNone(decision.direct_answer)
+        self.assertIn("BOE-A-2026-8444", decision.direct_answer)
 
     def test_allows_vigente_style_wording(self):
         decision = get_chat_skill_decision("Quiero ver oposiciones vigentes y convocatorias vigentes")
@@ -86,6 +97,24 @@ class ChatSkillsDecisionTests(unittest.TestCase):
 
         self.assertTrue(decision.blocked)
         self.assertEqual(decision.skill_name, "scope_blocker")
+
+    def test_allows_legal_followup_summary_without_literal_boe(self):
+        decision = get_chat_skill_decision("resumen del artículo 5 de esa norma")
+
+        self.assertFalse(decision.blocked)
+        self.assertIn(decision.skill_name, {"convocatoria_summary", "general_boe"})
+
+    def test_allows_legal_followup_deadline_question(self):
+        decision = get_chat_skill_decision("si se publicó el 2026-04-20, cuál es la fecha límite exacta")
+
+        self.assertFalse(decision.blocked)
+        self.assertIn(decision.skill_name, {"latest_updates", "convocatoria_summary", "general_boe"})
+
+    def test_allows_legal_cross_reference_wording(self):
+        decision = get_chat_skill_decision("explica el artículo citado en la disposición adicional si no viene en el texto")
+
+        self.assertFalse(decision.blocked)
+        self.assertIn(decision.skill_name, {"convocatoria_summary", "general_boe"})
 
 
 class ChatbotRouteTests(unittest.TestCase):
@@ -176,6 +205,29 @@ class ChatbotRouteTests(unittest.TestCase):
             payload["answer"],
             "Pregunta algo relacionado con el BOE, por favor",
         )
+
+    def test_route_uses_reference_summary_path(self):
+        client = self.app.test_client()
+
+        with patch("app.routes.main.chatbot", return_value="Resumen referencia") as mocked_chatbot:
+            response = client.post(
+                "/api/chatbot",
+                json={"message": "resumen del boe-a-2026-8444"},
+            )
+
+        payload = response.get_json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(payload["ok"])
+        self.assertIn("BOE-A-2026-8444", payload["answer"])
+        mocked_chatbot.assert_not_called()
+
+    def test_system_prompt_uses_full_prompt_always(self):
+        prompt = _build_system_prompt()
+
+        self.assertIn("ROL Y MISIÓN", prompt)
+        self.assertIn("RESTRICCIONES ESTRICTAS", prompt)
+        self.assertIn("FALLBACK ESTÁNDAR", prompt)
 
 
 if __name__ == "__main__":
