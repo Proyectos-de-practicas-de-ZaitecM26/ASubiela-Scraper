@@ -5,7 +5,7 @@ from flask_login import current_user
 from .config import Config
 from .db import init_boe_db, init_users_db, migrate_users_db, teardown_appcontext
 
-from datetime import timedelta
+from datetime import datetime, date, timedelta
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from .extensions import mail, login_manager
@@ -84,5 +84,90 @@ def create_app():
     @app.context_processor
     def inject_user():
         return {"user": current_user}
+
+    # ==== Filtros Jinja ====
+
+    @app.template_filter("format_date")
+    def format_date_filter(date_str):
+        if not date_str or len(date_str) != 8 or not date_str.isdigit():
+            return date_str
+        try:
+            year = date_str[0:4]
+            month = date_str[4:6]
+            day = date_str[6:8]
+            return f"{day}/{month}/{year}"
+        except Exception:
+            return date_str
+
+    @app.template_filter("es_reciente")
+    def es_reciente(fecha_str, dias=0):
+        try:
+            f = datetime.strptime(fecha_str, "%Y%m%d").date()
+            return (date.today() - f).days <= dias
+        except Exception:
+            return False
+
+    @app.template_filter("resaltar_titulo")
+    def resaltar_titulo(titulo):
+        """Resalta palabras clave importantes en el título de las oposiciones"""
+        import re
+
+        if not titulo:
+            return titulo
+
+        # Palabras clave a resaltar
+        palabras_clave = [
+            r"\bconvocatoria\b",
+            r"\boposiciones?\b",
+            r"\bplazas?\b",
+            r"\bacceso\b",
+            r"\bproceso selectivo\b",
+            r"\bfuncionarios?\b",
+            r"\bcuerpo\b",
+            r"\bescala\b",
+            r"\bgrupo [A-C][12]?\b",
+            r"\bturnos?\b",
+            r"\blibre\b",
+            r"\bpromoci[oó]n interna\b",
+            r"\bdiscapacidad\b",
+            r"\breserva\b",
+            r"\bnombramientos?\b",
+            r"\bceses?\b",
+            r"\bampliac[ió]n\b",
+            r"\bmodificac[ió]n\b",
+            r"\banulaci[oó]n\b",
+            r"\bcorrecc[ió]n\b",
+            r"\bpresentac[ió]n\b",
+            r"\badmisi[oó]n\b",
+            r"\bexclusi[oó]n\b",
+            r"\blista[s]?\b",
+            r"\bsolicitantes?\b",
+            r"\badmitidos?\b",
+            r"\bexcluidos?\b",
+            r"\btribunal\b",
+            r"\bcalificac[ió]n\b",
+            r"\bpruebas?\b",
+            r"\bejercicio[s]?\b",
+            r"\bexamen\b",
+            r"\bresultados?\b",
+            r"\bpuntuac[ió]n\b",
+            r"\badjudicac[ió]n\b",
+            r"\bdestinos?\b",
+            r"\btraslados?\b",
+            r"\bayuntamiento?\b"
+        ]
+
+        # Reemplazar cada palabra clave con versión en negrita
+        resultado = titulo
+        for patron in palabras_clave:
+            resultado = re.sub(
+                patron,
+                lambda m: f'<strong>{m.group()}</strong>',
+                resultado,
+                flags=re.IGNORECASE,
+            )
+
+        return resultado
+
 
     return app
