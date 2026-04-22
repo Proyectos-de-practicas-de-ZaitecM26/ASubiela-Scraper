@@ -1819,5 +1819,12 @@ html[data-theme="dark"] .dropdown-menu .form-check-input { accent-color:#60a5fa 
 .text-truncate {
     text-overflow: ellipsis;
     overflow: hidden;
-    line-clamp: 3;
+    
+}
+.line-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;  
+  overflow: hidden;
 }
