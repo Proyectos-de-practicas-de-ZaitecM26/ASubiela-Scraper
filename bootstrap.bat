@@ -4,16 +4,16 @@ SETLOCAL
 echo 🚀 Iniciando bootstrap del proyecto BOE Oposiciones...
 
 REM 1. Crear venv si no existe
-IF NOT EXIST "venv" (
-    echo 📦 Creando entorno virtual 'venv'...
-    python -m venv venv
+IF NOT EXIST ".venv" (
+    echo 📦 Creando entorno virtual '.venv'...
+    python -m venv .venv
 ) ELSE (
-    echo ✅ Entorno virtual 'venv' ya existe.
+    echo ✅ Entorno virtual '.venv' ya existe.
 )
 
 REM 2. Activar venv
 echo 🧪 Activando entorno virtual...
-CALL venv\Scripts\activate.bat
+CALL .venv\Scripts\activate.bat
 
 REM 3. Instalar dependencias
 IF EXIST "requirements.txt" (
@@ -35,7 +35,7 @@ IF NOT EXIST "static\uploads\profiles" (
 echo ✅ Bootstrap completado.
 echo.
 echo Para arrancar la aplicación:
-echo 1^)^  Activar la venv:    call venv\Scripts\activate.bat
-echo 2^)^  Ejecutar:           python run.py
+echo 1^)^  Activar la venv:    call .venv\Scripts\activate.bat
+echo 2^)^  Ejecutar:           .venv\Scripts\python.exe run.py
 
 ENDLOCAL

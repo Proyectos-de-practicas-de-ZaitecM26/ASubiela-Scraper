@@ -414,7 +414,6 @@ html[data-theme="dark"] .navbar .dropdown-menu .dropdown-item:hover {
 /* =========================================================
    TARJETAS
 ========================================================= */
-
 .card {
     border: none;
     border-radius: 16px;
@@ -1213,17 +1212,24 @@ html[data-theme="dark"] .text-muted {
     left: 20px;
     bottom: calc(90px + env(safe-area-inset-bottom));
     width: min(320px, calc(100vw - 40px));
+    max-height: min(80vh, calc(100dvh - 110px));
+    display: none;
+    flex-direction: column;
     background: #fff;
     border: 1px solid #d5e4d8;
     border-radius: 14px;
     box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
     overflow: hidden;
-    display: none;
     z-index: 1200;
 }
 
 .a11y-panel.open {
-    display: block;
+    display: flex;
+}
+
+.a11y-controls {
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .a11y-panel-header {
@@ -1255,6 +1261,9 @@ html[data-theme="dark"] .text-muted {
     display: flex;
     flex-direction: column;
     gap: 0.55rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    flex: 1;
 }
 
 .a11y-help {
@@ -1662,6 +1671,16 @@ html[data-theme="dark"] .chatbot-voice.listening {
     color: #fff;
 }
 
+@media (max-width: 768px) {
+    .a11y-panel {
+        left: 14px;
+        right: 14px;
+        width: auto;
+        bottom: calc(86px + env(safe-area-inset-bottom));
+        max-height: min(72vh, calc(100dvh - 104px));
+    }
+}
+
 @media (max-width: 576px) {
     .a11y-toggle {
         left: 14px;
@@ -1673,6 +1692,7 @@ html[data-theme="dark"] .chatbot-voice.listening {
         right: 10px;
         width: auto;
         bottom: calc(78px + env(safe-area-inset-bottom));
+        max-height: calc(100dvh - 96px);
     }
 
     .chatbot-toggle {
@@ -1804,7 +1824,398 @@ html[data-theme="dark"] .form-select {
 html[data-theme="dark"] .dropdown-menu,
 html[data-theme="dark"] .dropdown-menu[style] { background:#2c2f47 !important; color:#e5e7eb !important; border-color:#3b3f54 !important; }
 html[data-theme="dark"] .dropdown-menu .form-check-input { accent-color:#60a5fa !important; background:transparent !important; border-color:#4b5166 !important; }
+/* ========================= CHATBOT WIDGET ========================= */
+#chatbot-widget {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 320px;
+  height: 420px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 9999;
+  font-family: Arial, sans-serif;
+}
 
+/* Header */
+#chatbot-header {
+  background: linear-gradient(135deg, #004aad, #002b5b);
+  color: white;
+  padding: 10px;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Body */
+#chatbot-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* NUEVO: evita que se rompa el layout */
+}
+
+/* Mensajes */
+#chatbot-messages {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  font-size: 14px;
+
+  min-height: 0; /* NUEVO: permite scroll real en flex */
+}
+
+/* NUEVO: scrollbar visible y bonito */
+#chatbot-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+#chatbot-messages::-webkit-scrollbar-thumb {
+  background: #004aad;
+  border-radius: 10px;
+}
+
+#chatbot-messages::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* mensajes */
+.msg {
+  padding: 8px 10px;
+  margin: 5px 0;
+  border-radius: 10px;
+  max-width: 85%;
+}
+
+.msg.user {
+  background: #004aad;
+  color: white;
+  align-self: flex-end;
+}
+
+.msg.bot {
+  background: #f1f1f1;
+  color: #333;
+  align-self: flex-start;
+}
+
+/* input */
+.chatbot-input-area {
+  display: flex;
+  border-top: 1px solid #ddd;
+
+  flex-shrink: 0; /* NUEVO: evita que desaparezca */
+}
+
+.chatbot-input-area input {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  outline: none;
+}
+
+.chatbot-input-area button {
+  background: #004aad;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  cursor: pointer;
+}
+
+.chatbot-input-area button:hover {
+  background: #00327a;
+}
+
+/* ===================== BOTÓN DE IDIOMA ===================== */
+.btn-lang-toggle {
+  background: rgba(255, 255, 255, 0.18);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  padding: 5px 10px;
+  transition: background 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s;
+  margin-right: 6px;
+  vertical-align: middle;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.btn-lang-toggle:hover {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ===================== BANNER DE COOKIES ===================== */
+.cookie-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9000;
+  background: var(--card-bg, #fff);
+  border-top: 2px solid #004aad;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  padding: 1rem 1.5rem;
+  animation: slideUpCookie 0.35s ease;
+}
+
+@keyframes slideUpCookie {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.cookie-banner-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.cookie-banner-text {
+  flex: 1;
+  min-width: 220px;
+}
+
+.cookie-banner-text p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-color, #333);
+  line-height: 1.5;
+}
+
+.cookie-link {
+  color: #004aad;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.cookie-banner-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.cookie-btn {
+  padding: 0.45rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+
+.cookie-btn-primary {
+  background: #004aad;
+  color: #fff;
+  border-color: #004aad;
+}
+
+.cookie-btn-primary:hover {
+  background: #00327a;
+  border-color: #00327a;
+}
+
+.cookie-btn-secondary {
+  background: #6c757d;
+  color: #fff;
+  border-color: #6c757d;
+}
+
+.cookie-btn-secondary:hover {
+  background: #545b62;
+  border-color: #545b62;
+}
+
+.cookie-btn-outline {
+  background: transparent;
+  color: #004aad;
+  border-color: #004aad;
+}
+
+.cookie-btn-outline:hover {
+  background: #004aad;
+  color: #fff;
+}
+
+/* Modal de configuración de cookies */
+.cookie-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9100;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.cookie-modal-box {
+  background: var(--card-bg, #fff);
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.25);
+  max-width: 520px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.cookie-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem 0.75rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.cookie-modal-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-color, #222);
+}
+
+.cookie-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6c757d;
+  line-height: 1;
+  padding: 0;
+}
+
+.cookie-modal-close:hover {
+  color: #222;
+}
+
+.cookie-modal-body {
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cookie-option {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cookie-option p {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  color: #6c757d;
+}
+
+.cookie-option strong {
+  font-size: 0.95rem;
+  color: var(--text-color, #222);
+}
+
+/* Toggle switch */
+.cookie-toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+.cookie-toggle.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.cookie-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.cookie-slider {
+  position: absolute;
+  inset: 0;
+  background: #ccc;
+  border-radius: 24px;
+  transition: background 0.2s;
+}
+
+.cookie-slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.cookie-toggle input:checked + .cookie-slider {
+  background: #004aad;
+}
+
+.cookie-toggle input:checked + .cookie-slider::before {
+  transform: translateX(20px);
+}
+
+.cookie-modal-footer {
+  padding: 0.75rem 1.5rem 1.25rem;
+  border-top: 1px solid #dee2e6;
+  text-align: right;
+}
+
+/* Tema oscuro */
+[data-theme="dark"] .cookie-banner {
+  background: #1e1e2e;
+  border-top-color: #4d8aff;
+}
+
+[data-theme="dark"] .cookie-banner-text p {
+  color: #ddd;
+}
+
+[data-theme="dark"] .cookie-modal-box {
+  background: #1e1e2e;
+  color: #ddd;
+}
+
+[data-theme="dark"] .cookie-modal-header h2,
+[data-theme="dark"] .cookie-option strong {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .cookie-modal-header,
+[data-theme="dark"] .cookie-modal-footer {
+  border-color: #444;
+}
+
+[data-theme="dark"] .cookie-modal-close {
+  color: #aaa;
+}
+
+[data-theme="dark"] .cookie-modal-close:hover {
+  color: #fff;
+}
 
 .text-left {
     text-align: start;
@@ -1825,12 +2236,12 @@ html[data-theme="dark"] .dropdown-menu .form-check-input { accent-color:#60a5fa 
 .text-truncate {
     text-overflow: ellipsis;
     overflow: hidden;
-    
+
 }
 .line-clamp {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  -webkit-box-orient: vertical;  
-  overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }

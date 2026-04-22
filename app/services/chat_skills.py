@@ -182,6 +182,27 @@ INTENT_SYNONYMS = {
         "lista excluidos",
         "lista de excluidos",
     ),
+    # Signals that usually appear in BOE/legal follow-up questions.
+    "legal_context": (
+        "articulo",
+        "artículos",
+        "articulo ",
+        "articulo.",
+        "norma",
+        "disposicion",
+        "disposición",
+        "real decreto",
+        "resolucion",
+        "resolución",
+        "ley",
+        "plazo",
+        "fecha limite",
+        "fecha límite",
+        "solicitud",
+        "convocatoria",
+        "bases",
+        "requisitos",
+    ),
 }
 
 TOPIC_INTENTS = {
@@ -264,6 +285,15 @@ def _has_boe_domain_clue(intent_context):
 
     # Allow province-based queries only when they also look like search/filter requests.
     if "province_name" in intent_context and _has_any_intent(intent_context, {"search_intent", "location_intent"}):
+        return True
+
+    # Allow follow-up legal questions when they include legal context + intent markers.
+    # This keeps off-topic prompts (e.g., recipes) blocked while accepting BOE-like wording
+    # that doesn't repeat the literal token "BOE".
+    if "legal_context" in intent_context and _has_any_intent(
+        intent_context,
+        {"summary_intent", "latest_intent", "search_intent", "location_intent"},
+    ):
         return True
 
     return False

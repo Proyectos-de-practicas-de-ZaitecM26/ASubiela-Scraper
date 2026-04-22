@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Chatbot</title>
+
+    <style>
+        /* ================= CHATBOT ================= */
+
+        #chatbot-widget {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 320px;
+            height: 420px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-family: Arial;
+            z-index: 9999;
+        }
+
+        #chatbot-header {
+            background: #004aad;
+            color: white;
+            padding: 10px;
+            font-weight: bold;
+        }
+
+        #chatbot-messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto; /* 👈 SCROLL */
+            font-size: 14px;
+        }
+
+        .msg {
+            margin: 6px 0;
+            padding: 6px 8px;
+            border-radius: 8px;
+            max-width: 90%;
+        }
+
+        .msg.user {
+            background: #e3efff;
+            color: #004aad;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .msg.bot {
+            background: #f1f1f1;
+            color: #333;
+            margin-right: auto;
+        }
+
+        .chatbot-input-area {
+            display: flex;
+            border-top: 1px solid #ddd;
+        }
+
+        #chatbot-input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            outline: none;
+        }
+
+        button {
+            background: #004aad;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #003a8c;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🤖 Chatbot activo</h1>
+
+<!-- ================= CHATBOT ================= -->
+<div id="chatbot-widget">
+
+    <div id="chatbot-header">
+        💬 Chat BOE
+    </div>
+
+    <div id="chatbot-messages">
+        <div class="msg bot">Hola 👋 soy tu asistente de oposiciones</div>
+    </div>
+
+    <div class="chatbot-input-area">
+        <input type="text" id="chatbot-input" placeholder="Escribe algo...">
+        <button onclick="sendMessage()">➤</button>
+    </div>
+
+</div>
+
+<!-- ================= SCRIPT ================= -->
+<script>
+async function sendMessage() {
+    const input = document.getElementById("chatbot-input");
+    const message = input.value.trim();
+    if (!message) return;
+
+    const chat = document.getElementById("chatbot-messages");
+
+    // mensaje usuario
+    chat.innerHTML += `<div class="msg user">${message}</div>`;
+    input.value = "";
+
+    chat.scrollTop = chat.scrollHeight;
+
+    try {
+        const res = await fetch("/chatbot/api", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message })
+        });
+
+        const data = await res.json();
+
+        // respuesta bot
+        chat.innerHTML += `<div class="msg bot">${data.reply}</div>`;
+        chat.scrollTop = chat.scrollHeight;
+
+    } catch (err) {
+        chat.innerHTML += `<div class="msg bot">Error de conexión ❌</div>`;
+    }
+}
+</script>
+
+</body>
+</html>
