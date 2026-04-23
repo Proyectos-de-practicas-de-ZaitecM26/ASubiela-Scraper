@@ -5,7 +5,7 @@
       <div class="card shadow">
         <div class="card-header bg-primary text-white py-3">
           <h2 class="mb-0 text-center">
-            <i class="bi bi-person-plus"></i> Crear Nueva Cuenta
+            <i class="bi bi-person-plus"></i> <span data-i18n="register.title">Crear Nueva Cuenta</span>
           </h2>
         </div>
         <div class="card-body p-4">
@@ -31,7 +31,7 @@
                   for="foto_perfil_register"
                   class="btn btn-sm btn-outline-primary"
                 >
-                  <i class="bi bi-camera"></i> Seleccionar foto de perfil
+                  <i class="bi bi-camera"></i> <span data-i18n="register.photo.select">Seleccionar foto de perfil</span>
                 </label>
                 <input
                   type="file"
@@ -40,7 +40,7 @@
                   name="foto_perfil"
                   accept="image/*"
                 />
-                <small class="d-block text-muted mt-2"
+                <small class="d-block text-muted mt-2" data-i18n="register.photo.help"
                   >Opcional - Formatos: JPG, PNG, GIF, WEBP</small
                 >
               </div>
@@ -50,13 +50,13 @@
 
             <!-- Información Básica -->
             <h5 class="text-primary mb-3">
-              <i class="bi bi-person-circle"></i> Información Básica
+              <i class="bi bi-person-circle"></i> <span data-i18n="register.section.basic">Información Básica</span>
             </h5>
 
             <div class="row g-3 mb-3">
               <div class="col-md-6">
                 <label class="form-label fw-bold"
-                  >Nombre <span class="text-danger">*</span></label
+                  ><span data-i18n="register.name">Nombre</span> <span class="text-danger">*</span></label
                 >
                 <input
                   class="form-control"
@@ -67,7 +67,7 @@
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-bold"
-                  >Apellidos <span class="text-danger">*</span></label
+                  ><span data-i18n="register.lastname">Apellidos</span> <span class="text-danger">*</span></label
                 >
                 <input
                   class="form-control"
@@ -81,10 +81,10 @@
             <div class="row g-3 mb-3">
               <div class="col-md-6">
                 <label for="edad" class="form-label fw-bold"
-                  >Edad <span class="text-danger">*</span></label
+                  ><span data-i18n="register.age">Edad</span> <span class="text-danger">*</span></label
                 >
                 <select id="edad" name="edad" class="form-select" required>
-                  <option value="" disabled selected>Selecciona tu edad</option>
+                  <option value="" disabled selected data-i18n="register.age.placeholder">Selecciona tu edad</option>
                 </select>
               </div>
             </div>
@@ -93,16 +93,16 @@
 
             <!-- Formación Académica -->
             <h5 class="text-primary mb-3">
-              <i class="bi bi-mortarboard"></i> Formación Académica
+              <i class="bi bi-mortarboard"></i> <span data-i18n="register.section.education">Formación Académica</span>
             </h5>
 
             <div class="row g-3 mb-3">
               <div class="col-md-6">
                 <label class="form-label fw-bold"
-                  >Nivel de Estudios <span class="text-danger">*</span></label
+                  ><span data-i18n="register.education.level">Nivel de Estudios</span> <span class="text-danger">*</span></label
                 >
                 <select class="form-select" name="nivel_estudios" required>
-                  <option value="">Selecciona...</option>
+                  <option value="" data-i18n="register.select">Selecciona...</option>
                   <option value="ESO">ESO</option>
                   <option value="Bachillerato">Bachillerato</option>
                   <option value="FP Grado Medio">FP Grado Medio</option>
@@ -115,12 +115,12 @@
                 </select>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-bold">Titulación</label>
+                <label class="form-label fw-bold" data-i18n="register.education.degree">Titulación</label>
                 <input
                   class="form-control"
                   type="text"
                   name="titulacion"
-                  placeholder="Ej: Grado en Derecho"
+                  placeholder="Ej: Grado en Derecho" data-i18n-placeholder="register.education.degree.placeholder"
                 />
               </div>
             </div>
@@ -129,17 +129,17 @@
 
             <!-- Información Adicional Opcional -->
             <h5 class="text-primary mb-3">
-              <i class="bi bi-info-circle"></i> Información Adicional
-              <span class="text-muted small">(Opcional)</span>
+              <i class="bi bi-info-circle"></i> <span data-i18n="register.section.extra">Información Adicional</span>
+              <span class="text-muted small" data-i18n="register.optional">(Opcional)</span>
             </h5>
 
             <div class="mb-3">
-              <label class="form-label fw-bold">Teléfono</label>
+              <label class="form-label fw-bold" data-i18n="register.phone">Teléfono</label>
               <input
                 class="form-control"
                 type="tel"
                 name="telefono"
-                placeholder="+34 600 000 000"
+                placeholder="+34 600 000 000" data-i18n-placeholder="register.phone.placeholder"
               />
             </div>
 
@@ -147,25 +147,25 @@
 
             <!-- Cuenta de Acceso -->
             <h5 class="text-primary mb-3">
-              <i class="bi bi-shield-lock"></i> Datos de Acceso
+              <i class="bi bi-shield-lock"></i> <span data-i18n="register.section.access">Datos de Acceso</span>
             </h5>
 
             <div class="mb-3">
               <label class="form-label fw-bold"
-                >Email <span class="text-danger">*</span></label
+                ><span data-i18n="register.email">Email</span> <span class="text-danger">*</span></label
               >
               <input
                 class="form-control"
                 type="email"
                 name="email"
-                placeholder="tu@email.com"
+                placeholder="tu@email.com" data-i18n-placeholder="register.email.placeholder"
                 required
               />
             </div>
 
             <div class="mb-3">
               <label class="form-label fw-bold"
-                >Contraseña <span class="text-danger">*</span></label
+                ><span data-i18n="register.password">Contraseña</span> <span class="text-danger">*</span></label
               >
               <div class="position-relative">
                 <input
@@ -185,16 +185,17 @@
                   <i class="bi bi-eye text-muted" id="eye-icon-register"></i>
                 </button>
               </div>
-              <small class="form-text text-muted">Mínimo 6 caracteres</small>
+              <small class="form-text text-muted" data-i18n="register.password.help">Mínimo 6 caracteres</small>
             </div>
 
             <div class="d-grid gap-2 mt-4">
               <button type="submit" class="btn btn-primary btn-lg">
-                <i class="bi bi-check-circle"></i> Crear Cuenta
+                <i class="bi bi-check-circle"></i> <span data-i18n="register.submit">Crear Cuenta</span>
               </button>
               <a
                 href="{{ url_for('auth.login') }}"
                 class="btn btn-outline-secondary"
+                data-i18n="register.hasAccount"
               >
                 ¿Ya tienes cuenta? Inicia sesión
               </a>

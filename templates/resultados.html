@@ -4,26 +4,26 @@
 {% block content %}
 
 <div class="container py-4 contenido-principal">
-  <a href="{{ url_for('main.index') }}" class="btn btn-primary mb-3">&larr; Volver</a>
-  <h2 class="mb-4 text-center hero-title">Resultados de la búsqueda</h2>
+  <a href="{{ url_for('main.index') }}" class="btn btn-primary mb-3" data-i18n="common.back">&larr; Volver</a>
+  <h2 class="mb-4 text-center hero-title" data-i18n="results.title">Resultados de la búsqueda</h2>
 
 
   <div class="card mb-4 shadow-sm">
     <div class="card-body">
-      <h5 class="card-title mb-3">Filtros de búsqueda</h5>
+      <h5 class="card-title mb-3" data-i18n="common.searchFilters">Filtros de búsqueda</h5>
 
       <form method="GET" action="/resultados">
         <div class="row g-3 mb-3">
           <div class="col-md-8">
-            <label for="busqueda" class="form-label">Buscar por palabras clave:</label>
+            <label for="busqueda" class="form-label" data-i18n="common.searchByKeywords">Buscar por palabras clave:</label>
             <input type="text" class="form-control" id="busqueda" name="busqueda" value="{{ busqueda or '' }}"
-              placeholder="Buscar en identificador, título, control...">
-            <small class="text-muted">Busca en: Identificador, Título y Control</small>
+              placeholder="Buscar en identificador, título, control..." data-i18n-placeholder="common.searchPlaceholder">
+            <small class="text-muted" data-i18n="common.searchHelp">Busca en: Identificador, Título y Control</small>
           </div>
           <div class="col-md-4">
-            <label for="provincia" class="form-label">Filtrar por provincia:</label>
+            <label for="provincia" class="form-label" data-i18n="common.filterByProvince">Filtrar por provincia:</label>
             <select class="form-select" id="provincia" name="provincia">
-              <option value="">Todas las provincias</option>
+              <option value="" data-i18n="common.allProvinces">Todas las provincias</option>
               {% for prov in provincias %}
               <option value="{{ prov['provincia'] }}" {% if provincia_filtro==prov['provincia'] %}selected{% endif %}>
                 {{ prov['provincia'] }}
@@ -35,15 +35,15 @@
 
         <div class="row g-3 mt-2">
           <div class="col-12 d-flex justify-content-center gap-2">
-            <button type="submit" class="btn btn-primary flex-fill" style="max-width: 150px;">Filtrar</button>
+            <button type="submit" class="btn btn-primary flex-fill" style="max-width: 150px;" data-i18n="common.filter">Filtrar</button>
             <a href="/resultados"
-              class="btn btn-outline-secondary flex-fill" style="max-width: 150px;">Limpiar</a>
+              class="btn btn-outline-secondary flex-fill" style="max-width: 150px;" data-i18n="common.clear">Limpiar</a>
           </div>
         </div>
       </form>
 
       <div class="mt-3">
-        <small class="text-muted">Total de registros: {{ total }}</small>
+        <small class="text-muted"><span data-i18n="common.totalRecords">Total de registros:</span> {{ total }}</small>
       </div>
     </div>
   </div>
@@ -52,11 +52,11 @@
     <table class="table table-striped table-bordered align-middle">
       <thead class="table-dark">
         <tr>
-          <th>Identificador</th>
-          <th>Título</th>
-          <th>Control</th>
-          <th>PDF</th>
-          <th>Fecha</th>
+          <th data-i18n="table.identifier">Identificador</th>
+          <th data-i18n="table.title">Título</th>
+          <th data-i18n="table.control">Control</th>
+          <th data-i18n="table.pdf">PDF</th>
+          <th data-i18n="table.date">Fecha</th>
         </tr>
       </thead>
       <tbody>
@@ -71,7 +71,7 @@
             <div class="d-flex justify-content-between align-items-start">
               {% if row['url_html'] %}
               <a href="{{ row['url_html'] }}" target="_blank" class="text-decoration-none text-dark link-visitada"
-                data-id="{{ row['id'] }}" title="Ver en la web del BOE">
+                data-id="{{ row['id'] }}" title="Ver en la web del BOE" data-i18n-title="table.openBoeWeb">
                 {{ row['titulo']|resaltar_titulo|safe }} <i class="bi bi-box-arrow-up-right text-muted small ms-1"></i>
               </a>
               {% else %}
@@ -81,7 +81,7 @@
               {% if user.is_authenticated %}
               <span style="margin-left: 10px;">
                 <button type="button" class="toggle-favorito-btn" data-oposicion-id="{{ row['id'] }}"
-                  aria-label="Marcar como favorito"
+                  aria-label="Marcar como favorito" data-i18n-aria-label="table.markFavorite"
                   style="border: none; background: none; cursor: pointer; color: orange;">
                   <i class="bi {% if row['id'] in favoritas %}bi-star-fill{% else %}bi-star{% endif %}"
                     title="{% if row['id'] in favoritas %}Quitar de Favoritos{% else %}Marcar como Favorito{% endif %}">
@@ -93,10 +93,10 @@
 
             <div class="mt-2 d-flex flex-column align-items-start gap-1">
               {% if row['fecha'] == hoy %}
-              <span class="badge-nuevo">🟡 Nuevo</span>
+              <span class="badge-nuevo" data-i18n="table.badgeNew">🟡 Nuevo</span>
               {% endif %}
               {% if row['id'] in visitadas %}
-              <span class="badge-visitada">🔵 Visitada</span>
+              <span class="badge-visitada" data-i18n="table.badgeVisited">🔵 Visitada</span>
               {% endif %}
             </div>
           </td>
@@ -106,7 +106,7 @@
             {% if row['url_pdf'] %}
             <a href="{{ row['url_pdf'] }}" target="_blank" class="btn btn-sm btn-primary btn-pdf"
               data-id="{{ row['id'] }}">
-              Ver PDF
+              <span data-i18n="table.viewPdf">Ver PDF</span>
             </a>
             {% endif %}
           </td>
@@ -114,7 +114,7 @@
         </tr>
         {% else %}
         <tr>
-          <td colspan="5" class="text-center">No hay oposiciones registradas con estos filtros de búsqueda.</td>
+          <td colspan="5" class="text-center" data-i18n="results.empty">No hay oposiciones registradas con estos filtros de búsqueda.</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -122,7 +122,7 @@
   </div>
 
   {% if total_pages > 1 %}
-  <nav aria-label="Paginación de oposiciones" class="mt-4">
+  <nav aria-label="Paginación de oposiciones" data-i18n-aria-label="table.pagination" class="mt-4">
     <ul class="pagination justify-content-center">
       <li class="page-item {% if page <= 1 %}disabled{% endif %}">
         <a class="page-link" href="{{ url_for('main.mostrar_departamento', nombre=departamento, page=page-1) }}">←</a>
