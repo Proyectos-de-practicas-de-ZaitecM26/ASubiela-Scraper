@@ -283,6 +283,7 @@ Además del banner de cookies, la aplicación incorpora páginas legales accesib
 - `Politica de Cookies` → `/politica-cookies`
 - `Politica de Privacidad` → `/politica-privacidad`
 - `Aviso Legal` → `/aviso-legal`
+- Los tres enlaces se muestran en blanco para mantener una coloración uniforme en el footer.
 
 **Implementación técnica:**
 

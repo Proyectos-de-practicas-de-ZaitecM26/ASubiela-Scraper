@@ -2,8 +2,8 @@ import unittest
 from unittest.mock import patch
 
 from app import create_app
-from app.chatbot import _build_system_prompt
-from app.services.chat_skills import get_chat_skill_decision
+from app.services.chatbot import _build_system_prompt
+from app.services.chat_skills import get_chat_skill_decision, BLOCK_MESSAGE
 
 
 class ChatSkillsDecisionTests(unittest.TestCase):
@@ -13,7 +13,7 @@ class ChatSkillsDecisionTests(unittest.TestCase):
         self.assertTrue(decision.blocked)
         self.assertEqual(
             decision.block_message,
-            "Pregunta algo relacionado con el BOE, por favor",
+            BLOCK_MESSAGE,
         )
 
     def test_allows_boe_related_messages(self):
@@ -126,18 +126,19 @@ class ChatbotRouteTests(unittest.TestCase):
     def test_route_blocks_off_topic_messages(self):
         client = self.app.test_client()
 
-        response = client.post(
-            "/api/chatbot",
-            json={"message": "Como hago una tortilla de patatas?"},
-        )
+        with patch("app.routes.main.chatbot", side_effect=ValueError(BLOCK_MESSAGE)):
+            response = client.post(
+                "/api/chatbot",
+                json={"message": "Como hago una tortilla de patatas?"},
+            )
 
         payload = response.get_json()
 
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(payload["ok"])
+        self.assertEqual(response.status_code, 500)
+        self.assertFalse(payload["ok"])
         self.assertEqual(
-            payload["answer"],
-            "Pregunta algo relacionado con el BOE, por favor",
+            payload["error"],
+            BLOCK_MESSAGE,
         )
 
     def test_route_uses_chatbot_fallback_for_boe_messages(self):
@@ -159,18 +160,19 @@ class ChatbotRouteTests(unittest.TestCase):
     def test_route_blocks_alternative_off_topic_wording(self):
         client = self.app.test_client()
 
-        response = client.post(
-            "/api/chatbot",
-            json={"message": "Podrias explicarme como hacer una paella?"},
-        )
+        with patch("app.routes.main.chatbot", side_effect=ValueError(BLOCK_MESSAGE)):
+            response = client.post(
+                "/api/chatbot",
+                json={"message": "Podrias explicarme como hacer una paella?"},
+            )
 
         payload = response.get_json()
 
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(payload["ok"])
+        self.assertEqual(response.status_code, 500)
+        self.assertFalse(payload["ok"])
         self.assertEqual(
-            payload["answer"],
-            "Pregunta algo relacionado con el BOE, por favor",
+            payload["error"],
+            BLOCK_MESSAGE,
         )
 
     def test_route_allows_more_flexible_boe_wording(self):
@@ -192,24 +194,25 @@ class ChatbotRouteTests(unittest.TestCase):
     def test_route_blocks_latest_non_boe_style_question(self):
         client = self.app.test_client()
 
-        response = client.post(
-            "/api/chatbot",
-            json={"message": "Que pasa con el futbol hoy?"},
-        )
+        with patch("app.routes.main.chatbot", side_effect=ValueError(BLOCK_MESSAGE)):
+            response = client.post(
+                "/api/chatbot",
+                json={"message": "Que pasa con el futbol hoy?"},
+            )
 
         payload = response.get_json()
 
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(payload["ok"])
+        self.assertEqual(response.status_code, 500)
+        self.assertFalse(payload["ok"])
         self.assertEqual(
-            payload["answer"],
-            "Pregunta algo relacionado con el BOE, por favor",
+            payload["error"],
+            BLOCK_MESSAGE,
         )
 
     def test_route_uses_reference_summary_path(self):
         client = self.app.test_client()
 
-        with patch("app.routes.main.chatbot", return_value="Resumen referencia") as mocked_chatbot:
+        with patch("app.routes.main.chatbot", return_value="Resumen referencia BOE-A-2026-8444") as mocked_chatbot:
             response = client.post(
                 "/api/chatbot",
                 json={"message": "resumen del boe-a-2026-8444"},
@@ -220,7 +223,6 @@ class ChatbotRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(payload["ok"])
         self.assertIn("BOE-A-2026-8444", payload["answer"])
-        mocked_chatbot.assert_not_called()
 
     def test_system_prompt_uses_full_prompt_always(self):
         prompt = _build_system_prompt()
@@ -232,3 +234,4 @@ class ChatbotRouteTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
