@@ -80,7 +80,10 @@ Define la estructura general de la aplicación:
           </ul>
         </div>
 
-        <button id="langToggle" class="btn-lang-toggle" aria-label="Switch to English" title="Switch to English">🇬🇧 EN</button>
+        <button id="langToggle" class="btn-lang-toggle" aria-label="Switch to English" title="Switch to English">
+          <span class="lang-flag" aria-hidden="true">🇬🇧</span>
+          <span class="lang-code">EN</span>
+        </button>
 
         <a href="{{ url_for('toggle_theme') }}" class="btn-toggle-theme" aria-label="Toggle theme">
           {% if theme == 'dark' %}🔆{% else %}🌓{% endif %}
@@ -1534,11 +1537,11 @@ document.addEventListener("DOMContentLoaded", function () {
         const btn = document.getElementById('langToggle');
         if (btn) {
           if (lang === 'es') {
-            btn.textContent = '🇬🇧 EN';
+            btn.innerHTML = '<span class="lang-flag" aria-hidden="true">🇬🇧</span><span class="lang-code">EN</span>';
             btn.title = 'Switch to English';
             btn.setAttribute('aria-label', 'Switch to English');
           } else {
-            btn.textContent = '🇪🇸 ES';
+            btn.innerHTML = '<span class="lang-flag" aria-hidden="true">🇪🇸</span><span class="lang-code">ES</span>';
             btn.title = 'Cambiar a español';
             btn.setAttribute('aria-label', 'Cambiar a español');
           }
