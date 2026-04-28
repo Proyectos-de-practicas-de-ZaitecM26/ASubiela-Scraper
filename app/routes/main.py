@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 from flask import Blueprint, render_template, flash, redirect, url_for, request, jsonify, current_app
 from flask_login import current_user, login_required
-from ..db import get_boe_db, get_users_db
 from ..services.chatbot import chatbot
 from .. import limiter
 from ..data import sa_db, Oposicion, User, Visita, Favorita

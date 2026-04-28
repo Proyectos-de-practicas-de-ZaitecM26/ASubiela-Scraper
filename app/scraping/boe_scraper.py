@@ -4,8 +4,9 @@ import requests
 from datetime import datetime, date, timedelta
 from bs4 import BeautifulSoup
 from sqlalchemy.exc import IntegrityError
-from app.db import get_boe_db
-from ..data import sa_db, Oposicion, User, Visita, Favorita
+from sqlalchemy import func
+from ..data import sa_db, Oposicion
+
 
 def extraer_provincia(texto):
     if not texto:
