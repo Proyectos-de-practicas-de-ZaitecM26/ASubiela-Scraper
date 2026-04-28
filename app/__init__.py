@@ -6,7 +6,6 @@ from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 
 from .config import Config
-from .db import teardown_appcontext
 from .data import sa_db, User
 from .data import inicializar_y_migrar
 
@@ -64,7 +63,6 @@ def create_app():
     with app.app_context():
         inicializar_y_migrar()
 
-    app.teardown_appcontext(teardown_appcontext)
 
     # =========================
     # THEME
