@@ -12,7 +12,7 @@
     <div class="card-body">
       <h5 class="card-title mb-3">Filtros de búsqueda</h5>
 
-      <form method="GET" action="/resultados">
+      <form method="GET" action="{{ url_for('main.resultados') }}">
         <div class="row g-3 mb-3">
           <div class="col-md-8">
             <label for="busqueda" class="form-label">Buscar por palabras clave:</label>
@@ -25,8 +25,8 @@
             <select class="form-select" id="provincia" name="provincia">
               <option value="">Todas las provincias</option>
               {% for prov in provincias %}
-              <option value="{{ prov['provincia'] }}" {% if provincia_filtro==prov['provincia'] %}selected{% endif %}>
-                {{ prov['provincia'] }}
+              <option value="{{ prov }}" {% if provincia_filtro==prov %}selected{% endif %}>
+                {{ prov }}
               </option>
               {% endfor %}
             </select>
@@ -36,7 +36,7 @@
         <div class="row g-3 mt-2">
           <div class="col-12 d-flex justify-content-center gap-2">
             <button type="submit" class="btn btn-primary flex-fill" style="max-width: 150px;">Filtrar</button>
-            <a href="/resultados"
+            <a href="{{ url_for('main.resultados') }}"
               class="btn btn-outline-secondary flex-fill" style="max-width: 150px;">Limpiar</a>
           </div>
         </div>
@@ -125,13 +125,13 @@
   <nav aria-label="Paginación de oposiciones" class="mt-4">
     <ul class="pagination justify-content-center">
       <li class="page-item {% if page <= 1 %}disabled{% endif %}">
-        <a class="page-link" href="{{ url_for('main.mostrar_departamento', nombre=departamento, page=page-1) }}">←</a>
+        <a class="page-link" href="{{ url_for('main.resultados', page=page-1) }}">←</a>
       </li>
 
       {% set start_page = page - 2 if page > 3 else 1 %}
       {% set end_page = page + 2 if page < total_pages - 2 else total_pages %} {% if start_page> 1 %}
         <li class="page-item">
-          <a class="page-link" href="{{ url_for('main.mostrar_departamento', nombre=departamento, page=1) }}">1</a>
+          <a class="page-link" href="{{ url_for('main.resultados', page=1) }}">1</a>
         </li>
         {% if start_page > 2 %}
         <li class="page-item disabled"><span class="page-link">…</span></li>
@@ -140,7 +140,7 @@
 
         {% for p in range(start_page, end_page + 1) %}
         <li class="page-item {% if p == page %}active{% endif %}">
-          <a class="page-link" href="{{ url_for('main.mostrar_departamento', nombre=departamento, page=p) }}">{{ p
+          <a class="page-link" href="{{ url_for('main.resultados', page=p) }}">{{ p
             }}</a>
         </li>
         {% endfor %}
@@ -150,14 +150,14 @@
           {% endif %}
           <li class="page-item">
             <a class="page-link"
-              href="{{ url_for('main.mostrar_departamento', nombre=departamento, page=total_pages) }}">{{ total_pages
+              href="{{ url_for('main.resultados', page=total_pages) }}">{{ total_pages
               }}</a>
           </li>
           {% endif %}
 
           <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
             <a class="page-link"
-              href="{{ url_for('main.mostrar_departamento', nombre=departamento, page=page+1) }}">→</a>
+              href="{{ url_for('main.resultados', page=page+1) }}">→</a>
           </li>
     </ul>
   </nav>

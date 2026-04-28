@@ -1,7 +1,7 @@
 from flask_mail import Message
 from flask import url_for, render_template
 from app.extensions import mail
-from .db import get_users_db
+from .data import sa_db, User
 from itsdangerous import URLSafeTimedSerializer
 import os
 
@@ -77,5 +77,8 @@ def send_new_oposiciones_email(recipients, oposiciones):
 
 
 def all_user_emails():
-    db = get_users_db()
-    return [r["email"] for r in db.execute("SELECT email FROM users").fetchall()]
+    """
+    Obtiene una lista plana con todos los emails de los usuarios.
+    """
+    results = sa_db.session.query(User.email).all()
+    return [r[0] for r in results]

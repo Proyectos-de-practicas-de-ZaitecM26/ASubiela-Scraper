@@ -3,9 +3,9 @@
 import requests
 from datetime import datetime, date, timedelta
 from bs4 import BeautifulSoup
-import sqlite3
-
-from app.db import get_boe_db
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func
+from ..data import sa_db, Oposicion
 
 
 def extraer_provincia(texto):
@@ -41,15 +41,12 @@ def extraer_provincia(texto):
 BOE_SUMARIO_URL = "https://www.boe.es/datosabiertos/api/boe/sumario/{fecha}"
 
 
-def scrape_boe_dia(fecha: date, boe_db=None):
+def scrape_boe_dia(fecha: date):
     """
     Descarga y guarda en la BBDD las oposiciones del BOE (sección 2B)
     para un día concreto (objeto date).
     Devuelve la lista de oposiciones nuevas insertadas.
     """
-    if boe_db is None:
-        boe_db = get_boe_db()
-
     fecha_str = fecha.strftime("%Y%m%d")
 
     headers = {
@@ -100,60 +97,54 @@ def scrape_boe_dia(fecha: date, boe_db=None):
         provincia = extraer_provincia(titulo) or extraer_provincia(control)
 
         try:
-            boe_db.execute(
-                """
-                INSERT INTO oposiciones (
-                    identificador, control, titulo, url_html, url_pdf,
-                    departamento, fecha, provincia
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    identificador,
-                    control,
-                    titulo,
-                    url_html,
-                    url_pdf,
-                    departamento,
-                    fecha_str,
-                    provincia,
-                ),
+            nueva_opo = Oposicion(
+                identificador=identificador,
+                control=control,
+                titulo=titulo,
+                url_html=url_html,
+                url_pdf=url_pdf,
+                departamento=departamento,
+                fecha=fecha_str,
+                provincia=provincia
             )
-            boe_db.commit()
+            
+            sa_db.session.add(nueva_opo)
+            # Hacemos commit individual para replicar el comportamiento de tu script original
+            sa_db.session.commit()
 
-            newly_inserted.append(
-                {
-                    "identificador": identificador,
-                    "control": control,
-                    "titulo": titulo,
-                    "url_html": url_html,
-                    "url_pdf": url_pdf,
-                    "departamento": departamento,
-                    "fecha": fecha_str,
-                    "provincia": provincia,
-                }
-            )
-        except sqlite3.IntegrityError:
-            # url_html ya existía (UNIQUE), la saltamos
+            newly_inserted.append({
+                "identificador": identificador,
+                "control": control,
+                "titulo": titulo,
+                "url_html": url_html,
+                "url_pdf": url_pdf,
+                "departamento": departamento,
+                "fecha": fecha_str,
+                "provincia": provincia,
+            })
+
+        except IntegrityError:
+            # Si el registro ya existe (url_html UNIQUE), limpiamos la sesión y saltamos
+            sa_db.session.rollback()
+            continue
+        except Exception:
+            # Para cualquier otro error, revertimos para no dejar la sesión bloqueada
+            sa_db.session.rollback()
             continue
 
     return newly_inserted
 
-
 def scrape_boe_ultimos_dias(dias: int = 30):
     """
-    Hace scraping del BOE para los últimos `dias` días (incluyendo hoy).
-    Recorre fecha a fecha hacia atrás y llama a `scrape_boe_dia`.
-    Devuelve una lista con todas las oposiciones nuevas insertadas.
+    Hace scraping del BOE para los últimos `dias` días (incluyendo hoy)
+    usando SQLAlchemy.
     """
-    boe_db = get_boe_db()
     hoy = date.today()
-
     todas_nuevas = []
 
     for i in range(dias):
         fecha_obj = hoy - timedelta(days=i)
-        nuevas = scrape_boe_dia(fecha_obj, boe_db=boe_db)
+        nuevas = scrape_boe_dia(fecha_obj)
         if nuevas:
             print(f"[BOE] {fecha_obj} -> {len(nuevas)} oposiciones nuevas")
             todas_nuevas.extend(nuevas)
@@ -161,17 +152,12 @@ def scrape_boe_ultimos_dias(dias: int = 30):
     return todas_nuevas
 
 
-def get_last_boe_date(boe_db=None) -> date | None:
+def get_last_boe_date() -> date | None:
     """
     Devuelve la última fecha (tipo date) que hay en la tabla oposiciones.
-    Si la tabla está vacía, devuelve None.
+    Utiliza func.max de SQLAlchemy.
     """
-    if boe_db is None:
-        boe_db = get_boe_db()
-
-    row = boe_db.execute(
-        "SELECT MAX(fecha) AS max_fecha FROM oposiciones").fetchone()
-    max_fecha = row["max_fecha"] if row and row["max_fecha"] else None
+    max_fecha = sa_db.session.query(func.max(Oposicion.fecha)).scalar()
 
     if not max_fecha:
         return None
@@ -183,29 +169,19 @@ def get_last_boe_date(boe_db=None) -> date | None:
 
 
 def sync_boe_hasta_hoy(max_dias_inicial: int = 30,
-                       max_dias_guardados: int = 30):
+                        max_dias_guardados: int = 30):
     """
-    Sincroniza la BBDD del BOE SOLO con los días que falten hasta hoy.
-
-    - Si la tabla está vacía: baja hasta `max_dias_inicial` días hacia atrás.
-    - Si ya hay datos: empieza desde (última_fecha + 1) hasta hoy.
-   - Siempre, al final, borra registros con fecha anterior a (hoy - max_dias_guardados + 1).
-
-    Devuelve una lista con TODAS las oposiciones nuevas insertadas.
+    Sincroniza la BBDD del BOE usando SQLAlchemy.
+    Mantiene la lógica de inicio desde la última fecha y limpieza de antiguos.
     """
-    boe_db = get_boe_db()
     hoy = date.today()
-
-    last_date = get_last_boe_date(boe_db=boe_db)
+    last_date = get_last_boe_date()
 
     if last_date is None:
-        # BBDD vacía: empezamos max_dias_inicial días atrás
         start_date = hoy - timedelta(days=max_dias_inicial - 1)
     else:
-        # Ya tengo algo: empiezo desde el día siguiente al último guardado
         start_date = last_date + timedelta(days=1)
-
-    # Si la última fecha ya es hoy o posterior, no hay nada que hacer
+        
     if start_date > hoy:
         print("[BOE] BBDD ya está sincronizada hasta hoy")
         return []
@@ -214,28 +190,26 @@ def sync_boe_hasta_hoy(max_dias_inicial: int = 30,
     current = start_date
 
     while current <= hoy:
-        nuevas = scrape_boe_dia(current, boe_db=boe_db)
+        nuevas = scrape_boe_dia(current)
         if nuevas:
             print(f"[BOE] {current} -> {len(nuevas)} oposiciones nuevas")
             todas_nuevas.extend(nuevas)
         else:
-            print(
-                f"[BOE] {current} -> sin oposiciones nuevas o sin sección 2B")
+            print(f"[BOE] {current} -> sin oposiciones nuevas o sin sección 2B")
         current += timedelta(days=1)
 
-    # --- Eliminar registros antiguos (mantener solo `max_dias_guardados` días) ---
+    # --- Eliminar registros antiguos (Limpieza con SQLAlchemy) ---
     try:
         if max_dias_guardados and max_dias_guardados > 0:
             cutoff = hoy - timedelta(days=(max_dias_guardados - 1))
             cutoff_str = cutoff.strftime("%Y%m%d")
-            cur = boe_db.execute(
-                "DELETE FROM oposiciones WHERE fecha < ?",
-                (cutoff_str,),
-            )
-            boe_db.commit()
-            # sqlite3.Cursor.rowcount puede ser -1 depending on driver; show info
-            print(f"[BOE] Eliminados registros anteriores a {cutoff_str}")
+            
+            num_borrados = sa_db.session.query(Oposicion).filter(Oposicion.fecha < cutoff_str).delete()
+            sa_db.session.commit()
+            
+            print(f"[BOE] Eliminados {num_borrados} registros anteriores a {cutoff_str}")
     except Exception as e:
+        sa_db.session.rollback()
         print(f"[BOE] Error al eliminar registros antiguos: {e}")
 
     return todas_nuevas
