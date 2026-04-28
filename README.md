@@ -36,7 +36,8 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
   - [🌐 Selector de idioma (ES / EN)](#-selector-de-idioma-es--en)
   - [♿ Panel de accesibilidad visual](#-panel-de-accesibilidad-visual)
   - [🤖 Chatbot asistente BOE](#-chatbot-asistente-boe)
-  - [🛠️ Scripts útiles](#️-scripts-útiles)
+  - [� Página de estadísticas](#-página-de-estadísticas)
+  - [�🛠️ Scripts útiles](#️-scripts-útiles)
   - [📁 Estructura de archivos](#-estructura-de-archivos)
   - [🔮 Próximos pasos recomendados](#-próximos-pasos-recomendados)
   - [🤝 Contribución](#-contribución)
@@ -53,7 +54,8 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
   - `usuarios.db` con credenciales, perfil, visitas, favoritos y suscripciones.
 - **👤 Gestión de usuarios**: Registro con campos avanzados, login con `Flask-Login`, edición completa del perfil y cambio de contraseña.
 - **📧 Alertas y newsletters**: Configuración de alertas diarias o por favoritos y envío de emails con `Flask-Mail`.
-- **📊 Seguimiento de actividad**: Cada click marca visitas y favoritos para personalizar las tarjetas.
+- **📊 Seguimiento de actividad**: Cada click marca visitas y favoritos para personalizar las tarjetas. Las visitas se registran tanto para usuarios autenticados como anónimos.
+- **📈 Página de estadísticas**: Vista pública en `/estadisticas` con gráfico de barras por departamento, resumen desglosado de visitas autenticadas, anónimas y total combinado.
 - **🎨 Tema claro/oscuro** y subida de foto de perfil almacenada en `static/uploads/profiles`.
 - **🍪 Banner de cookies**: Aviso de política de cookies con preferencias granulares, persistido en `localStorage`.
 - **⚖️ Cumplimiento legal básico**: Enlaces permanentes en footer a política de cookies, política de privacidad y aviso legal.
@@ -450,6 +452,7 @@ I_S25_Web_Scraping/
 │   ├── user_newsletter.html
 │   ├── tarjeta.html         # Vista de oposiciones por departamento
 │   ├── chat.html            # Vista de pantalla completa del chatbot
+│   ├── estadisticas.html    # Página de estadísticas de visitas
 │   ├── politica_cookies.html
 │   ├── politica_privacidad.html
 │   ├── aviso_legal.html
@@ -467,7 +470,34 @@ I_S25_Web_Scraping/
 
 ---
 
-## 🔮 Próximos pasos recomendados
+## � Página de estadísticas
+
+Vista pública accesible desde el menú de navegación en `/estadisticas` que muestra el uso de la plataforma.
+
+**Contenido:**
+
+| Sección | Descripción |
+|---|---|
+| Gráfico de barras | Top departamentos ordenados por número de visitas (Chart.js) |
+| Resumen global | Visitas autenticadas, visitas anónimas y total combinado |
+| Tabla de detalle | Listado completo de departamentos con su contador de visitas |
+
+**Cómo se registran las visitas:**
+
+- **Usuarios autenticados**: Al hacer clic en el título o PDF de una oposición se llama a `POST /marcar_visitada/<id>` y se guarda en la tabla `visitas` de `usuarios.db`.
+- **Usuarios anónimos**: El mismo endpoint, sin sesión, incrementa un contador en la tabla `visitas_global` de `usuarios.db`.
+- Las estadísticas combinan ambas fuentes para mostrar el total real de interacciones.
+
+**Implementación técnica:**
+
+- Ruta: `GET /estadisticas` en `app/routes/main.py`.
+- Enlace en el navbar con soporte de traducción ES/EN (`nav.stats`).
+- Plantilla: `templates/estadisticas.html`.
+- Nueva tabla SQLite: `visitas_global (oposicion_id, total_visitas, fecha_ultima_visita)`.
+
+---
+
+## �🔮 Próximos pasos recomendados
 
 - ✅ Migrar a PostgreSQL para producción (mejor rendimiento con múltiples workers).
 - ✅ Añadir tests unitarios y de integración.
