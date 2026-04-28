@@ -22,8 +22,8 @@
             <select class="form-select" id="provincia" name="provincia">
               <option value="" data-i18n="common.allProvinces">Todas las provincias</option>
               {% for prov in provincias %}
-              <option value="{{ prov['provincia'] }}" {% if provincia_filtro==prov['provincia'] %}selected{% endif %}>
-                {{ prov['provincia'] }}
+              <option value="{{ prov }}" {% if provincia_filtro==prov %}selected{% endif %}>
+                {{ prov }}
               </option>
               {% endfor %}
             </select>
@@ -56,9 +56,9 @@
                 {% for dept in departamentos %}
                 <div class="form-check">
                   <input class="form-check-input dept-check" type="checkbox" name="departamentos"
-                    value="{{ dept['departamento'] }}" id="f_dept_{{ loop.index }}" {% if dept['departamento'] in
+                    value="{{ dept }}" id="f_dept_{{ loop.index }}" {% if dept in
                     selected_departamentos %}checked{% endif %}>
-                  <label class="form-check-label" for="f_dept_{{ loop.index }}">{{ dept['departamento'] }}</label>
+                  <label class="form-check-label" for="f_dept_{{ loop.index }}">{{ dept }}</label>
                 </div>
                 {% endfor %}
               </div>

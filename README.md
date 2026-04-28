@@ -16,7 +16,8 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
 - [📚 BOE Oposiciones – Web Scraping y Portal de Usuarios](#-boe-oposiciones--web-scraping-y-portal-de-usuarios)
   - [📑 Tabla de Contenidos](#-tabla-de-contenidos)
   - [✨ Características principales](#-características-principales)
-  - [📋 Requisitos previos](#-requisitos-previos)
+  - [�️ Migración a SQLAlchemy (2026-04-28)](#-migración-a-sqlalchemy-2026-04-28)
+  - [�📋 Requisitos previos](#-requisitos-previos)
   - [🚀 Instalación y configuración](#-instalación-y-configuración)
     - [Puesta en marcha rápida](#puesta-en-marcha-rápida)
       - [1. Clonar o descargar el proyecto](#1-clonar-o-descargar-el-proyecto)
@@ -62,6 +63,62 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
 - **🌐 Selector de idioma con banderas**: Botón dinámico `🇬🇧 EN` / `🇪🇸 ES` en la cabecera que traduce al instante tanto contenido estático como mensajes dinámicos del frontend, sin recargar.
 - **♿ Panel de accesibilidad visual**: Botón flotante que despliega controles para ajustar tamaño de texto, contraste y otros filtros visuales; persistidos en `localStorage`.
 - **🤖 Chatbot asistente BOE**: Asistente conversacional integrado con Groq (LLaMA 3.3 70B), con voz (TTS/STT), historial persistente y habilidades especializadas en búsqueda y filtrado del BOE.
+
+---
+
+## 🗄️ Migración a SQLAlchemy (2026-04-28)
+
+Esta sección documenta los cambios realizados el 28 de abril de 2026 para migrar de SQLite nativo a SQLAlchemy.
+
+### Cambios implementados
+
+#### 1. Consolidación de bases de datos
+- **Antes**: Dos bases de datos SQLite separadas (`oposiciones.db` y `usuarios.db`).
+- **Después**: Una única base de datos `boe_scraper.db` gestionada con SQLAlchemy.
+- La configuración se centraliza en `app/config.py` con `SQLALCHEMY_DATABASE_URI`.
+- La nueva base de datos está ubicada en la carpeta `instance`, al mismo nivel que la carpeta `app`
+
+#### 2. Nuevos modelos de datos
+Se han creado los siguientes modelos en `app/data/models.py`:
+- `Oposicion` - Oposiciones del BOE
+- `User` - Usuarios del sistema (hereda de `UserMixin` de Flask-Login)
+- `Visita` - Registro de visitas de usuarios a oposiciones
+- `Favorita` - Oposiciones marcadas como favoritas por usuarios
+- `Suscripcion` - Suscripciones a alertas diarias
+
+#### 3. Archivos modificados
+
+| Archivo | Cambios |
+|---------|---------|
+| `app/__init__.py` | Eliminado import de `db.py` y `teardown_appcontext` |
+| `app/config.py` | Añadida configuración SQLAlchemy, eliminadas rutas de BBDD antiguas |
+| `app/db.py` | **Eliminado** - Funciones de conexión SQLite nativas |
+| `app/models.py` | **Eliminado** - Modelo User antiguo basado en SQLite |
+| `app/data/models.py` | Actualizado para incluir `UserMixin` |
+| `app/data/migrar_datos.py` | Cambiados `print` por `logger`, añadido logging de migración |
+| `app/routes/main.py` | Migrado a consultas SQLAlchemy |
+| `app/routes/auth.py` | Migrada autenticación completa a SQLAlchemy |
+| `app/routes/user.py` | Migradas todas las funciones de usuario a SQLAlchemy |
+| `app/email_utils.py` | Migrada función `all_user_emails()` a SQLAlchemy |
+| `app/scraping/boe_scraper.py` | Completamente migrado a SQLAlchemy |
+| `daily_task.py` | Migrado a SQLAlchemy para gestión de tareas diarias |
+| `templates/user_oposiciones.html` | Ajustado para recibir listas en lugar de diccionarios |
+
+#### 4. Beneficios de la migración
+
+- **Código más limpio**: Eliminación de consultas SQL raw en favor de queries tipadas.
+- **Mantenibilidad**: Uso del ORM de SQLAlchemy facilita futuras migraciones a otras BBDD.
+- **Relaciones definidas**: Backrefs configurados entre modelos (`User.visitas`, `User.favoritas`, etc.).
+- **Logging**: Sustitución de `print` por `current_app.logger` para mejor trazabilidad.
+- **Gestión de errores**: Mejor manejo de transacciones con `rollback()` en caso de errores.
+
+#### 5. Migración automática
+
+Al iniciar la aplicación por primera vez después de esta migración:
+1. Se detectan las bases de datos antiguas (`usuarios.db` y `oposiciones.db`).
+2. Se ejecuta automáticamente la migración de datos a la nueva estructura.
+3. Se muestra un mensaje en la consola indicando que la migración ha finalizado.
+4. Los archivos antiguos pueden eliminarse manualmente tras verificar la migración.
 
 ---
 

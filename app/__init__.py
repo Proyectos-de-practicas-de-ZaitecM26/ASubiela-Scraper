@@ -1,9 +1,13 @@
 import os
 from flask import Flask, session, request, redirect, url_for
 from flask_login import current_user
+from flask_sqlalchemy import SQLAlchemy
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
 
 from .config import Config
-from .db import init_boe_db, init_users_db, migrate_users_db, teardown_appcontext
+from .data import sa_db, User
+from .data import inicializar_y_migrar
 
 from datetime import datetime, date, timedelta
 from flask_limiter import Limiter
@@ -19,9 +23,6 @@ from app.routes.main import main_bp
 from app.routes.auth import auth_bp
 from app.routes.user import user_bp
 from app.routes.chat import chat_bp
-
-from app.models import User
-
 
 def create_app():
     app = Flask(
@@ -47,21 +48,21 @@ def create_app():
     # 🔥 FIX IMPORTANTE: user_loader de Flask-Login
     @login_manager.user_loader
     def load_user(user_id):
-        return User.get(user_id)
+        return User.query.get(int(user_id))
 
     # Blueprints
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(chat_bp)
+    
+    # Initialize the db extension
+    sa_db.init_app(app)
 
     # DB init
     with app.app_context():
-        init_boe_db()
-        init_users_db()
-        migrate_users_db()
+        inicializar_y_migrar()
 
-    app.teardown_appcontext(teardown_appcontext)
 
     # =========================
     # THEME

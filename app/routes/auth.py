@@ -13,9 +13,7 @@ from flask import (
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-
-from ..db import get_users_db
-from ..models import User
+from ..data import sa_db, User
 from ..email_utils import (
     send_password_reset_email,
     generate_reset_token,
@@ -35,34 +33,34 @@ def create_user(
     nivel_estudios=None,
     titulacion=None,
 ):
-    db = get_users_db()
     password_hash = generate_password_hash(password)
-    db.execute(
-        """
-        INSERT INTO users (email, password_hash, name, apellidos, age, telefono,
-                        nivel_estudios, titulacion) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    """,
-        (
-            email.lower(),
-            password_hash,
-            name,
-            apellidos,
-            age,
-            telefono,
-            nivel_estudios,
-            titulacion,
-        ),
-    )
-    db.commit()
+    email_clean = email.lower().strip()
 
+    nuevo_usuario = User(
+        email=email_clean,
+        password_hash=password_hash,
+        name=name,
+        apellidos=apellidos,
+        age=age,
+        telefono=telefono,
+        nivel_estudios=nivel_estudios,
+        titulacion=titulacion
+    )
+
+    try:
+        sa_db.session.add(nuevo_usuario)
+        sa_db.session.commit()
+        
+        return nuevo_usuario # Devolvemos el objeto por si necesitas su ID inmediatamente
+
+    except Exception as e:
+        sa_db.session.rollback()
+        print(f"Error al crear usuario: {e}")
+        raise e # Re-lanzamos para manejar el error (ej. email duplicado) en la ruta
 
 def find_user_by_email(email):
-    db = get_users_db()
-    return db.execute(
-        "SELECT * FROM users WHERE email = ?",
-        (email.lower(),),
-    ).fetchone()
+    user = User.query.filter_by(email=email.lower()).first()
+    return user
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
@@ -71,22 +69,10 @@ def login():
         email = (request.form.get("email") or "").strip()
         password = request.form.get("password") or ""
         user = find_user_by_email(email)
-        if not user or not check_password_hash(user["password_hash"], password):
+        if not user or not check_password_hash(user.password_hash, password):
             flash("Credenciales inválidas.", "danger")
             return redirect(url_for("auth.login"))
-        login_user(
-            User(
-                user["id"],
-                user["email"],
-                user["name"],
-                user["apellidos"],
-                user["age"],
-                user["telefono"],
-                user["foto_perfil"],
-                user["nivel_estudios"],
-                user["titulacion"],
-            )
-        )
+        login_user(user)
         flash("Sesión iniciada.", "success")
         next_url = request.args.get("next") or url_for("main.index")
         return redirect(next_url)
@@ -160,27 +146,15 @@ def register():
                     file.save(filepath)
                     foto_perfil = f"/static/uploads/profiles/{filename}"
 
-                    db = get_users_db()
-                    db.execute(
-                        "UPDATE users SET foto_perfil = ? WHERE id = ?",
-                        (foto_perfil, user["id"]),
-                    )
-                    db.commit()
+                    user.foto_perfil = foto_perfil
+                    try:
+                        sa_db.session.commit()
+                    except Exception as e:
+                        sa_db.session.rollback()
+                        print(f"Error al actualizar la foto de perfil: {e}")
 
         user = find_user_by_email(email)
-        login_user(
-            User(
-                user["id"],
-                user["email"],
-                user["name"],
-                user["apellidos"],
-                user["age"],
-                user["telefono"],
-                user["foto_perfil"],
-                user["nivel_estudios"],
-                user["titulacion"],
-            )
-        )
+        login_user(user)
         flash("Registro correcto. Sesión iniciada.", "success")
         return redirect(url_for("main.index"))
     return render_template("register.html")
@@ -189,9 +163,6 @@ def register():
 @auth_bp.route("/change_password", methods=["POST"])
 @login_required
 def change_password():
-    db = get_users_db()
-    user_id = current_user.id
-
     current_password = request.form.get("current_password")
     new_password = request.form.get("new_password")
     confirm_password = request.form.get("confirm_password")
@@ -204,24 +175,20 @@ def change_password():
         flash("Las nuevas contraseñas no coinciden.", "danger")
         return redirect(url_for("user.configuracion_cuenta"))
 
-    row = db.execute(
-        "SELECT password_hash FROM users WHERE id = ?", (user_id,)
-    ).fetchone()
-    if not row:
-        flash("Usuario no encontrado.", "danger")
-        return redirect(url_for("main.index"))
-
-    stored_hash = row["password_hash"]
-
-    if not check_password_hash(stored_hash, current_password):
+    if not check_password_hash(current_user.password_hash, current_password):
         flash("La contraseña actual es incorrecta.", "danger")
         return redirect(url_for("user.configuracion_cuenta"))
 
-    new_hash = generate_password_hash(new_password)
-    db.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, user_id))
-    db.commit()
+    try:
+        current_user.password_hash = generate_password_hash(new_password)
+        sa_db.session.commit()
+        
+        flash("¡Contraseña actualizada correctamente!", "success")
+    except Exception as e:
+        sa_db.session.rollback()
+        flash("Ocurrió un error al actualizar la contraseña.", "danger")
+        print(f"Error: {e}")
 
-    flash("¡Contraseña actualizada correctamente!", "success")
     return redirect(url_for("user.configuracion_cuenta"))
 
 
@@ -287,18 +254,24 @@ def reset_password(token):
             flash("Las contraseñas no coinciden.", "danger")
             return redirect(url_for("auth.reset_password", token=token))
 
-        # Actualizar contraseña
-        db = get_users_db()
-        new_hash = generate_password_hash(new_password)
-        db.execute(
-            "UPDATE users SET password_hash = ? WHERE email = ?", (new_hash, email)
-        )
-        db.commit()
+        user = find_user_by_email(email)
 
-        flash(
-            "¡Contraseña restablecida correctamente! Ahora puedes iniciar sesión.",
-            "success",
-        )
-        return redirect(url_for("auth.login"))
+        if user:
+            try:
+                user.password_hash = generate_password_hash(new_password)
+                sa_db.session.commit()
+
+                flash(
+                    "¡Contraseña restablecida correctamente! Ahora puedes iniciar sesión.",
+                    "success",
+                )
+                return redirect(url_for("auth.login"))
+            except Exception as e:
+                sa_db.session.rollback()
+                flash("Error al procesar la solicitud. Inténtalo de nuevo.", "danger")
+                print(f"Error en reset_password: {e}")
+        else:
+            flash("No se encontró ningún usuario con ese correo electrónico.", "danger")
+            return redirect(url_for("auth.forgot_password"))
 
     return render_template("reset_password.html", token=token, email=email)

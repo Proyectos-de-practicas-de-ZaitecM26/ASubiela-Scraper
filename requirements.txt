@@ -1,5 +1,7 @@
 # Librerías necesarias para scraping BOE con Flask
-Flask==3.0.2 # principal web
+Flask==3.0.2 # principal webs
+Flask-Admin==2.0.2
+Flask-Sqlalchemy==3.1.1
 Flask-Login==0.6.3 # Manejo de sesiones, login, logout, usuarios
 Flask-Mail==0.9.1 # Envío de emails
 Flask-Limiter==3.8.0 # Rate limit para endpoints API

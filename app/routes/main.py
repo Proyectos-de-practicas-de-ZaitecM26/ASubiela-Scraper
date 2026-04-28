@@ -3,11 +3,10 @@ from datetime import datetime
 from flask import Blueprint, render_template, flash, redirect, url_for, request, jsonify, current_app
 from flask_login import current_user, login_required
 from ..services.chatbot import chatbot
-
 from .. import limiter
-from ..db import get_boe_db, get_users_db
+from ..data import sa_db, Oposicion, User, Visita, VisitaGlobal, Favorita
+from sqlalchemy import or_, func
 from ..scraping.boe_scraper import (
-    scrape_boe_dia,
     scrape_boe_ultimos_dias,
     sync_boe_hasta_hoy,
 )
@@ -46,26 +45,20 @@ def index():
         # Si la tabla está vacía, `sync_boe_hasta_hoy` bajará hasta 30 días atrás.
         sync_boe_hasta_hoy(max_dias_inicial=30, max_dias_guardados=30)
     except Exception as e:
-        # Usa logger si quieres
-        print(f"Error al actualizar datos automáticamente: {e}")
-    db = get_boe_db()
+        current_app.logger.error(f"Error al actualizar datos: {e}")
+    
     hoy = datetime.today().strftime("%Y%m%d")
     fecha_mostrar = datetime.today().strftime("%d/%m/%Y")
-    opos = db.execute(
-        """
-        SELECT *
-        FROM oposiciones
-        WHERE fecha = ?
-        ORDER BY fecha desc
-        LIMIT 4
-        """,
-        (hoy,),
-    ).fetchall()
+   
+    opos = Oposicion.query.filter_by(fecha=hoy)\
+        .order_by(Oposicion.fecha.desc())\
+        .limit(4).all()
     
-    provincias = db.execute(
-        "SELECT DISTINCT provincia FROM oposiciones "
-        "WHERE provincia IS NOT NULL ORDER BY provincia"
-    ).fetchall()
+    provincias_rows = sa_db.session.query(Oposicion.provincia).distinct()\
+        .filter(Oposicion.provincia.isnot(None))\
+        .order_by(Oposicion.provincia).all()
+ 
+    provincias = [p[0] for p in provincias_rows]
     
     return render_template(
         "index.html", 
@@ -75,192 +68,64 @@ def index():
     )
 
 @main_bp.route("/resultados")
-def resultados_de_busqueda():
-    boe_db = get_boe_db()
-    users_db = get_users_db()
+def resultados():
 
-    user = current_user
     busqueda = request.args.get("busqueda", "")
     provincia = request.args.get("provincia", "")
     orden = request.args.get("orden", "fecha_desc")
     page = int(request.args.get("page", 1))
     por_pagina = 10
-    offset = (page - 1) * por_pagina
-
-    # SOLO oposiciones de hoy
-    sql = "SELECT * FROM oposiciones "
-    sql_count = "SELECT count(*) FROM oposiciones "
-    params = []
-    params_count = []
-    filter_prefix = " WHERE"
-
+    
+    query = Oposicion.query
+    
     # Filtro de búsqueda (opcional)
     if busqueda:
-        like = f"%{busqueda}%"
-        sql +=  filter_prefix + " (titulo LIKE ? OR identificador LIKE ? OR control LIKE ? OR departamento LIKE ?)"
-        sql_count += filter_prefix + " (titulo LIKE ? OR identificador LIKE ? OR control LIKE ? OR departamento LIKE ?)"
-        filter_prefix = " AND"
-        params += [like, like, like, like]
-        params_count += [like, like, like, like]
+        like_str = f"%{busqueda}%"
+        query = query.filter(or_(
+            Oposicion.titulo.like(like_str),
+            Oposicion.identificador.like(like_str),
+            Oposicion.control.like(like_str),
+            Oposicion.departamento.like(like_str)
+        ))
 
     # Filtro por provincia (opcional)
     if provincia:
-        sql += filter_prefix + " provincia = ?"
-        params.append(provincia) 
-        sql_count += filter_prefix + " provincia = ?"
-        params_count.append(provincia) 
+        query = query.filter(Oposicion.provincia == provincia)
         
     # Orden + paginación
     if orden == "fecha_asc":
-        order_direction = "ASC"
-    elif orden == "fecha_desc":
-        order_direction = "DESC"
+        query = query.order_by(Oposicion.fecha.asc())
     else:
-        # Compatibilidad con valores antiguos
-        order_direction = "DESC" if orden == "desc" else "ASC"
+        query = query.order_by(Oposicion.fecha.desc())
     
-    sql += f" ORDER BY fecha {order_direction} LIMIT ? OFFSET ?"
-    params += [por_pagina, offset]
-
-    rows = boe_db.execute(sql, params).fetchall()
-
-    # Total
-    total = boe_db.execute(sql_count, params_count).fetchone()[0]
-
-    total_pages = (total + por_pagina - 1) // por_pagina
+    pagination = query.paginate(page=page, per_page=por_pagina, error_out=False)
+    rows = pagination.items
+    total = pagination.total
 
     # Provincias disponibles
-    provincias = boe_db.execute(
-        "SELECT DISTINCT provincia FROM oposiciones "
-        "WHERE provincia IS NOT NULL ORDER BY provincia"
-    ).fetchall()
+    provincias = [p[0] 
+        for p in sa_db.session.query(Oposicion.provincia).distinct().filter(Oposicion.provincia.isnot(None)).all()]
 
     # Visitadas / Favoritas
-    visitadas = []
-    favoritas = []
+    visitadas_ids = []
+    favoritas_ids = []
 
-    if user.is_authenticated:
-        visitadas = [
-            row["oposicion_id"]
-            for row in users_db.execute(
-                "SELECT oposicion_id FROM visitas WHERE user_id = ?",
-                (user.id,),
-            ).fetchall()
-        ]
-        favoritas = [
-            row["oposicion_id"]
-            for row in users_db.execute(
-                "SELECT oposicion_id FROM favoritas WHERE user_id = ?",
-                (user.id,),
-            ).fetchall()
-        ]
+    if current_user.is_authenticated:
+        # Gracias a backref='user', podemos acceder directo:
+        visitadas_ids = [v.oposicion_id for v in current_user.visitas]
+        favoritas_ids = [f.oposicion_id for f in current_user.favoritas]
 
     return render_template(
         "resultados.html",
         rows=rows,
         page=page,
-        total_pages=total_pages,
+        total_pages=pagination.pages,
         provincias=provincias,
         busqueda=busqueda,
         provincia_filtro=provincia,
         orden=orden,
-        visitadas=visitadas,
-        favoritas=favoritas,
-        total=total
-    )    
-
-
-@main_bp.route("/departamento/<nombre>")
-def mostrar_departamento(nombre):
-
-    boe_db = get_boe_db()
-    users_db = get_users_db()
-
-    hoy = datetime.today().strftime("%Y%m%d")
-    user = current_user
-    busqueda = request.args.get("busqueda", "")
-    provincia = request.args.get("provincia", "")
-    orden = request.args.get("orden", "fecha_desc")
-    page = int(request.args.get("page", 1))
-    por_pagina = 10
-    offset = (page - 1) * por_pagina
-
-    # SOLO oposiciones de hoy
-    sql = "SELECT * FROM oposiciones WHERE departamento = ? AND fecha = ?"
-    params = [nombre, hoy]
-
-    # Filtro de búsqueda (opcional)
-    if busqueda:
-        like = f"%{busqueda}%"
-        sql += " AND (titulo LIKE ? OR identificador LIKE ? OR control LIKE ?)"
-        params += [like, like, like]
-
-    # Filtro por provincia (opcional)
-    if provincia:
-        sql += " AND provincia = ?"
-        params.append(provincia) 
-        
-    # Orden + paginación
-    if orden == "fecha_asc":
-        order_direction = "ASC"
-    elif orden == "fecha_desc":
-        order_direction = "DESC"
-    else:
-        # Compatibilidad con valores antiguos
-        order_direction = "DESC" if orden == "desc" else "ASC"
-    
-    sql += f" ORDER BY fecha {order_direction} LIMIT ? OFFSET ?"
-    params += [por_pagina, offset]
-
-    rows = boe_db.execute(sql, params).fetchall()
-
-    # Total SOLO de hoy
-    total = boe_db.execute(
-        "SELECT COUNT(*) FROM oposiciones WHERE departamento = ? AND fecha = ?",
-        (nombre, hoy),
-    ).fetchone()[0]
-
-    total_pages = (total + por_pagina - 1) // por_pagina
-
-    # Provincias disponibles
-    provincias = boe_db.execute(
-        "SELECT DISTINCT provincia FROM oposiciones "
-        "WHERE provincia IS NOT NULL ORDER BY provincia"
-    ).fetchall()
-
-    # Visitadas / Favoritas
-    visitadas = []
-    favoritas = []
-
-    if user.is_authenticated:
-        visitadas = [
-            row["oposicion_id"]
-            for row in users_db.execute(
-                "SELECT oposicion_id FROM visitas WHERE user_id = ?",
-                (user.id,),
-            ).fetchall()
-        ]
-        favoritas = [
-            row["oposicion_id"]
-            for row in users_db.execute(
-                "SELECT oposicion_id FROM favoritas WHERE user_id = ?",
-                (user.id,),
-            ).fetchall()
-        ]
-
-    return render_template(
-        "tarjeta.html",
-        departamento=nombre,
-        rows=rows,
-        page=page,
-        total_pages=total_pages,
-        provincias=provincias,
-        busqueda=busqueda,
-        provincia_filtro=provincia,
-        orden=orden,
-        hoy=hoy,
-        visitadas=visitadas,
-        favoritas=favoritas,
+        visitadas=visitadas_ids,
+        favoritas=favoritas_ids,
         total=total
     )
 
@@ -274,39 +139,41 @@ def admin_scrape_ultimos_30():
     return redirect(url_for("user.oposiciones_vigentes"))
 
 
+
 @main_bp.route("/estadisticas")
 def estadisticas():
-    boe_db = get_boe_db()
-    users_db = get_users_db()
+    visitas_autenticadas = sa_db.session.query(
+        Oposicion.departamento,
+        func.count(Visita.id).label('total_visitas')
+    ).join(Visita, Visita.oposicion_id == Oposicion.id)\
+     .group_by(Oposicion.departamento)\
+     .order_by(sa_db.desc('total_visitas')).all()
+    visitas_anonimas = sa_db.session.query(
+        Oposicion.departamento,
+        func.sum(VisitaGlobal.total_visitas).label('total_visitas')
+    ).join(VisitaGlobal, VisitaGlobal.oposicion_id == Oposicion.id)\
+     .group_by(Oposicion.departamento).all()
 
-    visitas_user = users_db.execute(
-        """
-        SELECT oposicion_id, COUNT(id) AS total_visitas
-        FROM visitas
-        GROUP BY oposicion_id
-        """
-    ).fetchall()
-    visitas_global = users_db.execute(
-        """
-        SELECT oposicion_id, total_visitas
-        FROM visitas_global
-        """
-    ).fetchall()
+    total_autenticadas = sum((fila.total_visitas or 0) for fila in visitas_autenticadas)
+    total_anonimas = sum((fila.total_visitas or 0) for fila in visitas_anonimas)
 
-    total_autenticadas = sum(v["total_visitas"] for v in visitas_user)
-    total_anonimas = sum(v["total_visitas"] for v in visitas_global)
+    acumulado_por_departamento = {}
 
-    visitas_por_oposicion = {}
-    for v in visitas_user:
-        visitas_por_oposicion[v["oposicion_id"]] = (
-            visitas_por_oposicion.get(v["oposicion_id"], 0) + v["total_visitas"]
-        )
-    for v in visitas_global:
-        visitas_por_oposicion[v["oposicion_id"]] = (
-            visitas_por_oposicion.get(v["oposicion_id"], 0) + v["total_visitas"]
+    for fila in visitas_autenticadas:
+        if not fila.departamento:
+            continue
+        acumulado_por_departamento[fila.departamento] = (
+            acumulado_por_departamento.get(fila.departamento, 0) + (fila.total_visitas or 0)
         )
 
-    if not visitas_por_oposicion:
+    for fila in visitas_anonimas:
+        if not fila.departamento:
+            continue
+        acumulado_por_departamento[fila.departamento] = (
+            acumulado_por_departamento.get(fila.departamento, 0) + (fila.total_visitas or 0)
+        )
+
+    if not acumulado_por_departamento:
         return render_template(
             "estadisticas.html",
             stats=[],
@@ -316,27 +183,12 @@ def estadisticas():
             total_anonimas=0,
         )
 
-    opos_ids = list(visitas_por_oposicion.keys())
-    placeholders = ",".join("?" * len(opos_ids))
-    opos_rows = boe_db.execute(
-        f"SELECT id, departamento FROM oposiciones WHERE id IN ({placeholders})",
-        opos_ids,
-    ).fetchall()
-    dept_por_id = {row["id"]: row["departamento"] for row in opos_rows}
-
-    agg = {}
-    for oposicion_id, total_visitas in visitas_por_oposicion.items():
-        dep = dept_por_id.get(oposicion_id)
-        if not dep:
-            continue
-        agg[dep] = agg.get(dep, 0) + total_visitas
-
     stats = [
         {"departamento": dep, "total_visitas": total}
-        for dep, total in sorted(agg.items(), key=lambda x: x[1], reverse=True)
+        for dep, total in sorted(acumulado_por_departamento.items(), key=lambda item: item[1], reverse=True)
     ]
-    labels = [s["departamento"] for s in stats]
-    values = [s["total_visitas"] for s in stats]
+    labels = [fila["departamento"] for fila in stats]
+    values = [fila["total_visitas"] for fila in stats]
 
     return render_template(
         "estadisticas.html",
