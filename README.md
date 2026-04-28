@@ -74,6 +74,7 @@ Esta sección documenta los cambios realizados el 28 de abril de 2026 para migra
 - **Antes**: Dos bases de datos SQLite separadas (`oposiciones.db` y `usuarios.db`).
 - **Después**: Una única base de datos `boe_scraper.db` gestionada con SQLAlchemy.
 - La configuración se centraliza en `app/config.py` con `SQLALCHEMY_DATABASE_URI`.
+- La nueva base de datos está ubicada en la carpeta `instance`, al mismo nivel que la carpeta `app`
 
 #### 2. Nuevos modelos de datos
 Se han creado los siguientes modelos en `app/data/models.py`:
@@ -113,8 +114,8 @@ Se han creado los siguientes modelos en `app/data/models.py`:
 
 Al iniciar la aplicación por primera vez después de esta migración:
 1. Se detectan las bases de datos antiguas (`usuarios.db` y `oposiciones.db`).
-2. Se ejecut automáticamente la migración de datos a la nueva estructura.
-3. Se muestra un mensaje indicando que la migración ha finalizado.
+2. Se ejecuta automáticamente la migración de datos a la nueva estructura.
+3. Se muestra un mensaje en la consola indicando que la migración ha finalizado.
 4. Los archivos antiguos pueden eliminarse manualmente tras verificar la migración.
 
 ---
