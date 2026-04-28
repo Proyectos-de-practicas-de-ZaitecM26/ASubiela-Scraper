@@ -36,6 +36,25 @@ def registrar_visita(user_id, oposicion_id):
         print(f"Error al registrar visita: {e}")
 
 
+def registrar_visita_global(oposicion_id):
+    db = get_users_db()
+    fecha = datetime.utcnow().isoformat()
+    try:
+        db.execute(
+            """
+            INSERT INTO visitas_global (oposicion_id, total_visitas, fecha_ultima_visita)
+            VALUES (?, 1, ?)
+            ON CONFLICT(oposicion_id) DO UPDATE SET
+                total_visitas = total_visitas + 1,
+                fecha_ultima_visita = excluded.fecha_ultima_visita
+            """,
+            (oposicion_id, fecha),
+        )
+        db.commit()
+    except Exception as e:
+        print(f"Error al registrar visita global: {e}")
+
+
 def toggle_favorito(user_id, oposicion_id):
     db = get_users_db()
     fecha = datetime.utcnow().isoformat()
@@ -320,10 +339,11 @@ def update_profile():
 
 
 @user_bp.route("/marcar_visitada/<int:oposicion_id>", methods=["POST"])
-@login_required
 def marcar_visitada(oposicion_id):
-    user_id = current_user.id
-    registrar_visita(user_id, oposicion_id)
+    if current_user.is_authenticated:
+        registrar_visita(current_user.id, oposicion_id)
+    else:
+        registrar_visita_global(oposicion_id)
     return jsonify({"ok": True})
 
 

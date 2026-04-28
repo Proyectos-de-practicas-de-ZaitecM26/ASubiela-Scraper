@@ -40,6 +40,9 @@ Define la estructura general de la aplicación:
 
         <div id="navbarContent" class="nav-collapse">
           <ul class="nav-list">
+            <li class="nav-item">
+              <a href="{{ url_for('main.estadisticas') }}" class="btn-login" data-i18n="nav.stats">📊 Estadísticas</a>
+            </li>
             {% if user.is_authenticated %}
             <li class="nav-item user-menu">
               <a class="user-link" href="#" id="userMenuDropdown" aria-haspopup="true" aria-expanded="false">
@@ -1033,6 +1036,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const translations = {
         es: {
+          'nav.stats':             '📊 Estadísticas',
           'nav.vigentes':          '📚 Oposiciones vigentes',
           'nav.favoritas':         '⭐ Mis Favoritas',
           'nav.alertas':           '🔔 Alertas por correo',
@@ -1256,6 +1260,7 @@ document.addEventListener("DOMContentLoaded", function () {
           'cookie.save':           'Guardar preferencias',
         },
         en: {
+          'nav.stats':             '📊 Stats',
           'nav.vigentes':          '📚 Current vacancies',
           'nav.favoritas':         '⭐ My Favourites',
           'nav.alertas':           '🔔 Email alerts',

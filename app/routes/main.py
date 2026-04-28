@@ -279,23 +279,44 @@ def estadisticas():
     boe_db = get_boe_db()
     users_db = get_users_db()
 
-    visitas = users_db.execute(
+    visitas_user = users_db.execute(
         """
         SELECT oposicion_id, COUNT(id) AS total_visitas
         FROM visitas
         GROUP BY oposicion_id
         """
     ).fetchall()
+    visitas_global = users_db.execute(
+        """
+        SELECT oposicion_id, total_visitas
+        FROM visitas_global
+        """
+    ).fetchall()
 
-    if not visitas:
+    total_autenticadas = sum(v["total_visitas"] for v in visitas_user)
+    total_anonimas = sum(v["total_visitas"] for v in visitas_global)
+
+    visitas_por_oposicion = {}
+    for v in visitas_user:
+        visitas_por_oposicion[v["oposicion_id"]] = (
+            visitas_por_oposicion.get(v["oposicion_id"], 0) + v["total_visitas"]
+        )
+    for v in visitas_global:
+        visitas_por_oposicion[v["oposicion_id"]] = (
+            visitas_por_oposicion.get(v["oposicion_id"], 0) + v["total_visitas"]
+        )
+
+    if not visitas_por_oposicion:
         return render_template(
             "estadisticas.html",
             stats=[],
             labels=[],
             values=[],
+            total_autenticadas=0,
+            total_anonimas=0,
         )
 
-    opos_ids = [v["oposicion_id"] for v in visitas]
+    opos_ids = list(visitas_por_oposicion.keys())
     placeholders = ",".join("?" * len(opos_ids))
     opos_rows = boe_db.execute(
         f"SELECT id, departamento FROM oposiciones WHERE id IN ({placeholders})",
@@ -304,11 +325,11 @@ def estadisticas():
     dept_por_id = {row["id"]: row["departamento"] for row in opos_rows}
 
     agg = {}
-    for v in visitas:
-        dep = dept_por_id.get(v["oposicion_id"])
+    for oposicion_id, total_visitas in visitas_por_oposicion.items():
+        dep = dept_por_id.get(oposicion_id)
         if not dep:
             continue
-        agg[dep] = agg.get(dep, 0) + v["total_visitas"]
+        agg[dep] = agg.get(dep, 0) + total_visitas
 
     stats = [
         {"departamento": dep, "total_visitas": total}
@@ -317,7 +338,14 @@ def estadisticas():
     labels = [s["departamento"] for s in stats]
     values = [s["total_visitas"] for s in stats]
 
-    return render_template("estadisticas.html", stats=stats, labels=labels, values=values)
+    return render_template(
+        "estadisticas.html",
+        stats=stats,
+        labels=labels,
+        values=values,
+        total_autenticadas=total_autenticadas,
+        total_anonimas=total_anonimas,
+    )
 
 
 @main_bp.route("/politica-cookies")

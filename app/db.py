@@ -80,6 +80,15 @@ def init_users_db():
     )
     db.execute(
         """
+        CREATE TABLE IF NOT EXISTS visitas_global (
+            oposicion_id INTEGER PRIMARY KEY,
+            total_visitas INTEGER NOT NULL DEFAULT 0,
+            fecha_ultima_visita TEXT NOT NULL
+        )
+    """
+    )
+    db.execute(
+        """
         CREATE TABLE IF NOT EXISTS favoritas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
