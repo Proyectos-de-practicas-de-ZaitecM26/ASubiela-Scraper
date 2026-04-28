@@ -85,11 +85,23 @@
   </div>
 </div>
 
+<script id="stats-data" type="application/json">{{ {'labels': labels, 'values': values}|tojson }}</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   (function () {
-    const labels = {{ labels|tojson }};
-    const values = {{ values|tojson }};
+    const dataElement = document.getElementById("stats-data");
+    if (!dataElement) return;
+
+    let parsedData = { labels: [], values: [] };
+    try {
+      parsedData = JSON.parse(dataElement.textContent || "{}");
+    } catch (error) {
+      console.warn("No se pudo parsear stats-data", error);
+      return;
+    }
+
+    const labels = Array.isArray(parsedData.labels) ? parsedData.labels : [];
+    const values = Array.isArray(parsedData.values) ? parsedData.values : [];
 
     const ctx = document.getElementById("statsChart");
     if (!ctx || !labels.length) return;
