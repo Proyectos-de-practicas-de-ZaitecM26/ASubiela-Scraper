@@ -7,6 +7,9 @@ class Config:
     # Rutas de las dos bases de datos
     USERS_DB_PATH = os.getenv("USERS_DB_PATH", "usuarios.db")
     BOE_DB_PATH = os.getenv("BOE_DB_PATH", "oposiciones.db")
+    
+    SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI", "sqlite:///boe_scraper.db")
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Flask-Mail (idealmente todo por variables de entorno)
     MAIL_SERVER = "smtp.gmail.com"

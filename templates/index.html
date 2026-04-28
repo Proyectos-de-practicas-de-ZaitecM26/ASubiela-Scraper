@@ -17,7 +17,7 @@
   <div class="card-body">
     <h5 class="card-title mb-3">Filtros de búsqueda</h5>
 
-    <form method="GET" action="/resultados">
+    <form method="GET" action="{{ url_for('main.resultados') }}">
       <div class="row g-3 mb-3">
         <div class="col-md-8">
           <label for="busqueda" class="form-label">Buscar por palabras clave:</label>
@@ -30,8 +30,8 @@
           <select class="form-select" id="provincia" name="provincia">
             <option value="">Todas las provincias</option>
             {% for prov in provincias %}
-            <option value="{{ prov['provincia'] }}" {% if provincia_filtro==prov['provincia'] %}selected{% endif %}>
-              {{ prov['provincia'] }}
+            <option value="{{ prov }}" {% if provincia_filtro==prov %}selected{% endif %}>
+              {{ prov }}
             </option>
             {% endfor %}
           </select>

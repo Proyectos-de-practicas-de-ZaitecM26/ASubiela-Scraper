@@ -1,9 +1,14 @@
 import os
 from flask import Flask, session, request, redirect, url_for
 from flask_login import current_user
+from flask_sqlalchemy import SQLAlchemy
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
 
 from .config import Config
-from .db import init_boe_db, init_users_db, migrate_users_db, teardown_appcontext
+from .db import teardown_appcontext
+from .data import sa_db
+from .data import inicializar_y_migrar
 
 from datetime import datetime, date, timedelta
 from flask_limiter import Limiter
@@ -54,12 +59,13 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(chat_bp)
+    
+    # Initialize the db extension
+    sa_db.init_app(app)
 
     # DB init
     with app.app_context():
-        init_boe_db()
-        init_users_db()
-        migrate_users_db()
+        inicializar_y_migrar()
 
     app.teardown_appcontext(teardown_appcontext)
 
