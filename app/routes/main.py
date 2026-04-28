@@ -5,10 +5,9 @@ from flask_login import current_user, login_required
 from ..db import get_boe_db, get_users_db
 from ..services.chatbot import chatbot
 from .. import limiter
-from ..data import sa_db, Oposicion, User, Visita, Favorita # Ajusta la ruta según tu estructura
+from ..data import sa_db, Oposicion, User, Visita, Favorita
 from sqlalchemy import or_, func
 from ..scraping.boe_scraper import (
-    scrape_boe_dia,
     scrape_boe_ultimos_dias,
     sync_boe_hasta_hoy,
 )
