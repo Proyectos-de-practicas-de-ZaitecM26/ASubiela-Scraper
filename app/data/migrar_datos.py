@@ -1,6 +1,6 @@
 import os
 import sqlite3
-from flask import Flask
+from flask import current_app
 from .models import sa_db, User, Oposicion, Visita, Favorita, Suscripcion
 from ..config import Config
 
@@ -11,7 +11,7 @@ def inicializar_y_migrar():
         
         # Verificamos si existen los archivos antiguos para migrar
         if os.path.exists('usuarios.db') and os.path.exists('oposiciones.db'):
-            print("⚠️ Detectadas bases de datos antiguas. Iniciando migración automática...")
+            current_app.logger.info("⚠️ Detectadas bases de datos antiguas. Iniciando migración automática...")
             
             # Reutilizamos la lógica del script anterior (simplificada)
             conn_u = sqlite3.connect('usuarios.db')
@@ -50,4 +50,6 @@ def inicializar_y_migrar():
             sa_db.session.commit()
             conn_u.close()
             conn_o.close()
-            print("✅ Migración finalizada. Ya puedes borrar los archivos .db antiguos.")
+            current_app.logger.info("✅ Migración finalizada. Ya puedes borrar los archivos .db antiguos.")
+    else:
+        current_app.logger.info("✅ No es necesario ejecutar la migración, ya estamos usando SqlAlchemy")

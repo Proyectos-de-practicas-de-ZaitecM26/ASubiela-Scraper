@@ -7,7 +7,7 @@ from flask_admin.contrib.sqla import ModelView
 
 from .config import Config
 from .db import teardown_appcontext
-from .data import sa_db
+from .data import sa_db, User
 from .data import inicializar_y_migrar
 
 from datetime import datetime, date, timedelta
@@ -24,9 +24,6 @@ from app.routes.main import main_bp
 from app.routes.auth import auth_bp
 from app.routes.user import user_bp
 from app.routes.chat import chat_bp
-
-from app.models import User
-
 
 def create_app():
     app = Flask(
@@ -52,7 +49,7 @@ def create_app():
     # 🔥 FIX IMPORTANTE: user_loader de Flask-Login
     @login_manager.user_loader
     def load_user(user_id):
-        return User.get(user_id)
+        return User.query.get(int(user_id))
 
     # Blueprints
     app.register_blueprint(main_bp)

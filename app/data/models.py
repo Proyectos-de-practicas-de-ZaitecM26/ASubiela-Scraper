@@ -1,3 +1,4 @@
+from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
@@ -21,7 +22,7 @@ class Oposicion(sa_db.Model):
     usuarios_favoritos = sa_db.relationship('Favorita', backref='oposicion', cascade="all, delete-orphan")
 
 
-class User(sa_db.Model):
+class User(sa_db.Model, UserMixin):
     __tablename__ = 'users'
     
     id = sa_db.Column(sa_db.Integer, primary_key=True, autoincrement=True)
