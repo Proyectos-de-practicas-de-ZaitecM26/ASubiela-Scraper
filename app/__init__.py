@@ -25,12 +25,13 @@ from app.routes.auth import auth_bp
 from app.routes.user import user_bp
 from app.routes.chat import chat_bp
 
-def create_app():
+def create_app(config_overrides=None):
     app = Flask(
         __name__,
         template_folder=os.path.join(os.path.dirname(__file__), "..", "templates"),
         static_folder=os.path.join(os.path.dirname(__file__), "..", "static"),
     )
+    # Default DB (can be overridden by tests or deployment env)
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite3"
 
     # Config
@@ -40,6 +41,10 @@ def create_app():
         SESSION_COOKIE_SAMESITE='Lax',
         PERMANENT_SESSION_LIFETIME=timedelta(minutes=30)
     )
+
+    # Apply any overrides early so extensions pick them up during init
+    if config_overrides:
+        app.config.update(config_overrides)
 
     # Extensiones
     mail.init_app(app)
@@ -65,11 +70,15 @@ def create_app():
     with app.app_context():
         inicializar_y_migrar()
 
-    #admin
-    admin = Admin(name="Admin") 
-    admin.init_app(app)
-    admin.add_view(ModelView(User, sa_db.session, name="Usuarios", endpoint="admin_users"))
-    print(app.url_map)
+    # Admin: inicializar vistas admin seguras
+    try:
+        from .admin.views import init_admin
+        init_admin(app)
+    except Exception:
+        # Fallback: registrar Admin sin proteger (no debería ocurrir en producción)
+        admin = Admin(name="Admin")
+        admin.init_app(app)
+        admin.add_view(ModelView(User, sa_db.session, name="Usuarios", endpoint="admin_users"))
 
     # =========================
     # THEME
@@ -91,9 +100,20 @@ def create_app():
 
     @app.context_processor
     def inject_user():
-        return {"user": current_user}
+        return {"user": current_user, "getattr": getattr}
     
     # ==== Filtros Jinja ====
+
+    @app.before_request
+    def protect_admin_routes():
+        """Protect all /admin/* routes - require admin role"""
+        from flask import request
+        if request.path.startswith('/admin'):
+            if not current_user.is_authenticated:
+                return redirect(url_for('auth.login'))
+            if getattr(current_user, 'role', None) != 'admin':
+                from flask import abort
+                abort(403)
 
     @app.template_filter("format_date")
     def format_date_filter(date_str):

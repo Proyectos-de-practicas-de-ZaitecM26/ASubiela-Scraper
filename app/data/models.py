@@ -35,6 +35,9 @@ class User(sa_db.Model, UserMixin):
     foto_perfil = sa_db.Column(sa_db.String)
     nivel_estudios = sa_db.Column(sa_db.String)
     titulacion = sa_db.Column(sa_db.String)
+    # Rol de autorización: 'admin', 'manager', 'viewer'
+    ROLES = ('admin', 'manager', 'viewer')
+    role = sa_db.Column(sa_db.String(20), nullable=False, default='viewer')
 
     # Relaciones directas
     visitas = sa_db.relationship('Visita', backref='user', cascade="all, delete-orphan")

@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 from flask import Blueprint, render_template, flash, redirect, url_for, request, jsonify, current_app
 from flask_login import current_user, login_required
+from ..auth_utils import require_role
 from ..services.chatbot import chatbot
 from .. import limiter
 from ..data import sa_db, Oposicion, User, Visita, Favorita
@@ -131,7 +132,7 @@ def resultados():
 
 
 @main_bp.route("/admin/scrape_ultimos_30")
-@login_required
+@require_role('admin')
 def admin_scrape_ultimos_30():
     nuevas = scrape_boe_ultimos_dias(30)
     flash(
@@ -178,7 +179,7 @@ def aviso_legal():
 
 
 @main_bp.route("/admin/sync_boe")
-@login_required
+@require_role('admin')
 def admin_sync_boe():
     """
     Sincroniza la BBDD del BOE SOLO con los días que falten hasta hoy.
