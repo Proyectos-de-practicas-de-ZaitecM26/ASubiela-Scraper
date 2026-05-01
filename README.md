@@ -410,6 +410,31 @@ Botón flotante con icono de accesibilidad universal, visible en todas las pági
 
 ---
 
+## 🧩 Panel de Administración (Isidro)
+
+- Integración de Flask-Admin en la aplicación (`/admin`)
+- Creación de ModelViews para la gestión de datos
+- Implementación de CRUD completo en las entidades
+
+- Desarrollo de `UserModelView` con:
+  - Columnas configuradas
+  - Búsqueda por email, nombre y apellidos
+  - Filtro por rol
+  - Ordenación de registros
+  - Ocultación de contraseña
+
+- Validación de roles (`admin`, `manager`, `viewer`)
+
+- Añadidas ModelViews para:
+  - Oposiciones
+  - Favoritas
+  - Visitas
+  - Suscripciones
+
+- Integración con relaciones de SQLAlchemy
+- Acceso restringido solo a usuarios con rol `admin`
+- Panel completamente funcional para administración
+
 ## 🤖 Chatbot asistente BOE
 
 Asistente conversacional flotante especializado en el contenido del BOE, accesible desde cualquier página de la aplicación.

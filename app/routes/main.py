@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, flash, redirect, url_for, request,
 from flask_login import current_user, login_required
 from ..auth_utils import require_role
 from ..services.chatbot import chatbot
-from .. import limiter
+from app.extensions import limiter 
 from ..data import sa_db, Oposicion, User, Visita, Favorita
 from sqlalchemy import or_, func
 from ..scraping.boe_scraper import (
