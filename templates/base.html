@@ -69,6 +69,9 @@ Define la estructura general de la aplicación:
             <li class="nav-item">
               <a href="{{ url_for('auth.logout') }}" class="btn-logout" data-i18n="nav.salir">🔓 Salir</a>
             </li>
+            <li class="nav-item">
+              <a href="{{ url_for('admin.index') }}" class="btn-login" data-i18n="nav.admin">Administrador</a>
+            </li>
             {% else %}
             <li class="nav-item">
               <a href="{{ url_for('auth.login') }}" class="btn-login" data-i18n="nav.login">Iniciar sesión</a>
@@ -1023,6 +1026,7 @@ document.addEventListener("DOMContentLoaded", function () {
           'nav.salir':             '🔓 Salir',
           'nav.login':             'Iniciar sesión',
           'nav.register':          'Registrarse',
+          'nav.admin':             'Administrador',
           'a11y.title':            'Accesibilidad visual',
           'a11y.help':             'Ajustes para mejorar legibilidad y contraste.',
           'a11y.contrast':         'Alto contraste',
