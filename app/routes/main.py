@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
-from flask import Blueprint, render_template, flash, redirect, url_for, request, jsonify, current_app
+from flask import Blueprint, render_template, flash, redirect, url_for, request, jsonify, current_app, session
+# He añadido 'session' al final 👆
 from flask_login import current_user, login_required
 from ..auth_utils import require_role
 from ..services.chatbot import chatbot
@@ -191,3 +192,15 @@ def admin_sync_boe():
         "success",
     )
     return redirect(url_for("user.oposiciones_vigentes"))
+
+@main_bp.route('/toggle-theme')
+def toggle_theme():
+    # Cambiamos el tema en la sesión
+    current_theme = session.get('theme', 'dark')
+    session['theme'] = 'light' if current_theme == 'dark' else 'dark'
+    
+    # Esto obliga a Flask a guardar la sesión inmediatamente
+    session.modified = True 
+    
+    # Volvemos a donde estaba el usuario
+    return redirect(request.referrer or url_for('main.index'))
