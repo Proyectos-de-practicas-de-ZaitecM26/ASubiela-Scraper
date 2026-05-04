@@ -25,6 +25,9 @@ class Oposicion(sa_db.Model):
     usuarios_favoritos = sa_db.relationship(
         'Favorita', backref='oposicion', cascade="all, delete-orphan"
     )
+    visitas_globales = sa_db.relationship(
+        'VisitaGlobal', backref='oposicion', cascade="all, delete-orphan"
+    )
 
 
 class User(sa_db.Model, UserMixin):
@@ -72,6 +75,14 @@ class Visita(sa_db.Model):
         nullable=False,
         default=lambda: datetime.now().isoformat()
     )
+
+
+class VisitaGlobal(sa_db.Model):
+    __tablename__ = 'visitas_global'
+
+    oposicion_id = sa_db.Column(sa_db.Integer, sa_db.ForeignKey('oposiciones.id'), primary_key=True)
+    total_visitas = sa_db.Column(sa_db.Integer, nullable=False, default=0)
+    fecha_ultima_visita = sa_db.Column(sa_db.String, nullable=False, default=lambda: datetime.now().isoformat())
 
 
 class Favorita(sa_db.Model):

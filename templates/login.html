@@ -1,13 +1,13 @@
 {% extends 'base.html' %} 
 {% block content %}
-<h2 class="titulo-registro text-center mb-4">Iniciar sesión</h2>
+<h2 class="titulo-registro text-center mb-4" data-i18n="login.title">Iniciar sesión</h2>
 <form method="post" class="form-register mt-3 mx-auto" novalidate style="max-width: 500px; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.1); background:#fff; padding: 2rem;">
   <div class="mb-3">
-    <label class="form-label">Email</label>
+    <label class="form-label" data-i18n="login.email">Email</label>
     <input class="form-control" type="email" name="email" required>
   </div>
   <div class="mb-3 position-relative">
-    <label class="form-label">Contraseña</label>
+    <label class="form-label" data-i18n="login.password">Contraseña</label>
     <div class="position-relative">
       <input class="form-control pe-5" type="password" name="password" id="password-login" required>
       <button class="btn position-absolute top-50 end-0 translate-middle-y border-0 bg-transparent" type="button" id="togglePassword-login"
@@ -18,9 +18,9 @@
   </div>
   
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none small">¿Olvidaste tu contraseña?</a>
+    <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none small" data-i18n="login.forgot">¿Olvidaste tu contraseña?</a>
   </div>
 
-  <button class="btn btn-primary w-100">Entrar</button>
+  <button class="btn btn-primary w-100" data-i18n="login.submit">Entrar</button>
 </form>
 {% endblock %}

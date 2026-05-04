@@ -3,17 +3,17 @@
 
 {% block content %}
 <div class="col-md-9 mx-auto text-center mb-4">
-  <h2 class="hero-title">📬 Gestión de Alertas</h2>
+  <h2 class="hero-title" data-i18n="newsletter.title">📬 Gestión de Alertas</h2>
 
   <div class="col-md-9 mx-auto">
 
     <div class="card shadow-sm mb-4">
       <div class="card-header bg-white py-3">
-        <h5 class="mb-0 text-primary">Notificaciones por Correo</h5>
+        <h5 class="mb-0 text-primary" data-i18n="newsletter.mail.title">Notificaciones por Correo</h5>
       </div>
       <div class="card-body">
         <p class="text-muted">
-          Configura aquí qué notificaciones quieres recibir en: <strong>{{ user.email }}</strong>
+          <span data-i18n="newsletter.mail.desc">Configura aquí qué notificaciones quieres recibir en:</span> <strong>{{ user.email }}</strong>
         </p>
 
         <form method="POST" action="{{ url_for('user.newsletter_prefs') }}">
@@ -22,20 +22,20 @@
             <input class="form-check-input" type="checkbox" id="alerta_diaria" name="alerta_diaria" 
                    {% if prefs['alerta_diaria'] %}checked{% endif %}>
             <label class="form-check-label" for="alerta_diaria">
-              <strong>Resumen diario</strong>
-              <div class="text-muted small">Recibe un email cada mañana con las nuevas oposiciones publicadas.</div>
+              <strong data-i18n="newsletter.daily">Resumen diario</strong>
+              <div class="text-muted small" data-i18n="newsletter.daily.help">Recibe un email cada mañana con las nuevas oposiciones publicadas.</div>
             </label>
           </div>
 
           <hr class="my-4">
 
           <div class="mb-3 text-start">
-            <label class="form-label fw-bold">Filtrar resumen por departamento:</label>
+            <label class="form-label fw-bold" data-i18n="newsletter.filterDept">Filtrar resumen por departamento:</label>
             
             <div class="dropdown">
               <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center" 
                       type="button" data-bs-toggle="collapse" data-bs-target="#collapseDepartamentos" aria-expanded="false">
-                <span><i class="bi bi-list-check me-2"></i> Seleccionar departamentos...</span>
+                <span><i class="bi bi-list-check me-2"></i> <span data-i18n="newsletter.selectDepartments">Seleccionar departamentos...</span></span>
               </button>
 
               <div class="collapse" id="collapseDepartamentos">
@@ -47,7 +47,7 @@
                              name="departamentos" value="Todos" id="dept_todos" 
                              {% if 'Todos' in prefs['departamento_filtro'] %}checked{% endif %}>
                       <label class="form-check-label fw-bold" for="dept_todos">
-                        Todos los departamentos
+                        <span data-i18n="filters.departments.all">Todos los departamentos</span>
                       </label>
                     </div>
 
@@ -69,12 +69,12 @@
                 </div>
               </div>
             </div>
-            <div class="form-text mt-2">Selecciona "Todos" para recibir cualquier oposición o marca solo los departamentos que te interesen.</div>
+            <div class="form-text mt-2" data-i18n="newsletter.filter.help">Selecciona "Todos" para recibir cualquier oposición o marca solo los departamentos que te interesen.</div>
           </div>
 
           <div class="d-flex justify-content-end mt-4">
             <button type="submit" class="btn btn-primary">
-              <i class="bi bi-save"></i> Guardar Preferencias
+              <i class="bi bi-save"></i> <span data-i18n="newsletter.save">Guardar Preferencias</span>
             </button>
           </div>
         </form>
@@ -84,13 +84,13 @@
     <div class="card shadow-sm border-warning">
       <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3">
         <div class="text-start">
-          <h6 class="fw-bold mb-1"><i class="bi bi-send-check text-warning"></i> ¿Quieres recibir las alertas de hoy?</h6>
-          <small class="text-muted">Te enviaremos ahora mismo un resumen con las últimas oposiciones según tu filtro.</small>
+          <h6 class="fw-bold mb-1"><i class="bi bi-send-check text-warning"></i> <span data-i18n="newsletter.now.title">¿Quieres recibir las alertas de hoy?</span></h6>
+          <small class="text-muted" data-i18n="newsletter.now.help">Te enviaremos ahora mismo un resumen con las últimas oposiciones según tu filtro.</small>
         </div>
 
         <form method="POST" action="{{ url_for('user.enviar_resumen_ahora') }}">
           <button type="submit" class="btn btn-primary">
-            Enviar Email Ahora
+            <span data-i18n="newsletter.now.send">Enviar Email Ahora</span>
           </button>
         </form>
       </div>

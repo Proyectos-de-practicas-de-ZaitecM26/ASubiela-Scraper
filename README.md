@@ -38,6 +38,7 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
   - [🧪 Tests](#-tests)
     - [Pruebas unitarias del chatbot](#pruebas-unitarias-del-chatbot)
     - [Pruebas E2E del panel de administración](#pruebas-e2e-del-panel-de-administración)
+  - [📊 Página de estadísticas](#-página-de-estadísticas)
   - [🛠️ Scripts útiles](#️-scripts-útiles)
   - [📁 Estructura de archivos](#-estructura-de-archivos)
   - [🔮 Próximos pasos recomendados](#-próximos-pasos-recomendados)
@@ -55,11 +56,12 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
   - `usuarios.db` con credenciales, perfil, visitas, favoritos y suscripciones.
 - **👤 Gestión de usuarios**: Registro con campos avanzados, login con `Flask-Login`, edición completa del perfil y cambio de contraseña.
 - **📧 Alertas y newsletters**: Configuración de alertas diarias o por favoritos y envío de emails con `Flask-Mail`.
-- **📊 Seguimiento de actividad**: Cada click marca visitas y favoritos para personalizar las tarjetas.
+- **📊 Seguimiento de actividad**: Cada click marca visitas y favoritos para personalizar las tarjetas. Las visitas se registran tanto para usuarios autenticados como anónimos.
+- **📈 Página de estadísticas**: Vista pública en `/estadisticas` con gráfico de barras por departamento, resumen desglosado de visitas autenticadas, anónimas y total combinado.
 - **🎨 Tema claro/oscuro** y subida de foto de perfil almacenada en `static/uploads/profiles`.
 - **🍪 Banner de cookies**: Aviso de política de cookies con preferencias granulares, persistido en `localStorage`.
 - **⚖️ Cumplimiento legal básico**: Enlaces permanentes en footer a política de cookies, política de privacidad y aviso legal.
-- **🌐 Selector de idioma**: Botón EN / ES en la cabecera que traduce toda la interfaz estática al instante sin recargar la página.
+- **🌐 Selector de idioma con banderas**: Botón dinámico `🇬🇧 EN` / `🇪🇸 ES` en la cabecera que traduce al instante tanto contenido estático como mensajes dinámicos del frontend, sin recargar.
 - **♿ Panel de accesibilidad visual**: Botón flotante que despliega controles para ajustar tamaño de texto, contraste y otros filtros visuales; persistidos en `localStorage`.
 - **🤖 Chatbot asistente BOE**: Asistente conversacional integrado con Groq (LLaMA 3.3 70B), con voz (TTS/STT), historial persistente y habilidades especializadas en búsqueda y filtrado del BOE.
 
@@ -242,7 +244,7 @@ app/
     main.py            # Landing, scraping, estadísticas y páginas legales.
     auth.py            # Autenticación (login, registro, logout).
     user.py            # Panel del usuario, filtros, favoritos y perfil.
-    chat.py            # Endpoint /chatbot/api y ruta /chat.
+    chat.py            # Endpoint /chatbot/api.
   services/
     ai_client.py       # Cliente unificado de IA (Groq + proveedores alternativos).
     chat_skills.py     # Habilidades del chatbot: detección de intención y búsqueda en BD.
@@ -365,24 +367,25 @@ Botón visible en la cabecera de navegación que permite cambiar el idioma de to
 **Comportamiento:**
 
 - La preferencia se guarda en `localStorage` bajo la clave `boe_lang_v1` y se aplica automáticamente en cada visita.
-- El botón muestra `EN` cuando el idioma activo es español, y `ES` cuando es inglés.
+- El botón muestra `🇬🇧 EN` cuando el idioma activo es español, y `🇪🇸 ES` cuando es inglés.
 
 **Elementos traducidos:**
 
 | Zona | Textos traducidos |
 |---|---|
-| Navbar | Menú de usuario, login, registro, cerrar sesión |
-| Panel de accesibilidad | Título, descripciones y todos los botones |
-| Chatbot | Título, saludo de bienvenida, placeholder y botón Enviar |
-| Banner de cookies | Texto informativo, botones y modal de configuración |
+| Navbar y footer | Menú de usuario, login/registro, enlaces legales |
+| Portada, resultados y tablas | Filtros, cabeceras, botones, estados (`Nuevo`, `Visitada`) |
+| Perfil y formularios | Login, registro, recuperación/reset de contraseña, configuración y newsletter |
+| Legales y cookies | Política de cookies, privacidad, aviso legal y modal/banner de cookies |
+| Chatbot | Título, saludo, placeholder, envío, estados de voz y errores de conexión |
 
 **Implementación técnica:**
 
 - Sistema i18n 100% client-side en `templates/base.html` (sin librerías externas).
-- Los elementos a traducir llevan el atributo `data-i18n="clave"` (o `data-i18n-placeholder` para inputs).
-- El diccionario de traducciones vive en un objeto JS con las claves `es` y `en`.
+- Los elementos a traducir usan `data-i18n`, `data-i18n-placeholder`, `data-i18n-title` y `data-i18n-aria-label`.
+- El diccionario de traducciones vive en un objeto JS con claves `es` y `en`, más helper global `window.__boeI18n`.
+- Se emite el evento `boe:lang-changed` para refrescar textos que se renderizan dinámicamente por JavaScript.
 - El atributo `lang` del elemento `<html>` se actualiza automáticamente al cambiar de idioma.
-- El contenido dinámico (oposiciones del BOE) permanece en español al provenir de la base de datos.
 
 ---
 
@@ -503,7 +506,7 @@ Asistente conversacional flotante especializado en el contenido del BOE, accesib
 - **Voz (TTS / STT)**: Lectura en voz alta de las respuestas (Web Speech API) y dictado por voz para escribir preguntas.
 - **Historial persistente**: El hilo de conversación se guarda en `localStorage` (`boe_chat_messages_v1`) y se restaura al reabrir el chat.
 - **Borrador automático**: El texto en curso se guarda en `localStorage` (`boe_chat_draft_v1`) para no perderlo si se cierra el panel.
-- **Vista dedicada**: Página completa del chat disponible en `/chat` (`templates/chat.html`).
+- **Vista dedicada**: `templates/chat.html` se integró con la plantilla base para heredar navbar, selector ES/EN y traducciones globales.
 
 **Arquitectura del chatbot:**
 
@@ -514,7 +517,7 @@ app/
     ai_client.py           # Cliente unificado (Groq + fallback a otros proveedores)
     chat_skills.py         # Habilidades: búsqueda en BD, detección de intención, filtrado
   routes/
-    chat.py                # Blueprint /chatbot/api (POST) y ruta /chat (GET)
+    chat.py                # Blueprint /chatbot/api (POST)
 templates/
   chat.html                # Vista de pantalla completa del chatbot
 tests/
@@ -610,7 +613,7 @@ I_S25_Web_Scraping/
 │   │   ├── main.py          # Rutas principales (index, scraping, estadísticas y legales)
 │   │   ├── auth.py          # Autenticación (login, registro, logout)
 │   │   ├── user.py          # Panel de usuario (perfil, favoritos, alertas)
-│   │   └── chat.py          # Endpoint /chatbot/api y vista /chat
+│   │   └── chat.py          # Endpoint /chatbot/api
 │   ├── services/
 │   │   ├── __init__.py
 │   │   ├── ai_client.py     # Cliente unificado de IA
@@ -635,6 +638,7 @@ I_S25_Web_Scraping/
 │   ├── user_newsletter.html
 │   ├── tarjeta.html         # Vista de oposiciones por departamento
 │   ├── chat.html            # Vista de pantalla completa del chatbot
+│   ├── estadisticas.html    # Página de estadísticas de visitas
 │   ├── politica_cookies.html
 │   ├── politica_privacidad.html
 │   ├── aviso_legal.html
@@ -653,7 +657,34 @@ I_S25_Web_Scraping/
 
 ---
 
-## 🔮 Próximos pasos recomendados
+## � Página de estadísticas
+
+Vista pública accesible desde el menú de navegación en `/estadisticas` que muestra el uso de la plataforma.
+
+**Contenido:**
+
+| Sección | Descripción |
+|---|---|
+| Gráfico de barras | Top departamentos ordenados por número de visitas (Chart.js) |
+| Resumen global | Visitas autenticadas, visitas anónimas y total combinado |
+| Tabla de detalle | Listado completo de departamentos con su contador de visitas |
+
+**Cómo se registran las visitas:**
+
+- **Usuarios autenticados**: Al hacer clic en el título o PDF de una oposición se llama a `POST /marcar_visitada/<id>` y se guarda en la tabla `visitas` de `usuarios.db`.
+- **Usuarios anónimos**: El mismo endpoint, sin sesión, incrementa un contador en la tabla `visitas_global` de `usuarios.db`.
+- Las estadísticas combinan ambas fuentes para mostrar el total real de interacciones.
+
+**Implementación técnica:**
+
+- Ruta: `GET /estadisticas` en `app/routes/main.py`.
+- Enlace en el navbar con soporte de traducción ES/EN (`nav.stats`).
+- Plantilla: `templates/estadisticas.html`.
+- Nueva tabla SQLite: `visitas_global (oposicion_id, total_visitas, fecha_ultima_visita)`.
+
+---
+
+## �🔮 Próximos pasos recomendados
 
 - ✅ Migrar a PostgreSQL para producción (mejor rendimiento con múltiples workers).
 - ✅ Añadir tests unitarios y de integración.
