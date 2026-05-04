@@ -7,7 +7,7 @@
   <img src="{{ url_for('static', filename='img/hero-oposiciones.avif') }}" alt="Oposiciones BOE" class="hero-image"
     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
   <div class="hero-fallback" style="display: none;">
-    <h1 class="hero-title">Oposiciones BOE</h1>
+    <h1 class="hero-title" data-i18n="index.hero.title">Oposiciones BOE</h1>
   </div>
 </div>
 
@@ -15,20 +15,20 @@
 
 <div class="card mb-4 shadow-sm">
   <div class="card-body">
-    <h5 class="card-title mb-3">Filtros de búsqueda</h5>
+    <h5 class="card-title mb-3" data-i18n="index.filters.title">Filtros de búsqueda</h5>
 
     <form method="GET" action="{{ url_for('main.resultados') }}">
       <div class="row g-3 mb-3">
         <div class="col-md-8">
-          <label for="busqueda" class="form-label">Buscar por palabras clave:</label>
+          <label for="busqueda" class="form-label" data-i18n="index.filters.keywords">Buscar por palabras clave:</label>
           <input type="text" class="form-control" id="busqueda" name="busqueda" value="{{ busqueda or '' }}"
-            placeholder="Buscar en identificador, título, control...">
-          <small class="text-muted">Busca en: Identificador, Título y Control</small>
+            placeholder="Buscar en identificador, título, control..." data-i18n-placeholder="index.filters.keywords.placeholder">
+          <small class="text-muted" data-i18n="index.filters.keywords.help">Busca en: Identificador, Título y Control</small>
         </div>
         <div class="col-md-4">
-          <label for="provincia" class="form-label">Filtrar por provincia:</label>
+          <label for="provincia" class="form-label" data-i18n="index.filters.province">Filtrar por provincia:</label>
           <select class="form-select" id="provincia" name="provincia">
-            <option value="">Todas las provincias</option>
+            <option value="" data-i18n="index.filters.province.all">Todas las provincias</option>
             {% for prov in provincias %}
             <option value="{{ prov }}" {% if provincia_filtro==prov %}selected{% endif %}>
               {{ prov }}
@@ -40,7 +40,7 @@
 
       <div class="row g-3 mt-2">
         <div class="col-12 d-flex justify-content-center gap-2">
-          <button type="submit" class="btn btn-primary flex-fill" style="max-width: 150px;">Filtrar</button>
+          <button type="submit" class="btn btn-primary flex-fill" style="max-width: 150px;" data-i18n="index.filters.submit">Filtrar</button>
         </div>
       </div>
     </form>
@@ -49,10 +49,10 @@
 
 <!-- Contenedor principal con tarjetas de departamentos -->
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-  <h2 class="mb-0">Últimas novedades</h2>
+  <h2 class="mb-0" data-i18n="index.latest">Últimas novedades</h2>
   
   <span class="text-muted fs-5">
-    📅 Actualizado a {{ fecha_hoy }}
+    <span data-i18n="index.updated">📅 Actualizado a</span> {{ fecha_hoy }}
   </span>
 </div>
 <div class="row g-4">
@@ -66,7 +66,7 @@
           <div class="line-clamp">{{ opo['titulo'] }}</div>
           <div>
             <a href="{{ opo['url_html'] }}"
-               target="_blank">Leer más</a>
+               target="_blank" data-i18n="index.readmore">Leer más</a>
           </div>
         </div>
       </div>
