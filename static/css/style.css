@@ -562,7 +562,7 @@ html[data-theme="dark"] .navbar .dropdown-menu .dropdown-item:hover {
 }
 
 .mi-footer a {
-    color: #ffcc00;
+    color: white;
     text-decoration: none;
 }
 
@@ -1099,6 +1099,10 @@ html[data-theme="dark"] a {
 html[data-theme="dark"] .mi-footer {
     background-color: #25273b;
     color: var(--color-footer);
+}
+
+html[data-theme="dark"] .mi-footer a {
+    color: white !important;
 }
 
 /* Inputs, selects y filtros */

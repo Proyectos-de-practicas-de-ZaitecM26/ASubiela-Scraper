@@ -3,6 +3,7 @@ import os
 
 from flask import (
     Blueprint,
+    app,
     render_template,
     request,
     redirect,
@@ -44,7 +45,8 @@ def create_user(
         age=age,
         telefono=telefono,
         nivel_estudios=nivel_estudios,
-        titulacion=titulacion
+        titulacion=titulacion,
+        role='viewer'
     )
 
     try:
@@ -77,7 +79,6 @@ def login():
         next_url = request.args.get("next") or url_for("main.index")
         return redirect(next_url)
     return render_template("login.html")
-
 
 @auth_bp.route("/logout")
 @login_required

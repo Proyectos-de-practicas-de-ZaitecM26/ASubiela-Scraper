@@ -4,6 +4,7 @@ from datetime import datetime
 
 sa_db = SQLAlchemy()
 
+
 class Oposicion(sa_db.Model):
     __tablename__ = 'oposiciones'
     
@@ -17,10 +18,16 @@ class Oposicion(sa_db.Model):
     fecha = sa_db.Column(sa_db.String, index=True)
     provincia = sa_db.Column(sa_db.String)
 
-    # Relaciones inversas (opcional, para facilitar consultas)
-    usuarios_visitas = sa_db.relationship('Visita', backref='oposicion', cascade="all, delete-orphan")
-    usuarios_favoritos = sa_db.relationship('Favorita', backref='oposicion', cascade="all, delete-orphan")
-    visitas_globales = sa_db.relationship('VisitaGlobal', backref='oposicion', cascade="all, delete-orphan")
+    # Relaciones inversas
+    usuarios_visitas = sa_db.relationship(
+        'Visita', backref='oposicion', cascade="all, delete-orphan"
+    )
+    usuarios_favoritos = sa_db.relationship(
+        'Favorita', backref='oposicion', cascade="all, delete-orphan"
+    )
+    visitas_globales = sa_db.relationship(
+        'VisitaGlobal', backref='oposicion', cascade="all, delete-orphan"
+    )
 
 
 class User(sa_db.Model, UserMixin):
@@ -29,6 +36,11 @@ class User(sa_db.Model, UserMixin):
     id = sa_db.Column(sa_db.Integer, primary_key=True, autoincrement=True)
     email = sa_db.Column(sa_db.String, unique=True, nullable=False)
     password_hash = sa_db.Column(sa_db.String, nullable=False)
+
+    # 🔥 ROLE CORRECTO (SOLO UNO)
+    ROLES = ('admin', 'manager', 'viewer')
+    role = sa_db.Column(sa_db.String(20), nullable=False, default='viewer')
+
     name = sa_db.Column(sa_db.String)
     apellidos = sa_db.Column(sa_db.String)
     age = sa_db.Column(sa_db.Integer)
@@ -37,21 +49,32 @@ class User(sa_db.Model, UserMixin):
     nivel_estudios = sa_db.Column(sa_db.String)
     titulacion = sa_db.Column(sa_db.String)
 
-    # Relaciones directas
-    visitas = sa_db.relationship('Visita', backref='user', cascade="all, delete-orphan")
-    favoritas = sa_db.relationship('Favorita', backref='user', cascade="all, delete-orphan")
-    # uselist=False porque en tu SQL suscripciones tiene user_id como PK (relación 1 a 1)
-    suscripcion = sa_db.relationship('Suscripcion', backref='user', uselist=False, cascade="all, delete-orphan")
+    # Relaciones
+    visitas = sa_db.relationship(
+        'Visita', backref='user', cascade="all, delete-orphan"
+    )
+    favoritas = sa_db.relationship(
+        'Favorita', backref='user', cascade="all, delete-orphan"
+    )
+    suscripcion = sa_db.relationship(
+        'Suscripcion', backref='user', uselist=False, cascade="all, delete-orphan"
+    )
 
 
 class Visita(sa_db.Model):
     __tablename__ = 'visitas'
-    __table_args__ = (sa_db.UniqueConstraint('user_id', 'oposicion_id', name='unique_user_visita'),)
+    __table_args__ = (
+        sa_db.UniqueConstraint('user_id', 'oposicion_id', name='unique_user_visita'),
+    )
     
     id = sa_db.Column(sa_db.Integer, primary_key=True, autoincrement=True)
     user_id = sa_db.Column(sa_db.Integer, sa_db.ForeignKey('users.id'), nullable=False)
     oposicion_id = sa_db.Column(sa_db.Integer, sa_db.ForeignKey('oposiciones.id'), nullable=False)
-    fecha_visita = sa_db.Column(sa_db.String, nullable=False, default=lambda: datetime.now().isoformat())
+    fecha_visita = sa_db.Column(
+        sa_db.String,
+        nullable=False,
+        default=lambda: datetime.now().isoformat()
+    )
 
 
 class VisitaGlobal(sa_db.Model):
@@ -64,7 +87,9 @@ class VisitaGlobal(sa_db.Model):
 
 class Favorita(sa_db.Model):
     __tablename__ = 'favoritas'
-    __table_args__ = (sa_db.UniqueConstraint('user_id', 'oposicion_id', name='unique_user_favorito'),)
+    __table_args__ = (
+        sa_db.UniqueConstraint('user_id', 'oposicion_id', name='unique_user_favorito'),
+    )
     
     id = sa_db.Column(sa_db.Integer, primary_key=True, autoincrement=True)
     user_id = sa_db.Column(sa_db.Integer, sa_db.ForeignKey('users.id'), nullable=False)
@@ -75,8 +100,11 @@ class Favorita(sa_db.Model):
 class Suscripcion(sa_db.Model):
     __tablename__ = 'suscripciones'
     
-    # Aquí user_id es PK, lo que implica que un usuario solo tiene una fila de suscripción
-    user_id = sa_db.Column(sa_db.Integer, sa_db.ForeignKey('users.id'), primary_key=True)
+    user_id = sa_db.Column(
+        sa_db.Integer,
+        sa_db.ForeignKey('users.id'),
+        primary_key=True
+    )
     alerta_diaria = sa_db.Column(sa_db.Integer, default=0)
     alerta_favoritos = sa_db.Column(sa_db.Integer, default=0)
     departamento_filtro = sa_db.Column(sa_db.String)
