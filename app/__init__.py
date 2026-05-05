@@ -1,31 +1,27 @@
 import os
 from flask import Flask, session, request, redirect, url_for
 from flask_login import current_user
-from flask_sqlalchemy import SQLAlchemy
-from flask_admin import Admin
-from flask_admin.contrib.sqla import ModelView
+from datetime import datetime, date, timedelta
 
 
 from .config import Config
 from .data import sa_db, User
 from .data import inicializar_y_migrar
 
-from datetime import datetime, date, timedelta
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-from .extensions import mail, login_manager
 
-limiter = Limiter(
-    key_func=get_remote_address,
-    default_limits=[],
-)
+from .config import Config
+from .data import sa_db, User, inicializar_y_migrar
+from .extensions import mail, login_manager
 
 from app.routes.main import main_bp
 from app.routes.auth import auth_bp
 from app.routes.user import user_bp
 from app.routes.chat import chat_bp
 
-def create_app():
+from .extensions import mail, login_manager, limiter
+
+
+def create_app(config_overrides=None):
     app = Flask(
         __name__,
         template_folder=os.path.join(os.path.dirname(__file__), "..", "templates"),
@@ -33,13 +29,19 @@ def create_app():
     )
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite3"
 
+    # DB
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite3"
+
     # Config
     app.config.from_object(Config)
     app.config.update(
-        SESSION_COOKIE_HTTPONLY=True, 
-        SESSION_COOKIE_SAMESITE='Lax',
-        PERMANENT_SESSION_LIFETIME=timedelta(minutes=30)
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
+        PERMANENT_SESSION_LIFETIME=timedelta(minutes=30),
     )
+
+    if config_overrides:
+        app.config.update(config_overrides)
 
     # Extensiones
     mail.init_app(app)
@@ -47,21 +49,21 @@ def create_app():
     limiter.init_app(app)
     login_manager.login_view = "auth.login"
 
-    # 🔥 FIX IMPORTANTE: user_loader de Flask-Login
+    # DB
+    sa_db.init_app(app)
+
+    # 🔐 USER LOADER
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # Blueprints
+    # 🧩 BLUEPRINTS
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(chat_bp)
-    
-    # Initialize the db extension
-    sa_db.init_app(app)
 
-    # DB init
+    # 🛠️ DB INIT
     with app.app_context():
         inicializar_y_migrar()
 
@@ -100,10 +102,7 @@ def create_app():
         if not date_str or len(date_str) != 8 or not date_str.isdigit():
             return date_str
         try:
-            year = date_str[0:4]
-            month = date_str[4:6]
-            day = date_str[6:8]
-            return f"{day}/{month}/{year}"
+            return f"{date_str[6:8]}/{date_str[4:6]}/{date_str[0:4]}"
         except Exception:
             return date_str
 
@@ -117,65 +116,36 @@ def create_app():
 
     @app.template_filter("resaltar_titulo")
     def resaltar_titulo(titulo):
-        """Resalta palabras clave importantes en el título de las oposiciones"""
         import re
 
         if not titulo:
             return titulo
 
-        # Palabras clave a resaltar
         palabras_clave = [
-            r"\bconvocatoria\b",
-            r"\boposiciones?\b",
-            r"\bplazas?\b",
-            r"\bacceso\b",
-            r"\bproceso selectivo\b",
-            r"\bfuncionarios?\b",
-            r"\bcuerpo\b",
-            r"\bescala\b",
-            r"\bgrupo [A-C][12]?\b",
-            r"\bturnos?\b",
-            r"\blibre\b",
-            r"\bpromoci[oó]n interna\b",
-            r"\bdiscapacidad\b",
-            r"\breserva\b",
-            r"\bnombramientos?\b",
-            r"\bceses?\b",
-            r"\bampliac[ió]n\b",
-            r"\bmodificac[ió]n\b",
-            r"\banulaci[oó]n\b",
-            r"\bcorrecc[ió]n\b",
-            r"\bpresentac[ió]n\b",
-            r"\badmisi[oó]n\b",
-            r"\bexclusi[oó]n\b",
-            r"\blista[s]?\b",
-            r"\bsolicitantes?\b",
-            r"\badmitidos?\b",
-            r"\bexcluidos?\b",
-            r"\btribunal\b",
-            r"\bcalificac[ió]n\b",
-            r"\bpruebas?\b",
-            r"\bejercicio[s]?\b",
-            r"\bexamen\b",
-            r"\bresultados?\b",
-            r"\bpuntuac[ió]n\b",
-            r"\badjudicac[ió]n\b",
-            r"\bdestinos?\b",
-            r"\btraslados?\b",
-            r"\bayuntamiento?\b"
+            r"\bconvocatoria\b", r"\boposiciones?\b", r"\bplazas?\b",
+            r"\bacceso\b", r"\bproceso selectivo\b", r"\bfuncionarios?\b",
+            r"\bcuerpo\b", r"\bescala\b", r"\bgrupo [A-C][12]?\b",
+            r"\bturnos?\b", r"\blibre\b", r"\bpromoci[oó]n interna\b",
+            r"\bdiscapacidad\b", r"\breserva\b", r"\bnombramientos?\b",
+            r"\bceses?\b", r"\bampliac[ió]n\b", r"\bmodificac[ió]n\b",
+            r"\banulaci[oó]n\b", r"\bcorrecc[ió]n\b", r"\bpresentac[ió]n\b",
+            r"\badmisi[oó]n\b", r"\bexclusi[oó]n\b", r"\blista[s]?\b",
+            r"\bsolicitantes?\b", r"\badmitidos?\b", r"\bexcluidos?\b",
+            r"\btribunal\b", r"\bcalificac[ió]n\b", r"\bpruebas?\b",
+            r"\bejercicio[s]?\b", r"\bexamen\b", r"\bresultados?\b",
+            r"\bpuntuac[ió]n\b", r"\badjudicac[ió]n\b", r"\bdestinos?\b",
+            r"\btraslados?\b", r"\bayuntamiento?\b"
         ]
 
-        # Reemplazar cada palabra clave con versión en negrita
         resultado = titulo
         for patron in palabras_clave:
             resultado = re.sub(
                 patron,
-                lambda m: f'<strong>{m.group()}</strong>',
+                lambda m: f"<strong>{m.group()}</strong>",
                 resultado,
                 flags=re.IGNORECASE,
             )
 
         return resultado
-
 
     return app

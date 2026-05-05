@@ -45,7 +45,8 @@ def create_user(
         age=age,
         telefono=telefono,
         nivel_estudios=nivel_estudios,
-        titulacion=titulacion
+        titulacion=titulacion,
+        role='viewer'
     )
 
     try:

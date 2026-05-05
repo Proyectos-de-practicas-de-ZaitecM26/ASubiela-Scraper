@@ -59,4 +59,28 @@ def inicializar_y_migrar():
             conn_o.close()
             current_app.logger.info("✅ Migración finalizada. Ya puedes borrar los archivos .db antiguos.")
     else:
+        # Garantizar que la columna 'role' exista y hacer backfill si falta.
+        try:
+            db_path = 'instance/boe_scraper.db'
+            if os.path.exists(db_path):
+                conn = sqlite3.connect(db_path)
+                cur = conn.cursor()
+                # Comprobar columnas existentes en users
+                cur.execute("PRAGMA table_info('users')")
+                cols = [r[1] for r in cur.fetchall()]
+                if 'role' not in cols:
+                    current_app.logger.info("⚠️ Columna 'role' ausente en users. Añadiendo columna por defecto='viewer'...")
+                    try:
+                        cur.execute("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'viewer'")
+                        conn.commit()
+                        # Asegurar valores no nulos
+                        cur.execute("UPDATE users SET role='viewer' WHERE role IS NULL")
+                        conn.commit()
+                        current_app.logger.info("✅ Columna 'role' añadida y valores por defecto aplicados.")
+                    except Exception as e:
+                        current_app.logger.exception(f"Error al añadir columna 'role': {e}")
+                conn.close()
+        except Exception:
+            current_app.logger.exception("Error comprobando/migrando la columna 'role' en la base de datos existente.")
+
         current_app.logger.info("✅ No es necesario ejecutar la migración, ya estamos usando SqlAlchemy")
