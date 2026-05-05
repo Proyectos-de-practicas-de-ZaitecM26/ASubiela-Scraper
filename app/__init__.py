@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 
+
 from .config import Config
 from .data import sa_db, User
 from .data import inicializar_y_migrar
@@ -30,6 +31,7 @@ def create_app():
         template_folder=os.path.join(os.path.dirname(__file__), "..", "templates"),
         static_folder=os.path.join(os.path.dirname(__file__), "..", "static"),
     )
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite3"
 
     # Config
     app.config.from_object(Config)
@@ -63,6 +65,11 @@ def create_app():
     with app.app_context():
         inicializar_y_migrar()
 
+    #admin
+    admin = Admin(name="Admin") 
+    admin.init_app(app)
+    admin.add_view(ModelView(User, sa_db.session, name="Usuarios", endpoint="admin_users"))
+    print(app.url_map)
 
     # =========================
     # THEME
@@ -85,7 +92,7 @@ def create_app():
     @app.context_processor
     def inject_user():
         return {"user": current_user}
-
+    
     # ==== Filtros Jinja ====
 
     @app.template_filter("format_date")
