@@ -1,9 +1,13 @@
 from datetime import datetime
 import os
+import random
+import string
+from PIL import Image, ImageDraw, ImageFont
+import io
+from flask import send_file, session
 
 from flask import (
     Blueprint,
-    app,
     render_template,
     request,
     redirect,
@@ -22,6 +26,38 @@ from ..email_utils import (
 )
 
 auth_bp = Blueprint("auth", __name__)
+
+@auth_bp.route("/captcha")
+def captcha():
+    texto = generar_texto_captcha()
+    session["captcha"] = texto
+    return send_file(generar_imagen_captcha(texto), mimetype='image/png')
+
+def generar_texto_captcha(longitud=6):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=longitud))
+
+
+def generar_imagen_captcha(texto):
+    img = Image.new('RGB', (200, 80), (255, 255, 255))
+    draw = ImageDraw.Draw(img)
+    font = ImageFont.load_default()
+
+    draw.text((20, 20), texto, font=font, fill=(0, 0, 0))
+
+    # ruido básico
+    for _ in range(5):
+        draw.line((
+            random.randint(0, 200),
+            random.randint(0, 80),
+            random.randint(0, 200),
+            random.randint(0, 80)
+        ), fill=(0, 0, 0))
+
+    img_io = io.BytesIO()
+    img.save(img_io, 'PNG')
+    img_io.seek(0)
+
+    return img_io
 
 
 def create_user(
@@ -69,14 +105,25 @@ def login():
     if request.method == "POST":
         email = (request.form.get("email") or "").strip()
         password = request.form.get("password") or ""
+        user_captcha = (request.form.get("captcha") or "").strip()
+
+        # 🔐 CAPTCHA CHECK PRIMERO
+        if not user_captcha or user_captcha.upper() != session.get("captcha"):
+            flash("Captcha incorrecto.", "danger")
+            return redirect(url_for("auth.login"))
+
+        session.pop("captcha", None)  # limpiar captcha
+
         user = find_user_by_email(email)
+
         if not user or not check_password_hash(user.password_hash, password):
             flash("Credenciales inválidas.", "danger")
             return redirect(url_for("auth.login"))
+
         login_user(user)
         flash("Sesión iniciada.", "success")
-        next_url = request.args.get("next") or url_for("main.index")
-        return redirect(next_url)
+        return redirect(url_for("main.index"))
+
     return render_template("login.html")
 
 @auth_bp.route("/logout")
