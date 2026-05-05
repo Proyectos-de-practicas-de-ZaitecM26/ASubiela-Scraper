@@ -18,3 +18,4 @@ openrouter==0.8.1 # sdk openrouter (elephant, chatgpt, nvidia, etc)
 openai==2.32.0 # Cliente OpenAI requerido por ai_client
 groq==0.20.0 # SDK IA Groq
 python-dotenv>=1.0.0 # Variables de entorno desde .env
+Pillow>=10.0.0 # Procesamiento de imágenes (PIL)
