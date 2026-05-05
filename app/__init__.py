@@ -17,6 +17,7 @@ from app.routes.main import main_bp
 from app.routes.auth import auth_bp
 from app.routes.user import user_bp
 from app.routes.chat import chat_bp
+from app.admin.views import init_admin
 
 from .extensions import mail, login_manager, limiter
 
@@ -67,10 +68,8 @@ def create_app(config_overrides=None):
     with app.app_context():
         inicializar_y_migrar()
 
-    #admin
-    admin = Admin(name="Admin") 
-    admin.init_app(app)
-    admin.add_view(ModelView(User, sa_db.session, name="Usuarios", endpoint="admin_users"))
+    # Admin
+    init_admin(app)
     print(app.url_map)
 
     # =========================
