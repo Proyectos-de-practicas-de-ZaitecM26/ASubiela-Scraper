@@ -4,6 +4,10 @@ from flask_login import current_user
 from datetime import datetime, date, timedelta
 
 
+from .config import Config
+from .data import sa_db, User
+from .data import inicializar_y_migrar
+
 
 from .config import Config
 from .data import sa_db, User, inicializar_y_migrar
@@ -23,6 +27,7 @@ def create_app(config_overrides=None):
         template_folder=os.path.join(os.path.dirname(__file__), "..", "templates"),
         static_folder=os.path.join(os.path.dirname(__file__), "..", "static"),
     )
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite3"
 
     # DB
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite3"
@@ -62,9 +67,11 @@ def create_app(config_overrides=None):
     with app.app_context():
         inicializar_y_migrar()
 
-    # 🔥 ADMIN (SOLO UNA VEZ)
-    from app.admin.views import init_admin
-    init_admin(app)
+    #admin
+    admin = Admin(name="Admin") 
+    admin.init_app(app)
+    admin.add_view(ModelView(User, sa_db.session, name="Usuarios", endpoint="admin_users"))
+    print(app.url_map)
 
     # =========================
     # THEME
@@ -86,21 +93,9 @@ def create_app(config_overrides=None):
 
     @app.context_processor
     def inject_user():
-        return {"user": current_user, "getattr": getattr}
-
-    # 🔐 PROTEGER ADMIN
-    @app.before_request
-    def protect_admin_routes():
-        if request.path.startswith("/admin"):
-            if not current_user.is_authenticated:
-                return redirect(url_for("auth.login"))
-            if getattr(current_user, "role", None) != "admin":
-                from flask import abort
-                abort(403)
-
-    # =========================
-    # FILTROS
-    # =========================
+        return {"user": current_user}
+    
+    # ==== Filtros Jinja ====
 
     @app.template_filter("format_date")
     def format_date_filter(date_str):
