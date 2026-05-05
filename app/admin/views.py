@@ -151,6 +151,33 @@ class UserModelView(SecureModelView):
 
 
 # =========================
+# 📄 OPOSICIONES ADMIN
+# =========================
+
+class OposicionModelView(SecureModelView):
+
+    # Mostrar 10 resultados por página por defecto
+    page_size = 10
+    can_set_page_size = True
+    page_size_options = [10, 25, 50]
+
+    column_list = ['id', 'fecha', 'departamento', 'provincia', 'identificador', 'titulo']
+
+    column_labels = {
+        'id': 'ID',
+        'fecha': 'Fecha',
+        'departamento': 'Departamento',
+        'provincia': 'Provincia',
+        'identificador': 'Identificador',
+        'titulo': 'Título',
+    }
+
+    column_filters = ['fecha', 'departamento', 'provincia', 'identificador']
+    column_searchable_list = ['titulo', 'identificador', 'departamento', 'provincia']
+    column_default_sort = ('fecha', True)
+
+
+# =========================
 # 📊 ANALYTICS
 # =========================
 
@@ -220,7 +247,7 @@ def init_admin(app):
 
     # 📄 Oposiciones
     admin.add_view(
-        SecureModelView(
+        OposicionModelView(
             Oposicion,
             sa_db.session,
             name="Oposiciones",
