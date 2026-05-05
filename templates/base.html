@@ -40,6 +40,9 @@ Define la estructura general de la aplicación:
 
         <div id="navbarContent" class="nav-collapse">
           <ul class="nav-list">
+            <li class="nav-item">
+              <a href="{{ url_for('main.estadisticas') }}" class="btn-login" data-i18n="nav.stats">📊 Estadísticas</a>
+            </li>
             {% if user.is_authenticated %}
             <li class="nav-item user-menu">
               <a class="user-link" href="#" id="userMenuDropdown" aria-haspopup="true" aria-expanded="false">
@@ -83,7 +86,10 @@ Define la estructura general de la aplicación:
           </ul>
         </div>
 
-        <button id="langToggle" class="btn-lang-toggle" aria-label="Cambiar idioma" title="Switch to English">EN</button>
+        <button id="langToggle" class="btn-lang-toggle" aria-label="Switch to English" title="Switch to English">
+          <span class="lang-flag" aria-hidden="true">🇬🇧</span>
+          <span class="lang-code">EN</span>
+        </button>
 
         <a href="{{ url_for('toggle_theme') }}" class="btn-toggle-theme" aria-label="Toggle theme">
           {% if theme == 'dark' %}🔆{% else %}🌓{% endif %}
@@ -106,13 +112,13 @@ Define la estructura general de la aplicación:
   </main>
 
   <footer class="mi-footer">
-    <p class="mb-1">© 2026 Oposiciones BOE</p>
+    <p class="mb-1" data-i18n="footer.copy">© 2026 Oposiciones BOE</p>
     <p class="mb-0">
-      <a href="{{ url_for('main.politica_cookies') }}">Politica de Cookies</a>
+      <a href="{{ url_for('main.politica_cookies') }}" data-i18n="footer.cookies">Politica de Cookies</a>
       ·
-      <a href="{{ url_for('main.politica_privacidad') }}">Politica de Privacidad</a>
+      <a href="{{ url_for('main.politica_privacidad') }}" data-i18n="footer.privacy">Politica de Privacidad</a>
       ·
-      <a href="{{ url_for('main.aviso_legal') }}">Aviso Legal</a>
+      <a href="{{ url_for('main.aviso_legal') }}" data-i18n="footer.legal">Aviso Legal</a>
     </p>
   </footer>
 
@@ -252,15 +258,22 @@ document.addEventListener("DOMContentLoaded", function () {
     (function () {
       const btn = document.getElementById('departamentosFiltroBtn');
       const checks = () => Array.from(document.querySelectorAll('input[name="departamentos"]'));
+      function t(key, fallback) {
+        const i18n = window.__boeI18n;
+        if (!i18n || typeof i18n.t !== 'function') return fallback;
+        return i18n.t(key, fallback);
+      }
+
       function updateBtn() {
         const c = checks().filter(i => i.checked);
         if (!btn) return;
-        if (c.length === 0) btn.innerText = 'Todos los departamentos';
+        if (c.length === 0) btn.innerText = t('filters.departments.all', 'Todos los departamentos');
         else if (c.length === 1) btn.innerText = c[0].value;
-        else btn.innerText = c.length + ' seleccionados';
+        else btn.innerText = c.length + ' ' + t('filters.departments.selected', 'seleccionados');
       }
       document.addEventListener('change', function (e) { if (e.target && e.target.name === 'departamentos') updateBtn(); });
       document.addEventListener('DOMContentLoaded', updateBtn);
+      document.addEventListener('boe:lang-changed', updateBtn);
     })();
   </script>
   <!-- CRIS -->
@@ -348,6 +361,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   <script> // Lógica para botones de FAVORITO y MARCAR COMO VISITADA
     document.addEventListener('DOMContentLoaded', () => {
+      const i18n = window.__boeI18n;
+      const t = (key, fallback) => (i18n && typeof i18n.t === 'function') ? i18n.t(key, fallback) : fallback;
 
       // 1️⃣ Lógica del botón FAVORITO (Estrella)
       document.querySelectorAll('.toggle-favorito-btn').forEach(button => {
@@ -374,10 +389,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Cambiar clase del icono según estado
                 if (data.is_favorite) {
                   icon.classList.replace('bi-star', 'bi-star-fill');
-                  icon.title = "Quitar de Favoritos";
+                  icon.title = t('table.favorite.remove', 'Quitar de Favoritos');
                 } else {
                   icon.classList.replace('bi-star-fill', 'bi-star');
-                  icon.title = "Marcar como Favorito";
+                  icon.title = t('table.favorite.add', 'Marcar como Favorito');
                 }
               } else {
                 console.warn("Error al actualizar favoritos en servidor.");
@@ -421,7 +436,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (badgesDiv && !badgesDiv.querySelector('.badge-visitada')) {
               const span = document.createElement('span');
               span.className = 'badge-visitada'; // Clase CSS definida en styles.css
-              span.textContent = '🔵 Visitada';
+              span.textContent = t('table.badgeVisited', '🔵 Visitada');
               badgesDiv.appendChild(span);
             }
           }
@@ -544,9 +559,10 @@ document.addEventListener("DOMContentLoaded", function () {
       function setVoiceListeningState(listening) {
         isListening = listening;
         if (!voiceBtn) return;
+        const t = (key, fallback) => (window.__boeI18n && typeof window.__boeI18n.t === 'function') ? window.__boeI18n.t(key, fallback) : fallback;
         voiceBtn.classList.toggle('listening', listening);
-        voiceBtn.setAttribute('aria-label', listening ? 'Detener dictado' : 'Dictado por voz');
-        voiceBtn.title = listening ? 'Detener' : 'Hablar';
+        voiceBtn.setAttribute('aria-label', listening ? t('chat.voice.stopDictation', 'Detener dictado') : t('chat.voice.dictation', 'Dictado por voz'));
+        voiceBtn.title = listening ? t('chat.voice.stop', 'Detener') : t('chat.voice.speak', 'Hablar');
       }
 
       function openPanel() {
@@ -618,10 +634,11 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       if (speakToggleBtn) {
+        const t = (key, fallback) => (window.__boeI18n && typeof window.__boeI18n.t === 'function') ? window.__boeI18n.t(key, fallback) : fallback;
         if (!hasTTS) {
           ttsEnabled = false;
           speakToggleBtn.disabled = true;
-          speakToggleBtn.title = 'Lectura por voz no compatible en este navegador';
+          speakToggleBtn.title = t('chat.tts.unsupported', 'Lectura por voz no compatible en este navegador');
           speakToggleBtn.setAttribute('aria-pressed', 'false');
         }
 
@@ -632,28 +649,29 @@ document.addEventListener("DOMContentLoaded", function () {
           speakToggleBtn.setAttribute('aria-pressed', ttsEnabled ? 'true' : 'false');
 
           if (ttsEnabled) {
-            speakToggleBtn.title = 'Lectura activada';
-            speakText('Lectura activada.');
+            speakToggleBtn.title = t('chat.tts.enabled', 'Lectura activada');
+            speakText(t('chat.tts.enabledSay', 'Lectura activada.'));
           } else {
-            speakToggleBtn.title = 'Lectura desactivada';
+            speakToggleBtn.title = t('chat.tts.disabled', 'Lectura desactivada');
             stopSpeaking();
           }
         });
 
         speakToggleBtn.classList.toggle('active', false);
         speakToggleBtn.setAttribute('aria-pressed', 'false');
-        speakToggleBtn.title = 'Lectura desactivada';
+        speakToggleBtn.title = t('chat.tts.disabled', 'Lectura desactivada');
       }
 
       if (replayBtn) {
+        const t = (key, fallback) => (window.__boeI18n && typeof window.__boeI18n.t === 'function') ? window.__boeI18n.t(key, fallback) : fallback;
         if (!hasTTS) {
           replayBtn.disabled = true;
-          replayBtn.title = 'No disponible en este navegador';
+          replayBtn.title = t('chat.unavailable', 'No disponible en este navegador');
         }
 
         replayBtn.addEventListener('click', function () {
           if (!lastBotAnswer) {
-            addMessage('Todavia no tengo una respuesta para leer.', 'bot');
+            addMessage(t('chat.noAnswerYet', 'Todavia no tengo una respuesta para leer.'), 'bot');
             return;
           }
           speakText(lastBotAnswer);
@@ -667,9 +685,10 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       if (voiceBtn) {
+        const t = (key, fallback) => (window.__boeI18n && typeof window.__boeI18n.t === 'function') ? window.__boeI18n.t(key, fallback) : fallback;
         if (!SpeechRecognition) {
           voiceBtn.disabled = true;
-          voiceBtn.title = 'Reconocimiento de voz no compatible en este navegador';
+          voiceBtn.title = t('chat.stt.unsupported', 'Reconocimiento de voz no compatible en este navegador');
         } else {
           recognition = new SpeechRecognition();
           recognition.lang = 'es-ES';
@@ -686,7 +705,7 @@ document.addEventListener("DOMContentLoaded", function () {
           };
 
           recognition.onerror = function () {
-            addMessage('No pude acceder al microfono. Revisa permisos del navegador.', 'bot');
+            addMessage(t('chat.mic.error', 'No pude acceder al microfono. Revisa permisos del navegador.'), 'bot');
             refreshLastBotAnswer();
             setVoiceListeningState(false);
           };
@@ -708,7 +727,7 @@ document.addEventListener("DOMContentLoaded", function () {
               setVoiceListeningState(true);
               input.focus();
             } catch (_) {
-              addMessage('No se pudo iniciar el dictado por voz.', 'bot');
+              addMessage(t('chat.stt.startError', 'No se pudo iniciar el dictado por voz.'), 'bot');
               refreshLastBotAnswer();
               setVoiceListeningState(false);
             }
@@ -717,6 +736,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       form.addEventListener('submit', async function (e) {
+        const t = (key, fallback) => (window.__boeI18n && typeof window.__boeI18n.t === 'function') ? window.__boeI18n.t(key, fallback) : fallback;
         e.preventDefault();
         const text = input.value.trim();
         if (!text) return;
@@ -732,7 +752,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const typing = document.createElement('div');
         typing.className = 'chatbot-msg bot';
-        typing.textContent = 'Escribiendo...';
+        typing.textContent = t('chat.typing', 'Escribiendo...');
         messages.appendChild(typing);
         messages.scrollTop = messages.scrollHeight;
 
@@ -747,7 +767,7 @@ document.addEventListener("DOMContentLoaded", function () {
           typing.remove();
 
           if (!res.ok || !data.ok) {
-            const errText = data.error || 'No pude responder ahora mismo.';
+            const errText = data.error || t('chat.error.response', 'No pude responder ahora mismo.');
             addMessage(errText, 'bot');
             lastBotAnswer = errText;
             speakText(errText);
@@ -758,7 +778,7 @@ document.addEventListener("DOMContentLoaded", function () {
           }
         } catch (error) {
           typing.remove();
-          const errText = 'Error de conexión con el asistente.';
+          const errText = t('chat.error.connection', 'Error de conexión con el asistente.');
           addMessage(errText, 'bot');
           lastBotAnswer = errText;
           speakText(errText);
@@ -1019,6 +1039,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const translations = {
         es: {
+          'nav.stats':             '📊 Estadísticas',
           'nav.vigentes':          '📚 Oposiciones vigentes',
           'nav.favoritas':         '⭐ Mis Favoritas',
           'nav.alertas':           '🔔 Alertas por correo',
@@ -1026,7 +1047,193 @@ document.addEventListener("DOMContentLoaded", function () {
           'nav.salir':             '🔓 Salir',
           'nav.login':             'Iniciar sesión',
           'nav.register':          'Registrarse',
-          'nav.admin':             'Administrador',
+          'footer.copy':           '© 2026 Oposiciones BOE',
+          'footer.cookies':        'Politica de Cookies',
+          'footer.privacy':        'Politica de Privacidad',
+          'footer.legal':          'Aviso Legal',
+          'filters.departments.all': 'Todos los departamentos',
+          'filters.departments.selected': 'seleccionados',
+          'index.hero.title':       'Oposiciones BOE',
+          'index.filters.title':    'Filtros de búsqueda',
+          'index.filters.keywords': 'Buscar por palabras clave:',
+          'index.filters.keywords.placeholder': 'Buscar en identificador, título, control...',
+          'index.filters.keywords.help': 'Busca en: Identificador, Título y Control',
+          'index.filters.province': 'Filtrar por provincia:',
+          'index.filters.province.all': 'Todas las provincias',
+          'index.filters.submit':   'Filtrar',
+          'index.latest':           'Últimas novedades',
+          'index.updated':          '📅 Actualizado a',
+          'index.readmore':         'Leer más',
+          'login.title':            'Iniciar sesión',
+          'login.email':            'Email',
+          'login.password':         'Contraseña',
+          'login.forgot':           '¿Olvidaste tu contraseña?',
+          'login.submit':           'Entrar',
+          'register.title':         'Crear Nueva Cuenta',
+          'register.photo.select':  'Seleccionar foto de perfil',
+          'register.photo.help':    'Opcional - Formatos: JPG, PNG, GIF, WEBP',
+          'register.section.basic': 'Información Básica',
+          'register.name':          'Nombre',
+          'register.lastname':      'Apellidos',
+          'register.age':           'Edad',
+          'register.age.placeholder': 'Selecciona tu edad',
+          'register.section.education': 'Formación Académica',
+          'register.education.level': 'Nivel de Estudios',
+          'register.education.degree': 'Titulación',
+          'register.education.degree.placeholder': 'Ej: Grado en Derecho',
+          'register.section.extra': 'Información Adicional',
+          'register.optional':      '(Opcional)',
+          'register.phone':         'Teléfono',
+          'register.phone.placeholder': '+34 600 000 000',
+          'register.section.access': 'Datos de Acceso',
+          'register.email':         'Email',
+          'register.email.placeholder': 'tu@email.com',
+          'register.password':      'Contraseña',
+          'register.password.help': 'Mínimo 6 caracteres',
+          'register.submit':        'Crear Cuenta',
+          'register.hasAccount':    '¿Ya tienes cuenta? Inicia sesión',
+          'register.select':        'Selecciona...',
+          'common.back':            '← Volver',
+          'common.searchFilters':   'Filtros de búsqueda',
+          'common.searchByKeywords':'Buscar por palabras clave:',
+          'common.searchPlaceholder':'Buscar en identificador, título, control...',
+          'common.searchHelp':      'Busca en: Identificador, Título y Control',
+          'common.filterByProvince':'Filtrar por provincia:',
+          'common.allProvinces':    'Todas las provincias',
+          'common.filter':          'Filtrar',
+          'common.clear':           'Limpiar',
+          'common.totalRecords':    'Total de registros:',
+          'common.from':            'Desde:',
+          'common.to':              'Hasta:',
+          'common.departments':     'Departamentos:',
+          'table.identifier':       'Identificador',
+          'table.title':            'Título',
+          'table.department':       'Departamento',
+          'table.control':          'Control',
+          'table.pdf':              'PDF',
+          'table.date':             'Fecha',
+          'table.openBoeWeb':       'Ver en la web del BOE',
+          'table.markFavorite':     'Marcar como favorito',
+          'table.favorite.add':     'Marcar como Favorito',
+          'table.favorite.remove':  'Quitar de Favoritos',
+          'table.badgeNew':         '🟡 Nuevo',
+          'table.badgeVisited':     '🔵 Visitada',
+          'table.viewPdf':          'Ver PDF',
+          'table.pagination':       'Paginación de oposiciones',
+          'results.title':          'Resultados de la búsqueda',
+          'results.empty':          'No hay oposiciones registradas con estos filtros de búsqueda.',
+          'dept.title':             'Oposiciones',
+          'dept.empty':             'No hay oposiciones registradas para este departamento.',
+          'user.searchPlaceholder': 'Buscar por identificador, título, control...',
+          'user.departments.help':  'Selecciona uno o varios departamentos para filtrar los resultados.',
+          'user.empty':             'No hay oposiciones disponibles con estos filtros.',
+          'user.account':           'Mi Cuenta',
+          'config.title':           '⚙️ Configuración',
+          'config.tab.profile':     'Perfil',
+          'config.tab.security':    'Seguridad',
+          'config.photo.change':    'Cambiar foto',
+          'config.photo.formats':   'Formatos: JPG, PNG, GIF, WEBP',
+          'config.email':           'Correo Electrónico',
+          'config.profileTitle':    'Mi Perfil',
+          'config.email.locked':    'El email no se puede modificar',
+          'config.save':            'Guardar Cambios',
+          'config.changePassword':  'Cambiar Contraseña',
+          'config.password.note':   'Para proteger tu cuenta, te pediremos tu contraseña actual antes de realizar cambios.',
+          'config.password.current':'Contraseña Actual',
+          'config.password.new':    'Nueva Contraseña',
+          'config.password.confirm':'Confirmar Nueva',
+          'config.password.update': 'Actualizar Contraseña',
+          'newsletter.title':       '📬 Gestión de Alertas',
+          'newsletter.mail.title':  'Notificaciones por Correo',
+          'newsletter.mail.desc':   'Configura aquí qué notificaciones quieres recibir en:',
+          'newsletter.daily':       'Resumen diario',
+          'newsletter.daily.help':  'Recibe un email cada mañana con las nuevas oposiciones publicadas.',
+          'newsletter.filterDept':  'Filtrar resumen por departamento:',
+          'newsletter.selectDepartments': 'Seleccionar departamentos...',
+          'newsletter.filter.help': 'Selecciona "Todos" para recibir cualquier oposición o marca solo los departamentos que te interesen.',
+          'newsletter.save':        'Guardar Preferencias',
+          'newsletter.now.title':   '¿Quieres recibir las alertas de hoy?',
+          'newsletter.now.help':    'Te enviaremos ahora mismo un resumen con las últimas oposiciones según tu filtro.',
+          'newsletter.now.send':    'Enviar Email Ahora',
+          'forgot.title':           'Recuperar Contraseña',
+          'forgot.help':            'Introduce tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.',
+          'forgot.submit':          'Enviar Enlace de Recuperación',
+          'forgot.backLogin':       'Volver al Login',
+          'reset.title':            'Nueva Contraseña',
+          'reset.help':             'Introduce tu nueva contraseña para',
+          'reset.confirm':          'Confirmar Contraseña',
+          'reset.submit':           'Restablecer Contraseña',
+          'chat.voice.stopDictation':'Detener dictado',
+          'chat.voice.dictation':   'Dictado por voz',
+          'chat.voice.stop':        'Detener',
+          'chat.voice.speak':       'Hablar',
+          'chat.tts.unsupported':   'Lectura por voz no compatible en este navegador',
+          'chat.tts.enabled':       'Lectura activada',
+          'chat.tts.enabledSay':    'Lectura activada.',
+          'chat.tts.disabled':      'Lectura desactivada',
+          'chat.unavailable':       'No disponible en este navegador',
+          'chat.noAnswerYet':       'Todavia no tengo una respuesta para leer.',
+          'chat.stt.unsupported':   'Reconocimiento de voz no compatible en este navegador',
+          'chat.mic.error':         'No pude acceder al microfono. Revisa permisos del navegador.',
+          'chat.stt.startError':    'No se pudo iniciar el dictado por voz.',
+          'chat.typing':            'Escribiendo...',
+          'chat.error.response':    'No pude responder ahora mismo.',
+          'chat.error.connection':  'Error de conexión con el asistente.',
+          'chatpage.title':         '🤖 Chatbot activo',
+          'chatpage.header':        '💬 Chat BOE',
+          'chatpage.welcome':       'Hola 👋 soy tu asistente de oposiciones',
+          'chatpage.placeholder':   'Escribe algo...',
+          'chatpage.sendAria':      'Enviar mensaje',
+          'legal.title':            'Aviso Legal',
+          'legal.updated':          'Ultima actualizacion: 21 de abril de 2026',
+          'legal.s1.title':         '1. Titular del sitio web',
+          'legal.s1.body':          'Este sitio web es una plataforma informativa y de apoyo para el seguimiento de convocatorias de oposiciones publicadas en el BOE.',
+          'legal.s2.title':         '2. Condiciones de uso',
+          'legal.s2.body':          'El acceso y uso del sitio implica la aceptacion de las condiciones aqui descritas. El usuario se compromete a utilizar la plataforma de forma licita y respetuosa.',
+          'legal.s3.title':         '3. Propiedad intelectual',
+          'legal.s3.body':          'Los contenidos y elementos propios de la plataforma (diseno, textos y funcionalidades) estan protegidos por la normativa de propiedad intelectual e industrial. Queda prohibida su reproduccion no autorizada.',
+          'legal.s4.title':         '4. Limitacion de responsabilidad',
+          'legal.s4.body':          'La informacion mostrada se ofrece con finalidad informativa. Aunque se aplican medidas para mantenerla actualizada, no se garantiza la ausencia total de errores o interrupciones del servicio.',
+          'legal.s5.title':         '5. Enlaces de terceros',
+          'legal.s5.body':          'Esta web puede incluir enlaces a recursos externos. No nos responsabilizamos del contenido o politicas de dichos sitios.',
+          'legal.s6.title':         '6. Legislacion aplicable',
+          'legal.s6.body':          'Este aviso legal se rige por la legislacion espanola y la normativa europea aplicable.',
+          'privacy.title':          'Politica de Privacidad',
+          'privacy.intro':          'Esta Politica de Privacidad explica como tratamos los datos personales de los usuarios de esta plataforma, en cumplimiento del Reglamento (UE) 2016/679 (RGPD) y de la normativa aplicable.',
+          'privacy.s1.title':       '1. Datos que tratamos',
+          'privacy.s1.i1':          'Datos identificativos y de contacto que facilitas al registrarte.',
+          'privacy.s1.i2':          'Preferencias de uso relacionadas con alertas y funcionalidades de la plataforma.',
+          'privacy.s1.i3':          'Informacion tecnica basica para garantizar seguridad y funcionamiento.',
+          'privacy.s2.title':       '2. Finalidades del tratamiento',
+          'privacy.s2.i1':          'Gestionar tu cuenta de usuario y el acceso a la plataforma.',
+          'privacy.s2.i2':          'Prestar servicios de seguimiento y alertas sobre oposiciones.',
+          'privacy.s2.i3':          'Mejorar la experiencia de uso y prevenir usos indebidos.',
+          'privacy.s3.title':       '3. Base juridica',
+          'privacy.s3.body':        'La base juridica puede ser la ejecucion de la relacion contractual, el cumplimiento de obligaciones legales, el consentimiento del usuario y/o el interes legitimo, segun corresponda a cada tratamiento.',
+          'privacy.s4.title':       '4. Conservacion de datos',
+          'privacy.s4.body':        'Conservamos los datos durante el tiempo necesario para cumplir las finalidades descritas y las obligaciones legales aplicables.',
+          'privacy.s5.title':       '5. Derechos de las personas usuarias',
+          'privacy.s5.body':        'Puedes ejercer tus derechos de acceso, rectificacion, supresion, oposicion, limitacion del tratamiento y portabilidad, conforme a la normativa vigente.',
+          'privacy.s6.body':        'Para cualquier consulta sobre privacidad, utiliza los canales de contacto habilitados en la aplicacion.',
+          'cookies.title':          'Politica de Cookies',
+          'cookies.intro':          'En este sitio web utilizamos cookies propias y de terceros para garantizar el funcionamiento del servicio, analizar el uso de la plataforma y personalizar la experiencia del usuario.',
+          'cookies.s1.title':       '1. Que son las cookies',
+          'cookies.s1.body':        'Las cookies son pequenos archivos de texto que se almacenan en tu dispositivo cuando visitas una pagina web. Permiten recordar informacion sobre tu visita para mejorar la navegacion y ofrecer funcionalidades adaptadas.',
+          'cookies.s2.title':       '2. Tipos de cookies que utilizamos',
+          'cookies.s2.i1t':         'Cookies esenciales:',
+          'cookies.s2.i1b':         'necesarias para el funcionamiento basico de la web y la seguridad de la sesion.',
+          'cookies.s2.i2t':         'Cookies analiticas:',
+          'cookies.s2.i2b':         'nos ayudan a entender como se utiliza el sitio para mejorar contenidos y rendimiento.',
+          'cookies.s2.i3t':         'Cookies de personalizacion:',
+          'cookies.s2.i3b':         'permiten recordar tus preferencias para ofrecer una experiencia mas adaptada.',
+          'cookies.s3.title':       '3. Base legal',
+          'cookies.s3.body':        'El uso de cookies no esenciales se realiza sobre la base de tu consentimiento, que puedes aceptar, rechazar o configurar desde el banner de cookies disponible en el sitio.',
+          'cookies.s4.title':       '4. Gestion de preferencias',
+          'cookies.s4.body':        'Puedes modificar tus preferencias de cookies en cualquier momento desde las opciones del banner. Ademas, puedes eliminar o bloquear cookies desde la configuracion de tu navegador.',
+          'cookies.s5.title':       '5. Conservacion',
+          'cookies.s5.body':        'Las cookies se conservaran durante el tiempo estrictamente necesario para cumplir su finalidad o hasta que retires tu consentimiento, segun corresponda en cada categoria.',
+          'cookies.s6.title':       '6. Contacto',
+          'cookies.s6.body':        'Si tienes dudas sobre esta Politica de Cookies, puedes escribirnos a traves de los canales de contacto publicados en la aplicacion.',
           'a11y.title':            'Accesibilidad visual',
           'a11y.help':             'Ajustes para mejorar legibilidad y contraste.',
           'a11y.contrast':         'Alto contraste',
@@ -1056,6 +1263,7 @@ document.addEventListener("DOMContentLoaded", function () {
           'cookie.save':           'Guardar preferencias',
         },
         en: {
+          'nav.stats':             '📊 Stats',
           'nav.vigentes':          '📚 Current vacancies',
           'nav.favoritas':         '⭐ My Favourites',
           'nav.alertas':           '🔔 Email alerts',
@@ -1063,6 +1271,193 @@ document.addEventListener("DOMContentLoaded", function () {
           'nav.salir':             '🔓 Log out',
           'nav.login':             'Log in',
           'nav.register':          'Sign up',
+          'footer.copy':           '© 2026 BOE Public Jobs',
+          'footer.cookies':        'Cookies Policy',
+          'footer.privacy':        'Privacy Policy',
+          'footer.legal':          'Legal Notice',
+          'filters.departments.all': 'All departments',
+          'filters.departments.selected': 'selected',
+          'index.hero.title':       'BOE Public Jobs',
+          'index.filters.title':    'Search filters',
+          'index.filters.keywords': 'Search by keywords:',
+          'index.filters.keywords.placeholder': 'Search in identifier, title, control...',
+          'index.filters.keywords.help': 'Search in: Identifier, Title and Control',
+          'index.filters.province': 'Filter by province:',
+          'index.filters.province.all': 'All provinces',
+          'index.filters.submit':   'Filter',
+          'index.latest':           'Latest updates',
+          'index.updated':          '📅 Updated on',
+          'index.readmore':         'Read more',
+          'login.title':            'Log in',
+          'login.email':            'Email',
+          'login.password':         'Password',
+          'login.forgot':           'Forgot your password?',
+          'login.submit':           'Sign in',
+          'register.title':         'Create New Account',
+          'register.photo.select':  'Select profile picture',
+          'register.photo.help':    'Optional - Formats: JPG, PNG, GIF, WEBP',
+          'register.section.basic': 'Basic Information',
+          'register.name':          'First name',
+          'register.lastname':      'Last name',
+          'register.age':           'Age',
+          'register.age.placeholder': 'Select your age',
+          'register.section.education': 'Academic Education',
+          'register.education.level': 'Education level',
+          'register.education.degree': 'Degree',
+          'register.education.degree.placeholder': 'Ex: Law Degree',
+          'register.section.extra': 'Additional Information',
+          'register.optional':      '(Optional)',
+          'register.phone':         'Phone',
+          'register.phone.placeholder': '+34 600 000 000',
+          'register.section.access': 'Access Details',
+          'register.email':         'Email',
+          'register.email.placeholder': 'you@email.com',
+          'register.password':      'Password',
+          'register.password.help': 'At least 6 characters',
+          'register.submit':        'Create Account',
+          'register.hasAccount':    'Already have an account? Log in',
+          'register.select':        'Select...',
+          'common.back':            '← Back',
+          'common.searchFilters':   'Search filters',
+          'common.searchByKeywords':'Search by keywords:',
+          'common.searchPlaceholder':'Search in identifier, title, control...',
+          'common.searchHelp':      'Search in: Identifier, Title and Control',
+          'common.filterByProvince':'Filter by province:',
+          'common.allProvinces':    'All provinces',
+          'common.filter':          'Filter',
+          'common.clear':           'Clear',
+          'common.totalRecords':    'Total records:',
+          'common.from':            'From:',
+          'common.to':              'To:',
+          'common.departments':     'Departments:',
+          'table.identifier':       'Identifier',
+          'table.title':            'Title',
+          'table.department':       'Department',
+          'table.control':          'Control',
+          'table.pdf':              'PDF',
+          'table.date':             'Date',
+          'table.openBoeWeb':       'View on BOE website',
+          'table.markFavorite':     'Mark as favorite',
+          'table.favorite.add':     'Mark as Favorite',
+          'table.favorite.remove':  'Remove from Favorites',
+          'table.badgeNew':         '🟡 New',
+          'table.badgeVisited':     '🔵 Visited',
+          'table.viewPdf':          'View PDF',
+          'table.pagination':       'Jobs pagination',
+          'results.title':          'Search results',
+          'results.empty':          'No records found with these search filters.',
+          'dept.title':             'Public jobs',
+          'dept.empty':             'No records found for this department.',
+          'user.searchPlaceholder': 'Search by identifier, title, control...',
+          'user.departments.help':  'Select one or more departments to filter the results.',
+          'user.empty':             'No vacancies available with these filters.',
+          'user.account':           'My Account',
+          'config.title':           '⚙️ Settings',
+          'config.tab.profile':     'Profile',
+          'config.tab.security':    'Security',
+          'config.photo.change':    'Change photo',
+          'config.photo.formats':   'Formats: JPG, PNG, GIF, WEBP',
+          'config.email':           'Email',
+          'config.profileTitle':    'My Profile',
+          'config.email.locked':    'Email cannot be modified',
+          'config.save':            'Save changes',
+          'config.changePassword':  'Change password',
+          'config.password.note':   'To protect your account, we will ask for your current password before applying changes.',
+          'config.password.current':'Current password',
+          'config.password.new':    'New password',
+          'config.password.confirm':'Confirm new password',
+          'config.password.update': 'Update password',
+          'newsletter.title':       '📬 Alerts Management',
+          'newsletter.mail.title':  'Email Notifications',
+          'newsletter.mail.desc':   'Configure which notifications you want to receive at:',
+          'newsletter.daily':       'Daily summary',
+          'newsletter.daily.help':  'Receive an email every morning with newly published vacancies.',
+          'newsletter.filterDept':  'Filter summary by department:',
+          'newsletter.selectDepartments': 'Select departments...',
+          'newsletter.filter.help': 'Select "All" to receive any vacancy or choose only departments you are interested in.',
+          'newsletter.save':        'Save preferences',
+          'newsletter.now.title':   'Do you want to receive today\'s alerts?',
+          'newsletter.now.help':    'We will send you a summary right now with the latest vacancies based on your filter.',
+          'newsletter.now.send':    'Send Email Now',
+          'forgot.title':           'Recover Password',
+          'forgot.help':            'Enter your email and we will send you a link to reset your password.',
+          'forgot.submit':          'Send Recovery Link',
+          'forgot.backLogin':       'Back to Login',
+          'reset.title':            'New Password',
+          'reset.help':             'Enter your new password for',
+          'reset.confirm':          'Confirm Password',
+          'reset.submit':           'Reset Password',
+          'chat.voice.stopDictation':'Stop dictation',
+          'chat.voice.dictation':   'Voice dictation',
+          'chat.voice.stop':        'Stop',
+          'chat.voice.speak':       'Speak',
+          'chat.tts.unsupported':   'Voice reading is not supported in this browser',
+          'chat.tts.enabled':       'Reading enabled',
+          'chat.tts.enabledSay':    'Reading enabled.',
+          'chat.tts.disabled':      'Reading disabled',
+          'chat.unavailable':       'Not available in this browser',
+          'chat.noAnswerYet':       'I still do not have an answer to read.',
+          'chat.stt.unsupported':   'Speech recognition is not supported in this browser',
+          'chat.mic.error':         'I could not access the microphone. Check browser permissions.',
+          'chat.stt.startError':    'Could not start voice dictation.',
+          'chat.typing':            'Typing...',
+          'chat.error.response':    'I could not answer right now.',
+          'chat.error.connection':  'Connection error with the assistant.',
+          'chatpage.title':         '🤖 Chatbot active',
+          'chatpage.header':        '💬 BOE Chat',
+          'chatpage.welcome':       'Hi 👋 I am your public jobs assistant',
+          'chatpage.placeholder':   'Type something...',
+          'chatpage.sendAria':      'Send message',
+          'legal.title':            'Legal Notice',
+          'legal.updated':          'Last updated: 21 April 2026',
+          'legal.s1.title':         '1. Website owner',
+          'legal.s1.body':          'This website is an informational platform to support the tracking of public job announcements published in the BOE.',
+          'legal.s2.title':         '2. Terms of use',
+          'legal.s2.body':          'Accessing and using the website implies acceptance of these conditions. The user agrees to use the platform lawfully and respectfully.',
+          'legal.s3.title':         '3. Intellectual property',
+          'legal.s3.body':          'The platform\'s own content and elements (design, texts and features) are protected by intellectual and industrial property regulations. Unauthorized reproduction is prohibited.',
+          'legal.s4.title':         '4. Limitation of liability',
+          'legal.s4.body':          'The information is provided for informational purposes. Although measures are applied to keep it updated, the total absence of errors or service interruptions cannot be guaranteed.',
+          'legal.s5.title':         '5. Third-party links',
+          'legal.s5.body':          'This website may include links to external resources. We are not responsible for the content or policies of those sites.',
+          'legal.s6.title':         '6. Applicable law',
+          'legal.s6.body':          'This legal notice is governed by Spanish law and applicable European regulations.',
+          'privacy.title':          'Privacy Policy',
+          'privacy.intro':          'This Privacy Policy explains how we process users\' personal data in compliance with Regulation (EU) 2016/679 (GDPR) and applicable regulations.',
+          'privacy.s1.title':       '1. Data we process',
+          'privacy.s1.i1':          'Identification and contact data provided during registration.',
+          'privacy.s1.i2':          'Usage preferences related to alerts and platform features.',
+          'privacy.s1.i3':          'Basic technical information to ensure security and operation.',
+          'privacy.s2.title':       '2. Processing purposes',
+          'privacy.s2.i1':          'Manage your user account and platform access.',
+          'privacy.s2.i2':          'Provide tracking services and alerts about public jobs.',
+          'privacy.s2.i3':          'Improve user experience and prevent misuse.',
+          'privacy.s3.title':       '3. Legal basis',
+          'privacy.s3.body':        'The legal basis may be contractual performance, compliance with legal obligations, user consent and/or legitimate interest, as appropriate for each processing activity.',
+          'privacy.s4.title':       '4. Data retention',
+          'privacy.s4.body':        'We keep data for the time necessary to fulfill the described purposes and applicable legal obligations.',
+          'privacy.s5.title':       '5. User rights',
+          'privacy.s5.body':        'You can exercise your rights of access, rectification, deletion, objection, processing limitation and portability according to current regulations.',
+          'privacy.s6.body':        'For any privacy query, use the contact channels enabled in the application.',
+          'cookies.title':          'Cookies Policy',
+          'cookies.intro':          'On this website we use first- and third-party cookies to ensure service operation, analyze platform usage and personalize the user experience.',
+          'cookies.s1.title':       '1. What cookies are',
+          'cookies.s1.body':        'Cookies are small text files stored on your device when you visit a website. They allow remembering information about your visit to improve navigation and offer adapted features.',
+          'cookies.s2.title':       '2. Types of cookies we use',
+          'cookies.s2.i1t':         'Essential cookies:',
+          'cookies.s2.i1b':         'required for the basic functioning of the website and session security.',
+          'cookies.s2.i2t':         'Analytical cookies:',
+          'cookies.s2.i2b':         'help us understand site usage to improve content and performance.',
+          'cookies.s2.i3t':         'Personalization cookies:',
+          'cookies.s2.i3b':         'allow remembering your preferences to offer a more tailored experience.',
+          'cookies.s3.title':       '3. Legal basis',
+          'cookies.s3.body':        'The use of non-essential cookies is based on your consent, which you can accept, reject or configure from the cookie banner available on the site.',
+          'cookies.s4.title':       '4. Preference management',
+          'cookies.s4.body':        'You can change your cookie preferences at any time from the banner options. You can also delete or block cookies from your browser settings.',
+          'cookies.s5.title':       '5. Retention',
+          'cookies.s5.body':        'Cookies will be kept for the strictly necessary time to fulfill their purpose or until you withdraw consent, as applicable in each category.',
+          'cookies.s6.title':       '6. Contact',
+          'cookies.s6.body':        'If you have questions about this Cookie Policy, you can write to us through the contact channels published in the application.',
           'a11y.title':            'Visual accessibility',
           'a11y.help':             'Settings to improve readability and contrast.',
           'a11y.contrast':         'High contrast',
@@ -1101,6 +1496,13 @@ document.addEventListener("DOMContentLoaded", function () {
         try { localStorage.setItem(LANG_KEY, lang); } catch (_) {}
       }
 
+      function t(key, fallback) {
+        const lang = getLang();
+        const dict = translations[lang] || translations.es;
+        if (dict[key] !== undefined) return dict[key];
+        return fallback !== undefined ? fallback : key;
+      }
+
       function applyLang(lang) {
         const dict = translations[lang] || translations.es;
 
@@ -1114,6 +1516,18 @@ document.addEventListener("DOMContentLoaded", function () {
         document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
           const key = el.getAttribute('data-i18n-placeholder');
           if (dict[key] !== undefined) el.placeholder = dict[key];
+        });
+
+        // data-i18n-title -> title
+        document.querySelectorAll('[data-i18n-title]').forEach(function (el) {
+          const key = el.getAttribute('data-i18n-title');
+          if (dict[key] !== undefined) el.title = dict[key];
+        });
+
+        // data-i18n-aria-label -> aria-label
+        document.querySelectorAll('[data-i18n-aria-label]').forEach(function (el) {
+          const key = el.getAttribute('data-i18n-aria-label');
+          if (dict[key] !== undefined) el.setAttribute('aria-label', dict[key]);
         });
 
         // Etiqueta dinámica del tamaño de texto en el panel de accesibilidad
@@ -1131,16 +1545,27 @@ document.addEventListener("DOMContentLoaded", function () {
         const btn = document.getElementById('langToggle');
         if (btn) {
           if (lang === 'es') {
-            btn.textContent = 'EN';
+            btn.innerHTML = '<span class="lang-flag" aria-hidden="true">🇬🇧</span><span class="lang-code">EN</span>';
             btn.title = 'Switch to English';
             btn.setAttribute('aria-label', 'Switch to English');
           } else {
-            btn.textContent = 'ES';
+            btn.innerHTML = '<span class="lang-flag" aria-hidden="true">🇪🇸</span><span class="lang-code">ES</span>';
             btn.title = 'Cambiar a español';
             btn.setAttribute('aria-label', 'Cambiar a español');
           }
         }
+
+        document.dispatchEvent(new CustomEvent('boe:lang-changed', {
+          detail: { lang: lang, dict: dict }
+        }));
       }
+
+      window.__boeI18n = {
+        getLang,
+        setLang,
+        applyLang,
+        t
+      };
 
       document.addEventListener('DOMContentLoaded', function () {
         const current = getLang();
