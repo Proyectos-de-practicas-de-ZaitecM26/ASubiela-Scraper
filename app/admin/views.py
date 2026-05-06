@@ -1,9 +1,12 @@
 from flask_admin import Admin, AdminIndexView, expose, BaseView
 from flask_admin.contrib.sqla import ModelView
+from flask_admin.contrib.sqla.view import tools, sql_cast, Unicode, or_
 from flask_admin.actions import action
-from flask import redirect, url_for, abort, flash
+from flask import redirect, url_for, abort, flash, request
 from flask_login import current_user
 from sqlalchemy import func
+import unicodedata
+from datetime import datetime
 
 from ..data import sa_db, User, Oposicion, Favorita, Visita, Suscripcion
 
@@ -155,10 +158,11 @@ class UserModelView(SecureModelView):
 # =========================
 
 class OposicionModelView(SecureModelView):
+    list_template = 'admin/oposiciones_list.html'
 
     # Mostrar 10 resultados por página por defecto
     page_size = 10
-    can_set_page_size = True
+    can_set_page_size = False
     page_size_options = [10, 25, 50]
 
     column_list = ['id', 'fecha', 'departamento', 'provincia', 'identificador', 'titulo']
@@ -172,9 +176,88 @@ class OposicionModelView(SecureModelView):
         'titulo': 'Título',
     }
 
-    column_filters = ['fecha', 'departamento', 'provincia', 'identificador']
+    column_filters = []
     column_searchable_list = ['titulo', 'identificador', 'departamento', 'provincia']
     column_default_sort = ('fecha', True)
+    action_disallowed_list = ['delete', 'eliminar_seleccionados']
+
+    @staticmethod
+    def _normalize_text(value):
+        if not value:
+            return ""
+        normalized = unicodedata.normalize("NFD", value)
+        without_accents = "".join(ch for ch in normalized if not unicodedata.combining(ch))
+        return without_accents.lower().strip()
+
+    @staticmethod
+    def _normalize_sql_expr(column):
+        expr = func.lower(sql_cast(column, Unicode))
+        for src, dst in (("á", "a"), ("é", "e"), ("í", "i"), ("ó", "o"), ("ú", "u"), ("ü", "u"), ("ñ", "n")):
+            expr = func.replace(expr, src, dst)
+        return expr
+
+    def _apply_search(self, query, count_query, joins, count_joins, search):
+        terms = search.split(" ")
+
+        for term in terms:
+            normalized_term = self._normalize_text(term)
+            if not normalized_term:
+                continue
+
+            stmt = tools.parse_like_term(normalized_term)
+
+            filter_stmt = []
+            count_filter_stmt = []
+
+            for field, path in self._search_fields:
+                query, joins, alias = self._apply_path_joins(query, joins, path, inner_join=False)
+
+                count_alias = None
+                if count_query is not None:
+                    count_query, count_joins, count_alias = self._apply_path_joins(
+                        count_query, count_joins, path, inner_join=False
+                    )
+
+                column = field if alias is None else getattr(alias, field.key)
+                normalized_column = self._normalize_sql_expr(column)
+                filter_stmt.append(normalized_column.ilike(stmt))
+
+                if count_query is not None:
+                    column = field if count_alias is None else getattr(count_alias, field.key)
+                    normalized_count_column = self._normalize_sql_expr(column)
+                    count_filter_stmt.append(normalized_count_column.ilike(stmt))
+
+            query = query.filter(or_(*filter_stmt))
+
+            if count_query is not None:
+                count_query = count_query.filter(or_(*count_filter_stmt))
+
+        return query, count_query, joins, count_joins
+
+    @expose('/guardar_favorita/<int:oposicion_id>', methods=('POST',))
+    def guardar_favorita(self, oposicion_id):
+        if not self.is_accessible():
+            return self.inaccessible_callback('guardar_favorita')
+
+        existente = Favorita.query.filter_by(
+            user_id=current_user.id,
+            oposicion_id=oposicion_id,
+        ).first()
+
+        if existente:
+            flash('La oposición ya estaba en favoritos.', 'info')
+            return redirect(request.referrer or self.get_url('.index_view'))
+
+        favorita = Favorita(
+            user_id=current_user.id,
+            oposicion_id=oposicion_id,
+            fecha_favorito=datetime.now().isoformat(),
+        )
+        sa_db.session.add(favorita)
+        sa_db.session.commit()
+        flash('Oposición guardada en favoritos.', 'success')
+
+        return redirect(request.referrer or self.get_url('.index_view'))
 
 
 # =========================
