@@ -9,7 +9,7 @@ from app.data import sa_db, User
 
 def create_admin(app, email, password, name="Admin"):
     with app.app_context():
-        sa_db.init_app(app)
+      # sa_db.init_app(app)
         sa_db.create_all()
         email = email.lower().strip()
         user = User.query.filter_by(email=email).first()

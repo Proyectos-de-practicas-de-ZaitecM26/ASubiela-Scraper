@@ -1,11 +1,12 @@
 import os
 from datetime import datetime
-from flask import Blueprint, render_template, flash, redirect, url_for, request, jsonify, current_app
+from flask import Blueprint, render_template, flash, redirect, url_for, request, jsonify, current_app, session
+
 from flask_login import current_user, login_required
 from ..auth_utils import require_role
 from ..services.chatbot import chatbot
-from .. import limiter
-from ..data import sa_db, Oposicion, User, Visita, Favorita
+from app.extensions import limiter 
+from ..data import sa_db, Oposicion, User, Visita, VisitaGlobal, Favorita
 from sqlalchemy import or_, func
 from ..scraping.boe_scraper import (
     scrape_boe_ultimos_dias,
@@ -143,24 +144,62 @@ def admin_scrape_ultimos_30():
 
 @main_bp.route("/estadisticas")
 def estadisticas():
-    # Hacemos un JOIN entre Visitas y Oposiciones y agrupamos por departamento
-    stats_query = sa_db.session.query(
+    visitas_autenticadas = sa_db.session.query(
         Oposicion.departamento,
         func.count(Visita.id).label('total_visitas')
     ).join(Visita, Visita.oposicion_id == Oposicion.id)\
      .group_by(Oposicion.departamento)\
      .order_by(sa_db.desc('total_visitas')).all()
+    visitas_anonimas = sa_db.session.query(
+        Oposicion.departamento,
+        func.sum(VisitaGlobal.total_visitas).label('total_visitas')
+    ).join(VisitaGlobal, VisitaGlobal.oposicion_id == Oposicion.id)\
+     .group_by(Oposicion.departamento).all()
 
-    if not stats_query:
-        return render_template("estadisticas.html", stats=[], labels=[], values=[])
+    total_autenticadas = sum((fila.total_visitas or 0) for fila in visitas_autenticadas)
+    total_anonimas = sum((fila.total_visitas or 0) for fila in visitas_anonimas)
 
-    labels = [s.departamento for s in stats_query]
-    values = [s.total_visitas for s in stats_query]
-    
-    # Convertimos a diccionario para mantener compatibilidad con tu template
-    stats = [{"departamento": s.departamento, "total_visitas": s.total_visitas} for s in stats_query]
+    acumulado_por_departamento = {}
 
-    return render_template("estadisticas.html", stats=stats, labels=labels, values=values)
+    for fila in visitas_autenticadas:
+        if not fila.departamento:
+            continue
+        acumulado_por_departamento[fila.departamento] = (
+            acumulado_por_departamento.get(fila.departamento, 0) + (fila.total_visitas or 0)
+        )
+
+    for fila in visitas_anonimas:
+        if not fila.departamento:
+            continue
+        acumulado_por_departamento[fila.departamento] = (
+            acumulado_por_departamento.get(fila.departamento, 0) + (fila.total_visitas or 0)
+        )
+
+    if not acumulado_por_departamento:
+        return render_template(
+            "estadisticas.html",
+            stats=[],
+            labels=[],
+            values=[],
+            total_autenticadas=0,
+            total_anonimas=0,
+        )
+
+    stats = [
+        {"departamento": dep, "total_visitas": total}
+        for dep, total in sorted(acumulado_por_departamento.items(), key=lambda item: item[1], reverse=True)
+    ]
+    labels = [fila["departamento"] for fila in stats]
+    values = [fila["total_visitas"] for fila in stats]
+
+    return render_template(
+        "estadisticas.html",
+        stats=stats,
+        labels=labels,
+        values=values,
+        total_autenticadas=total_autenticadas,
+        total_anonimas=total_anonimas,
+    )
 
 
 @main_bp.route("/politica-cookies")
@@ -191,3 +230,15 @@ def admin_sync_boe():
         "success",
     )
     return redirect(url_for("user.oposiciones_vigentes"))
+
+@main_bp.route('/toggle-theme')
+def toggle_theme():
+    # Cambiamos el tema en la sesión
+    current_theme = session.get('theme', 'dark')
+    session['theme'] = 'light' if current_theme == 'dark' else 'dark'
+    
+    # Esto obliga a Flask a guardar la sesión inmediatamente
+    session.modified = True 
+    
+    # Volvemos a donde estaba el usuario
+    return redirect(request.referrer or url_for('main.index'))

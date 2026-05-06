@@ -1,5 +1,3 @@
-
-
 # 📚 BOE Oposiciones – Web Scraping y Portal de Usuarios
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
@@ -16,8 +14,8 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
 - [📚 BOE Oposiciones – Web Scraping y Portal de Usuarios](#-boe-oposiciones--web-scraping-y-portal-de-usuarios)
   - [📑 Tabla de Contenidos](#-tabla-de-contenidos)
   - [✨ Características principales](#-características-principales)
-  - [�️ Migración a SQLAlchemy (2026-04-28)](#-migración-a-sqlalchemy-2026-04-28)
-  - [�📋 Requisitos previos](#-requisitos-previos)
+  - [🗄️ Migración a SQLAlchemy (2026-04-28)](#-migración-a-sqlalchemy-2026-04-28)
+  - [📋 Requisitos previos](#-requisitos-previos)
   - [🚀 Instalación y configuración](#-instalación-y-configuración)
     - [Puesta en marcha rápida](#puesta-en-marcha-rápida)
       - [1. Clonar o descargar el proyecto](#1-clonar-o-descargar-el-proyecto)
@@ -37,6 +35,10 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
   - [🌐 Selector de idioma (ES / EN)](#-selector-de-idioma-es--en)
   - [♿ Panel de accesibilidad visual](#-panel-de-accesibilidad-visual)
   - [🤖 Chatbot asistente BOE](#-chatbot-asistente-boe)
+  - [🧪 Tests](#-tests)
+    - [Pruebas unitarias del chatbot](#pruebas-unitarias-del-chatbot)
+    - [Pruebas E2E del panel de administración](#pruebas-e2e-del-panel-de-administración)
+  - [📊 Página de estadísticas](#-página-de-estadísticas)
   - [🛠️ Scripts útiles](#️-scripts-útiles)
   - [📁 Estructura de archivos](#-estructura-de-archivos)
   - [🔮 Próximos pasos recomendados](#-próximos-pasos-recomendados)
@@ -54,11 +56,12 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
   - `usuarios.db` con credenciales, perfil, visitas, favoritos y suscripciones.
 - **👤 Gestión de usuarios**: Registro con campos avanzados, login con `Flask-Login`, edición completa del perfil y cambio de contraseña.
 - **📧 Alertas y newsletters**: Configuración de alertas diarias o por favoritos y envío de emails con `Flask-Mail`.
-- **📊 Seguimiento de actividad**: Cada click marca visitas y favoritos para personalizar las tarjetas.
+- **📊 Seguimiento de actividad**: Cada click marca visitas y favoritos para personalizar las tarjetas. Las visitas se registran tanto para usuarios autenticados como anónimos.
+- **📈 Página de estadísticas**: Vista pública en `/estadisticas` con gráfico de barras por departamento, resumen desglosado de visitas autenticadas, anónimas y total combinado.
 - **🎨 Tema claro/oscuro** y subida de foto de perfil almacenada en `static/uploads/profiles`.
 - **🍪 Banner de cookies**: Aviso de política de cookies con preferencias granulares, persistido en `localStorage`.
 - **⚖️ Cumplimiento legal básico**: Enlaces permanentes en footer a política de cookies, política de privacidad y aviso legal.
-- **🌐 Selector de idioma**: Botón EN / ES en la cabecera que traduce toda la interfaz estática al instante sin recargar la página.
+- **🌐 Selector de idioma con banderas**: Botón dinámico `🇬🇧 EN` / `🇪🇸 ES` en la cabecera que traduce al instante tanto contenido estático como mensajes dinámicos del frontend, sin recargar.
 - **♿ Panel de accesibilidad visual**: Botón flotante que despliega controles para ajustar tamaño de texto, contraste y otros filtros visuales; persistidos en `localStorage`.
 - **🤖 Chatbot asistente BOE**: Asistente conversacional integrado con Groq (LLaMA 3.3 70B), con voz (TTS/STT), historial persistente y habilidades especializadas en búsqueda y filtrado del BOE.
 
@@ -200,7 +203,7 @@ El chatbot usa siempre el prompt completo del BOE. Cada compañero solo necesita
 
 ```powershell
 venv\Scripts\activate
- $env:GROQ_API_KEY="tu_api_key"
+$env:GROQ_API_KEY="tu_api_key"
 python run.py
 ```
 
@@ -216,10 +219,10 @@ Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:5000/api/chatbot" -Content
 - Si falta contexto: aplica fallback y no inventa datos.
 
 4. **Casos recomendados de validación rápida**:
-- `como hacer una paella?` -> bloqueo por fuera de dominio.
-- `resumen del boe-a-2026-8444` -> respuesta directa orientada a resumen de referencia.
-- `Busca oposiciones en Madrid para hoy` -> respuesta IA (requiere `GROQ_API_KEY`).
-- `resumen del artículo 5 de esa norma` -> no bloquea y aplica fallback si falta contexto.
+- `como hacer una paella?` → bloqueo por fuera de dominio.
+- `resumen del boe-a-2026-8444` → respuesta directa orientada a resumen de referencia.
+- `Busca oposiciones en Madrid para hoy` → respuesta IA (requiere `GROQ_API_KEY`).
+- `resumen del artículo 5 de esa norma` → no bloquea y aplica fallback si falta contexto.
 
 ---
 
@@ -235,14 +238,13 @@ app/
   services/
     chat_skills.py     # Capa de skills: bloqueo de dominio + ruteo de intención.
   email_utils.py       # Helpers para enviar newsletters.
-  chatbot.py           # Función principal del chatbot (llama a Groq API).
   scraping/
     boe_scraper.py     # Lógica de scraping y sincronización del BOE.
   routes/
     main.py            # Landing, scraping, estadísticas y páginas legales.
     auth.py            # Autenticación (login, registro, logout).
     user.py            # Panel del usuario, filtros, favoritos y perfil.
-    chat.py            # Endpoint /chatbot/api y ruta /chat.
+    chat.py            # Endpoint /chatbot/api.
   services/
     ai_client.py       # Cliente unificado de IA (Groq + proveedores alternativos).
     chat_skills.py     # Habilidades del chatbot: detección de intención y búsqueda en BD.
@@ -253,6 +255,7 @@ bootstrap.(bat|sh)     # Scripts para preparar el entorno.
 requirements.txt       # Dependencias de Python.
 tests/
   test_chat_skills.py  # Pruebas unitarias de las habilidades del chatbot.
+  test_admin_e2e.py    # Pruebas E2E del panel de administración con Playwright.
 ```
 
 ---
@@ -364,24 +367,25 @@ Botón visible en la cabecera de navegación que permite cambiar el idioma de to
 **Comportamiento:**
 
 - La preferencia se guarda en `localStorage` bajo la clave `boe_lang_v1` y se aplica automáticamente en cada visita.
-- El botón muestra `EN` cuando el idioma activo es español, y `ES` cuando es inglés.
+- El botón muestra `🇬🇧 EN` cuando el idioma activo es español, y `🇪🇸 ES` cuando es inglés.
 
 **Elementos traducidos:**
 
 | Zona | Textos traducidos |
 |---|---|
-| Navbar | Menú de usuario, login, registro, cerrar sesión |
-| Panel de accesibilidad | Título, descripciones y todos los botones |
-| Chatbot | Título, saludo de bienvenida, placeholder y botón Enviar |
-| Banner de cookies | Texto informativo, botones y modal de configuración |
+| Navbar y footer | Menú de usuario, login/registro, enlaces legales |
+| Portada, resultados y tablas | Filtros, cabeceras, botones, estados (`Nuevo`, `Visitada`) |
+| Perfil y formularios | Login, registro, recuperación/reset de contraseña, configuración y newsletter |
+| Legales y cookies | Política de cookies, privacidad, aviso legal y modal/banner de cookies |
+| Chatbot | Título, saludo, placeholder, envío, estados de voz y errores de conexión |
 
 **Implementación técnica:**
 
 - Sistema i18n 100% client-side en `templates/base.html` (sin librerías externas).
-- Los elementos a traducir llevan el atributo `data-i18n="clave"` (o `data-i18n-placeholder` para inputs).
-- El diccionario de traducciones vive en un objeto JS con las claves `es` y `en`.
+- Los elementos a traducir usan `data-i18n`, `data-i18n-placeholder`, `data-i18n-title` y `data-i18n-aria-label`.
+- El diccionario de traducciones vive en un objeto JS con claves `es` y `en`, más helper global `window.__boeI18n`.
+- Se emite el evento `boe:lang-changed` para refrescar textos que se renderizan dinámicamente por JavaScript.
 - El atributo `lang` del elemento `<html>` se actualiza automáticamente al cambiar de idioma.
-- El contenido dinámico (oposiciones del BOE) permanece en español al provenir de la base de datos.
 
 ---
 
@@ -410,6 +414,82 @@ Botón flotante con icono de accesibilidad universal, visible en todas las pági
 
 ---
 
+## 🧩 Panel de Administración (Isidro)
+
+- Integración de Flask-Admin en la aplicación (`/admin`)
+- Creación de ModelViews para la gestión de datos
+- Implementación de CRUD completo en las entidades
+
+- Desarrollo de `UserModelView` con:
+  - Columnas configuradas
+  - Búsqueda por email, nombre y apellidos
+  - Filtro por rol
+  - Ordenación de registros
+  - Ocultación de contraseña
+
+- Validación de roles (`admin`, `manager`, `viewer`)
+
+- Añadidas ModelViews para:
+  - Oposiciones
+  - Favoritas
+  - Visitas
+  - Suscripciones
+
+- Integración con relaciones de SQLAlchemy
+- Acceso restringido solo a usuarios con rol `admin`
+- Panel completamente funcional para administración
+
+### ✨ UI, Dashboard y Tema (Anas)
+
+#### Plantilla base personalizada (`templates/admin/master.html`)
+
+Se ha sobrescrito la plantilla base de Flask-Admin para reemplazar su interfaz genérica por un diseño moderno basado en **Bootstrap 5**. Los elementos principales son:
+
+- **Sidebar fijo** con navegación a todos los modelos, agrupada por secciones (General / Modelos / Sistema).
+- **Topbar fija** con breadcrumb de navegación, indicador de estado del sistema y botón de logout.
+- **Sistema de tema claro/oscuro** gestionado 100% en el cliente mediante `localStorage` (clave `theme`), sin ninguna llamada al servidor.
+- Variables CSS (`--bg-base`, `--accent`, `--text-primary`, etc.) que unifican toda la paleta de colores.
+- Overrides completos de los componentes de Flask-Admin: tablas, botones, formularios, paginación, alertas, modales y dropdowns.
+
+#### Dashboard con datos reales (`templates/admin/index.html` + `app/admin/views.py`)
+
+- **5 tarjetas de estadísticas** con conteos reales de la BD (`COUNT(*)` sobre cada tabla), enlazando a su `ModelView`.
+- **Tabla de últimos 5 usuarios** con badges de color por rol (`admin` / `manager` / `viewer`).
+- **Tabla de últimas 5 oposiciones** scrapeadas con identificador y fecha.
+
+#### Archivos modificados
+
+| Archivo | Cambios |
+|---------|---------|
+| `templates/admin/master.html` | Plantilla base reescrita con Bootstrap 5, sidebar, topbar y tema claro/oscuro |
+| `templates/admin/index.html` | Dashboard con tarjetas de stats reales y tablas de registros recientes |
+| `app/admin/views.py` | Añadido `@expose('/')` con consultas SQLAlchemy y `self.render()` |
+
+### 📊 Analíticas (Anas)
+
+- Vista personalizada (`BaseView`) accesible en `/admin/analytics` desde el sidebar del panel.
+- **Gráfico de dona** con el reparto de oposiciones por departamento (Top 7).
+- **Gráfico de barras vertical** con el perfil de nivel de estudios de los usuarios registrados.
+- **Gráfico de barras horizontal** con las 5 oposiciones más visitadas.
+- Los gráficos se redibujan automáticamente al cambiar entre tema claro y oscuro.
+
+| Archivo | Cambios |
+|---------|---------|
+| `app/admin/views.py` | Añadida clase `AnalyticsView` con queries SQLAlchemy y registrada en `init_admin` |
+| `templates/admin/analytics.html` | Template con 3 gráficos Chart.js adaptados al tema claro/oscuro |
+
+### 📤 Exportación CSV y acciones masivas (Anas)
+
+- Exportación a CSV habilitada en todos los `ModelView` con el botón **Export** en la parte superior de cada lista.
+- **Acción masiva general** — "Eliminar seleccionados": elimina los registros marcados con confirmación previa y rollback automático si algo falla. Disponible en todos los modelos.
+- **Acción masiva específica de usuarios** — "Cambiar rol a Viewer": cambia el rol de los usuarios seleccionados a `viewer`, protegiendo siempre a los `admin`.
+
+| Archivo | Cambios |
+|---------|---------|
+| `app/admin/views.py` | `can_export = True`, `export_types = ['csv']` en `SecureModelView` y dos acciones `@action` |
+
+---
+
 ## 🤖 Chatbot asistente BOE
 
 Asistente conversacional flotante especializado en el contenido del BOE, accesible desde cualquier página de la aplicación.
@@ -426,7 +506,7 @@ Asistente conversacional flotante especializado en el contenido del BOE, accesib
 - **Voz (TTS / STT)**: Lectura en voz alta de las respuestas (Web Speech API) y dictado por voz para escribir preguntas.
 - **Historial persistente**: El hilo de conversación se guarda en `localStorage` (`boe_chat_messages_v1`) y se restaura al reabrir el chat.
 - **Borrador automático**: El texto en curso se guarda en `localStorage` (`boe_chat_draft_v1`) para no perderlo si se cierra el panel.
-- **Vista dedicada**: Página completa del chat disponible en `/chat` (`templates/chat.html`).
+- **Vista dedicada**: `templates/chat.html` se integró con la plantilla base para heredar navbar, selector ES/EN y traducciones globales.
 
 **Arquitectura del chatbot:**
 
@@ -437,7 +517,7 @@ app/
     ai_client.py           # Cliente unificado (Groq + fallback a otros proveedores)
     chat_skills.py         # Habilidades: búsqueda en BD, detección de intención, filtrado
   routes/
-    chat.py                # Blueprint /chatbot/api (POST) y ruta /chat (GET)
+    chat.py                # Blueprint /chatbot/api (POST)
 templates/
   chat.html                # Vista de pantalla completa del chatbot
 tests/
@@ -456,6 +536,57 @@ tests/
 - `app/nvidia_chat.py` – NVIDIA NIM
 - `app/elephant_chat.py` – ElephantSQL / modelos propios
 - `app/groq_chat.py` – Wrapper alternativo de Groq
+
+---
+
+## 🧪 Tests
+
+### Pruebas unitarias del chatbot
+
+El archivo `tests/test_chat_skills.py` cubre las habilidades del chatbot: detección de intención, bloqueo de temas fuera de BOE y búsqueda en base de datos.
+
+```bash
+pytest tests/test_chat_skills.py -v
+```
+
+### Pruebas E2E del panel de administración
+
+El archivo `tests/test_admin_e2e.py` contiene **15 pruebas de extremo a extremo** con Playwright que simulan un navegador real interactuando con el panel de administración.
+
+**Instalación de dependencias:**
+
+```bash
+pip install playwright pytest-playwright
+playwright install chromium
+```
+
+**Ejecución** (la app Flask debe estar corriendo en paralelo):
+
+```bash
+# Terminal 1 — arranca la app
+python run.py
+
+# Terminal 2 — ejecuta los tests
+pytest tests/test_admin_e2e.py -v
+```
+
+**Variables de entorno opcionales:**
+
+| Variable | Descripción | Valor por defecto |
+|---|---|---|
+| `BASE_URL` | URL base de la aplicación | `http://127.0.0.1:5000` |
+| `ADMIN_EMAIL` | Email del usuario administrador | `amm0246@alu.medac.es` |
+| `ADMIN_PASSWORD` | Contraseña del administrador | `Anas1234` |
+
+**Clases de tests incluidas:**
+
+| Clase | Tests | Descripción |
+|---|---|---|
+| `TestLogin` | 3 | Carga del formulario, credenciales incorrectas y login correcto |
+| `TestAccesoAdmin` | 4 | Dashboard accesible, mensaje de bienvenida, sidebar y topbar visibles |
+| `TestNavegacionModelos` | 4 | Navegación a Usuarios, Oposiciones, Analíticas y presencia de gráficos |
+| `TestControlAcceso` | 2 | Redirección al login para usuarios sin sesión |
+| `TestExportCSV` | 2 | Botón Export visible en Usuarios y Oposiciones |
 
 ---
 
@@ -482,7 +613,7 @@ I_S25_Web_Scraping/
 │   │   ├── main.py          # Rutas principales (index, scraping, estadísticas y legales)
 │   │   ├── auth.py          # Autenticación (login, registro, logout)
 │   │   ├── user.py          # Panel de usuario (perfil, favoritos, alertas)
-│   │   └── chat.py          # Endpoint /chatbot/api y vista /chat
+│   │   └── chat.py          # Endpoint /chatbot/api
 │   ├── services/
 │   │   ├── __init__.py
 │   │   ├── ai_client.py     # Cliente unificado de IA
@@ -507,13 +638,15 @@ I_S25_Web_Scraping/
 │   ├── user_newsletter.html
 │   ├── tarjeta.html         # Vista de oposiciones por departamento
 │   ├── chat.html            # Vista de pantalla completa del chatbot
+│   ├── estadisticas.html    # Página de estadísticas de visitas
 │   ├── politica_cookies.html
 │   ├── politica_privacidad.html
 │   ├── aviso_legal.html
 │   └── emails/
 │       └── nuevas_oposiciones.html
 ├── tests/
-│   └── test_chat_skills.py  # Pruebas unitarias de las habilidades del chatbot
+│   ├── test_chat_skills.py  # Pruebas unitarias de las habilidades del chatbot
+│   └── test_admin_e2e.py    # Pruebas E2E del panel de administración (Playwright)
 ├── bootstrap.bat            # Script de bootstrap (Windows)
 ├── bootstrap.sh             # Script de bootstrap (Linux/macOS)
 ├── run.py                   # Punto de entrada de la aplicación
@@ -524,7 +657,34 @@ I_S25_Web_Scraping/
 
 ---
 
-## 🔮 Próximos pasos recomendados
+## � Página de estadísticas
+
+Vista pública accesible desde el menú de navegación en `/estadisticas` que muestra el uso de la plataforma.
+
+**Contenido:**
+
+| Sección | Descripción |
+|---|---|
+| Gráfico de barras | Top departamentos ordenados por número de visitas (Chart.js) |
+| Resumen global | Visitas autenticadas, visitas anónimas y total combinado |
+| Tabla de detalle | Listado completo de departamentos con su contador de visitas |
+
+**Cómo se registran las visitas:**
+
+- **Usuarios autenticados**: Al hacer clic en el título o PDF de una oposición se llama a `POST /marcar_visitada/<id>` y se guarda en la tabla `visitas` de `usuarios.db`.
+- **Usuarios anónimos**: El mismo endpoint, sin sesión, incrementa un contador en la tabla `visitas_global` de `usuarios.db`.
+- Las estadísticas combinan ambas fuentes para mostrar el total real de interacciones.
+
+**Implementación técnica:**
+
+- Ruta: `GET /estadisticas` en `app/routes/main.py`.
+- Enlace en el navbar con soporte de traducción ES/EN (`nav.stats`).
+- Plantilla: `templates/estadisticas.html`.
+- Nueva tabla SQLite: `visitas_global (oposicion_id, total_visitas, fecha_ultima_visita)`.
+
+---
+
+## �🔮 Próximos pasos recomendados
 
 - ✅ Migrar a PostgreSQL para producción (mejor rendimiento con múltiples workers).
 - ✅ Añadir tests unitarios y de integración.

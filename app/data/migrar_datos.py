@@ -1,14 +1,17 @@
 import os
 import sqlite3
 from flask import current_app
-from .models import sa_db, User, Oposicion, Visita, Favorita, Suscripcion
+from .models import sa_db, User, Oposicion, Visita, VisitaGlobal, Favorita, Suscripcion
 from ..config import Config
 
 def inicializar_y_migrar():
     """Crea la DB y migra datos si es la primera vez que se ejecuta."""
-    if not os.path.exists('instance/boe_scraper.db'): # Flask-SQLAlchemy suele crearla en /instance
-        sa_db.create_all()
-        
+    db_path = 'instance/boe_scraper.db'
+    primera_ejecucion = not os.path.exists(db_path)
+
+    sa_db.create_all()
+
+    if primera_ejecucion: # Flask-SQLAlchemy suele crearla en /instance
         # Verificamos si existen los archivos antiguos para migrar
         if os.path.exists('usuarios.db') and os.path.exists('oposiciones.db'):
             current_app.logger.info("⚠️ Detectadas bases de datos antiguas. Iniciando migración automática...")
@@ -37,6 +40,10 @@ def inicializar_y_migrar():
             visitas = conn_u.execute("SELECT * FROM visitas").fetchall()
             for r in visitas:
                 sa_db.session.add(Visita(id=r[0], user_id=r[1], oposicion_id=r[2], fecha_visita=r[3]))
+
+            visitas_globales = conn_u.execute("SELECT * FROM visitas_global").fetchall()
+            for r in visitas_globales:
+                sa_db.session.add(VisitaGlobal(oposicion_id=r[0], total_visitas=r[1], fecha_ultima_visita=r[2]))
             
             favs = conn_u.execute("SELECT * FROM favoritas").fetchall()
             for r in favs:

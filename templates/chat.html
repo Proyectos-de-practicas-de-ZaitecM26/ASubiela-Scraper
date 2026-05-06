@@ -1,143 +1,166 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Chatbot</title>
+{% extends "base.html" %}
 
-    <style>
-        /* ================= CHATBOT ================= */
+{% block title %}Chat - Oposiciones BOE{% endblock %}
 
-        #chatbot-widget {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            width: 320px;
-            height: 420px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            font-family: Arial;
-            z-index: 9999;
-        }
+{% block content %}
+<div class="container py-4 contenido-principal">
+  <h1 class="mb-4 text-center hero-title" data-i18n="chatpage.title">🤖 Chatbot activo</h1>
 
-        #chatbot-header {
-            background: #004aad;
-            color: white;
-            padding: 10px;
-            font-weight: bold;
-        }
-
-        #chatbot-messages {
-            flex: 1;
-            padding: 10px;
-            overflow-y: auto; /* 👈 SCROLL */
-            font-size: 14px;
-        }
-
-        .msg {
-            margin: 6px 0;
-            padding: 6px 8px;
-            border-radius: 8px;
-            max-width: 90%;
-        }
-
-        .msg.user {
-            background: #e3efff;
-            color: #004aad;
-            margin-left: auto;
-            text-align: right;
-        }
-
-        .msg.bot {
-            background: #f1f1f1;
-            color: #333;
-            margin-right: auto;
-        }
-
-        .chatbot-input-area {
-            display: flex;
-            border-top: 1px solid #ddd;
-        }
-
-        #chatbot-input {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            outline: none;
-        }
-
-        button {
-            background: #004aad;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #003a8c;
-        }
-    </style>
-</head>
-
-<body>
-
-<h1>🤖 Chatbot activo</h1>
-
-<!-- ================= CHATBOT ================= -->
-<div id="chatbot-widget">
-
-    <div id="chatbot-header">
-        💬 Chat BOE
-    </div>
+  <div id="chatbot-widget" class="chatpage-widget mx-auto">
+    <div id="chatbot-header" data-i18n="chatpage.header">💬 Chat BOE</div>
 
     <div id="chatbot-messages">
-        <div class="msg bot">Hola 👋 soy tu asistente de oposiciones</div>
+      <div class="msg bot" data-i18n="chatpage.welcome">Hola 👋 soy tu asistente de oposiciones</div>
     </div>
 
     <div class="chatbot-input-area">
-        <input type="text" id="chatbot-input" placeholder="Escribe algo...">
-        <button onclick="sendMessage()">➤</button>
+      <input type="text" id="chatbot-input" placeholder="Escribe algo..." data-i18n-placeholder="chatpage.placeholder">
+      <button id="chatbot-send-btn" type="button" data-i18n-aria-label="chatpage.sendAria">➤</button>
     </div>
-
+  </div>
 </div>
 
-<!-- ================= SCRIPT ================= -->
+<style>
+  .chatpage-widget {
+    width: min(100%, 760px);
+    height: 70vh;
+    min-height: 420px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(0, 74, 173, 0.2);
+  }
+
+  #chatbot-header {
+    background: #004aad;
+    color: #fff;
+    padding: 12px 14px;
+    font-weight: 700;
+  }
+
+  #chatbot-messages {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+    font-size: 14px;
+    background: #f7f9fc;
+  }
+
+  .msg {
+    margin: 8px 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    max-width: 90%;
+    line-height: 1.35;
+  }
+
+  .msg.user {
+    background: #e3efff;
+    color: #004aad;
+    margin-left: auto;
+    text-align: right;
+  }
+
+  .msg.bot {
+    background: #f1f1f1;
+    color: #333;
+    margin-right: auto;
+  }
+
+  .chatbot-input-area {
+    display: flex;
+    border-top: 1px solid #ddd;
+    background: #fff;
+  }
+
+  #chatbot-input {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    outline: none;
+  }
+
+  #chatbot-send-btn {
+    background: #004aad;
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    cursor: pointer;
+  }
+
+  #chatbot-send-btn:hover {
+    background: #003a8c;
+  }
+
+  [data-theme="dark"] .chatpage-widget {
+    background: #1f2937;
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  [data-theme="dark"] #chatbot-messages {
+    background: #111827;
+  }
+
+  [data-theme="dark"] .msg.bot {
+    background: #374151;
+    color: #f3f4f6;
+  }
+
+  [data-theme="dark"] #chatbot-input {
+    background: #1f2937;
+    color: #f3f4f6;
+  }
+</style>
+
 <script>
-async function sendMessage() {
-    const input = document.getElementById("chatbot-input");
-    const message = input.value.trim();
-    if (!message) return;
+  (function () {
+    const input = document.getElementById('chatbot-input');
+    const chat = document.getElementById('chatbot-messages');
+    const sendBtn = document.getElementById('chatbot-send-btn');
 
-    const chat = document.getElementById("chatbot-messages");
+    if (!input || !chat || !sendBtn) return;
 
-    // mensaje usuario
-    chat.innerHTML += `<div class="msg user">${message}</div>`;
-    input.value = "";
+    const t = (key, fallback) => {
+      const i18n = window.__boeI18n;
+      return i18n && typeof i18n.t === 'function' ? i18n.t(key, fallback) : fallback;
+    };
 
-    chat.scrollTop = chat.scrollHeight;
+    function appendMessage(text, role) {
+      const div = document.createElement('div');
+      div.className = role === 'user' ? 'msg user' : 'msg bot';
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
 
-    try {
-        const res = await fetch("/chatbot/api", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message })
+    async function sendMessage() {
+      const message = input.value.trim();
+      if (!message) return;
+
+      appendMessage(message, 'user');
+      input.value = '';
+
+      try {
+        const res = await fetch('/chatbot/api', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
         });
 
         const data = await res.json();
-
-        // respuesta bot
-        chat.innerHTML += `<div class="msg bot">${data.reply}</div>`;
-        chat.scrollTop = chat.scrollHeight;
-
-    } catch (err) {
-        chat.innerHTML += `<div class="msg bot">Error de conexión ❌</div>`;
+        appendMessage(data.reply || t('chat.error.response', 'No pude responder ahora mismo.'), 'bot');
+      } catch (_) {
+        appendMessage(t('chat.error.connection', 'Error de conexión con el asistente.'), 'bot');
+      }
     }
-}
-</script>
 
-</body>
-</html>
+    sendBtn.addEventListener('click', sendMessage);
+    input.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') sendMessage();
+    });
+  })();
+</script>
+{% endblock %}

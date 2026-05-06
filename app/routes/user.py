@@ -3,7 +3,7 @@ from sqlalchemy import or_
 from werkzeug.utils import secure_filename
 from app.email_utils import send_new_oposiciones_email
 from datetime import datetime, timedelta
-from ..data import sa_db, Visita, Favorita, Oposicion, Suscripcion
+from ..data import sa_db, Visita, VisitaGlobal, Favorita, Oposicion, Suscripcion
 from flask_login import login_required, current_user
 from flask import (
     Blueprint,
@@ -43,6 +43,30 @@ def registrar_visita(user_id, oposicion_id):
     except Exception as e:
         sa_db.session.rollback()
         print(f"Error al registrar visita: {e}")
+
+
+def registrar_visita_global(oposicion_id):
+    fecha = datetime.utcnow().isoformat()
+
+    try:
+        visita = VisitaGlobal.query.filter_by(oposicion_id=oposicion_id).first()
+
+        if visita:
+            visita.total_visitas += 1
+            visita.fecha_ultima_visita = fecha
+        else:
+            sa_db.session.add(
+                VisitaGlobal(
+                    oposicion_id=oposicion_id,
+                    total_visitas=1,
+                    fecha_ultima_visita=fecha,
+                )
+            )
+
+        sa_db.session.commit()
+    except Exception as e:
+        sa_db.session.rollback()
+        print(f"Error al registrar visita global: {e}")
 
 
 def toggle_favorito(user_id, oposicion_id):
@@ -286,10 +310,11 @@ def update_profile():
 
 
 @user_bp.route("/marcar_visitada/<int:oposicion_id>", methods=["POST"])
-@login_required
 def marcar_visitada(oposicion_id):
-    user_id = current_user.id
-    registrar_visita(user_id, oposicion_id)
+    if current_user.is_authenticated:
+        registrar_visita(current_user.id, oposicion_id)
+    else:
+        registrar_visita_global(oposicion_id)
     return jsonify({"ok": True})
 
 
