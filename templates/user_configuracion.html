@@ -3,16 +3,16 @@
 
 {% block content %}
 <div class="container py-4 contenido-principal config-page">
-  <h2 class="mb-4 text-center hero-title">⚙️ Configuración</h2>
+  <h2 class="mb-4 text-center hero-title" data-i18n="config.title">⚙️ Configuración</h2>
 
   <div class="row">
     <div class="col-md-3 mb-4">
       <div class="list-group shadow-sm">
         <a href="#perfil" class="list-group-item list-group-item-action active" data-bs-toggle="list">
-          <i class="bi bi-person-badge me-2"></i> Perfil
+          <i class="bi bi-person-badge me-2"></i> <span data-i18n="config.tab.profile">Perfil</span>
         </a>
         <a href="#seguridad" class="list-group-item list-group-item-action" data-bs-toggle="list">
-          <i class="bi bi-shield-lock me-2"></i> Seguridad
+          <i class="bi bi-shield-lock me-2"></i> <span data-i18n="config.tab.security">Seguridad</span>
         </a>
       </div>
     </div>
@@ -23,7 +23,7 @@
         <div class="tab-pane fade show active" id="perfil">
           <div class="card shadow-sm">
             <div class="card-header bg-white py-3">
-              <h5 class="mb-0 text-primary">Mi Perfil</h5>
+              <h5 class="mb-0 text-primary" data-i18n="config.profileTitle">Mi Perfil</h5>
             </div>
             <div class="card-body">
               <form action="{{ url_for('user.update_profile') }}" method="POST" enctype="multipart/form-data">
@@ -43,10 +43,10 @@
                   </div>
                   <div class="mt-3">
                     <label for="foto_perfil" class="btn btn-sm btn-primary">
-                      <i class="bi bi-camera"></i> Cambiar foto
+                      <i class="bi bi-camera"></i> <span data-i18n="config.photo.change">Cambiar foto</span>
                     </label>
                     <input type="file" class="d-none" id="foto_perfil" name="foto_perfil" accept="image/*">
-                    <small class="d-block text-muted mt-2">Formatos: JPG, PNG, GIF, WEBP</small>
+                    <small class="d-block text-muted mt-2" data-i18n="config.photo.formats">Formatos: JPG, PNG, GIF, WEBP</small>
                   </div>
                 </div>
 
@@ -55,7 +55,7 @@
                 <!-- Nombre y Apellidos -->
                 <div class="row g-3 mb-3">
                   <div class="col-md-6">
-                    <label for="name" class="form-label fw-bold">Nombre <span class="text-danger">*</span></label>
+                    <label for="name" class="form-label fw-bold"><span data-i18n="register.name">Nombre</span> <span class="text-danger">*</span></label>
                     <div class="input-group">
                       <span class="input-group-text"><i class="bi bi-person"></i></span>
                       <input type="text" class="form-control" id="name" name="name" value="{{ user.name or '' }}"
@@ -63,7 +63,7 @@
                     </div>
                   </div>
                   <div class="col-md-6">
-                    <label for="apellidos" class="form-label fw-bold">Apellidos <span
+                    <label for="apellidos" class="form-label fw-bold"><span data-i18n="register.lastname">Apellidos</span> <span
                         class="text-danger">*</span></label>
                     <div class="input-group">
                       <span class="input-group-text"><i class="bi bi-person-lines-fill"></i></span>
@@ -75,19 +75,19 @@
 
                 <!-- Email (solo lectura) -->
                 <div class="mb-3">
-                  <label for="email" class="form-label fw-bold">Correo Electrónico</label>
+                  <label for="email" class="form-label fw-bold" data-i18n="config.email">Correo Electrónico</label>
                   <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-envelope"></i></span>
                     <input type="email" class="form-control" id="email" value="{{ user.email }}" disabled>
                   </div>
-                  <small class="text-muted">El email no se puede modificar</small>
+                  <small class="text-muted" data-i18n="config.email.locked">El email no se puede modificar</small>
                 </div>
 
                 <!-- Teléfono y Género -->
                 <div class="row g-3 mb-3">
                   <div class="col-md-6">
-                    <label for="telefono" class="form-label fw-bold">Teléfono <span
-                        class="text-muted">(opcional)</span></label>
+                    <label for="telefono" class="form-label fw-bold"><span data-i18n="register.phone">Teléfono</span> <span
+                      class="text-muted" data-i18n="register.optional">(opcional)</span></label>
                     <div class="input-group">
                       <span class="input-group-text"><i class="bi bi-telephone"></i></span>
                       <input type="tel" class="form-control" id="telefono" name="telefono"
@@ -97,17 +97,17 @@
                 </div>
 
                 <hr class="my-4">
-                <h6 class="text-secondary mb-3"><i class="bi bi-mortarboard"></i> Formación Académica</h6>
+                <h6 class="text-secondary mb-3"><i class="bi bi-mortarboard"></i> <span data-i18n="register.section.education">Formación Académica</span></h6>
 
                 <!-- Nivel de Estudios y Titulación -->
                 <div class="row g-3 mb-3">
                   <div class="col-md-6">
-                    <label for="nivel_estudios" class="form-label fw-bold">Nivel de Estudios <span
+                    <label for="nivel_estudios" class="form-label fw-bold"><span data-i18n="register.education.level">Nivel de Estudios</span> <span
                         class="text-danger">*</span></label>
                     <div class="input-group">
                       <span class="input-group-text"><i class="bi bi-book"></i></span>
                       <select class="form-select" id="nivel_estudios" name="nivel_estudios" required>
-                        <option value="">Selecciona...</option>
+                        <option value="" data-i18n="register.select">Selecciona...</option>
                         <option value="ESO" {% if user.nivel_estudios=='ESO' %}selected{% endif %}>ESO</option>
                         <option value="Bachillerato" {% if user.nivel_estudios=='Bachillerato' %}selected{% endif %}>
                           Bachillerato</option>
@@ -124,18 +124,18 @@
                     </div>
                   </div>
                   <div class="col-md-6">
-                    <label for="titulacion" class="form-label fw-bold">Titulación</label>
+                    <label for="titulacion" class="form-label fw-bold" data-i18n="register.education.degree">Titulación</label>
                     <div class="input-group">
                       <span class="input-group-text"><i class="bi bi-award"></i></span>
                       <input type="text" class="form-control" id="titulacion" name="titulacion"
-                        value="{{ user.titulacion or '' }}" placeholder="Ej: Grado en Derecho">
+                        value="{{ user.titulacion or '' }}" placeholder="Ej: Grado en Derecho" data-i18n-placeholder="register.education.degree.placeholder">
                     </div>
                   </div>
                 </div>
 
                 <div class="mt-4 d-flex justify-content-end">
                   <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-lg"></i> Guardar Cambios
+                    <i class="bi bi-check-lg"></i> <span data-i18n="config.save">Guardar Cambios</span>
                   </button>
                 </div>
 
@@ -148,17 +148,17 @@
         <div class="tab-pane fade" id="seguridad">
           <div class="card shadow-sm">
             <div class="card-header bg-white py-3">
-              <h5 class="mb-0 text-primary">Cambiar Contraseña</h5>
+              <h5 class="mb-0 text-primary" data-i18n="config.changePassword">Cambiar Contraseña</h5>
             </div>
             <div class="card-body">
               <p class="text-muted small mb-4">
-                Para proteger tu cuenta, te pediremos tu contraseña actual antes de realizar cambios.
+                <span data-i18n="config.password.note">Para proteger tu cuenta, te pediremos tu contraseña actual antes de realizar cambios.</span>
               </p>
 
               <form action="{{ url_for('auth.change_password') }}" method="POST">
 
                 <div class="mb-3">
-                  <label for="current_password" class="form-label fw-bold">Contraseña Actual</label>
+                  <label for="current_password" class="form-label fw-bold" data-i18n="config.password.current">Contraseña Actual</label>
                   <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-key"></i></span>
                     <input type="password" class="form-control pe-5" id="current_password" name="current_password"
@@ -175,7 +175,7 @@
 
                 <div class="row g-3">
                   <div class="col-md-6">
-                    <label for="new_password" class="form-label fw-bold">Nueva Contraseña</label>
+                    <label for="new_password" class="form-label fw-bold" data-i18n="config.password.new">Nueva Contraseña</label>
                     <div class="input-group">
                       <span class="input-group-text"><i class="bi bi-lock"></i></span>
                       <input type="password" class="form-control pe-5" id="new_password" name="new_password" required
@@ -188,7 +188,7 @@
                     </div>
                   </div>
                   <div class="col-md-6">
-                    <label for="confirm_password" class="form-label fw-bold">Confirmar Nueva</label>
+                    <label for="confirm_password" class="form-label fw-bold" data-i18n="config.password.confirm">Confirmar Nueva</label>
                     <div class="input-group">
                       <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
                       <input type="password" class="form-control pe-5" id="confirm_password" name="confirm_password"
@@ -204,7 +204,7 @@
 
                 <div class="mt-4 d-flex justify-content-end">
                   <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-lg"></i> Actualizar Contraseña
+                    <i class="bi bi-check-lg"></i> <span data-i18n="config.password.update">Actualizar Contraseña</span>
                   </button>
                 </div>
 
