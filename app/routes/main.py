@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 from flask import Blueprint, render_template, flash, redirect, url_for, request, jsonify, current_app, session
-# He añadido 'session' al final 👆
+
 from flask_login import current_user, login_required
 from ..auth_utils import require_role
 from ..services.chatbot import chatbot
