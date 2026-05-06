@@ -19,6 +19,18 @@ $env:SEED_ADMIN_PASSWORD = "ContraseñaSegura123!"
 venv\Scripts\python.exe scripts\seed_admin.py --non-interactive
 ```
 
+- Ejemplo (macOS/Linux - zsh/bash):
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+SEED_ADMIN_EMAIL='admin@example.com' SEED_ADMIN_PASSWORD='ContrasenaSegura123' python scripts/seed_admin.py --non-interactive
+```
+
+Nota:
+- En el formulario de login hay CAPTCHA obligatorio. Si las credenciales son correctas pero el CAPTCHA falla, el acceso se rechaza igualmente.
+
 Buenas prácticas
 - No exponer campos de `role` en formularios públicos.
 - Limitar la creación/edición de roles sólo a la UI admin o a procesos internos.
