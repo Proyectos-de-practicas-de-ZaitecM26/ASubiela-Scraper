@@ -1,7 +1,13 @@
 import os
+import sys
 import argparse
 from getpass import getpass
 from werkzeug.security import generate_password_hash
+
+# Permite ejecutar el script desde cualquier directorio.
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
 from app import create_app
 from app.data import sa_db, User
@@ -9,8 +15,9 @@ from app.data import sa_db, User
 
 def create_admin(app, email, password, name="Admin"):
     with app.app_context():
-      # sa_db.init_app(app)
+        # sa_db.init_app(app)
         sa_db.create_all()
+        print(f"DB activa: {app.config.get('SQLALCHEMY_DATABASE_URI')}")
         email = email.lower().strip()
         user = User.query.filter_by(email=email).first()
         if user:
@@ -18,7 +25,12 @@ def create_admin(app, email, password, name="Admin"):
             user.role = 'admin'
             print(f"Actualizado usuario existente {email} como admin.")
         else:
-            user = User(email=email, password_hash=generate_password_hash(password), name=name, role='admin')
+            user = User(
+                email=email,
+                password_hash=generate_password_hash(password),
+                name=name,
+                role='admin'
+            )
             sa_db.session.add(user)
             print(f"Creado usuario admin {email}.")
         sa_db.session.commit()
