@@ -9,9 +9,8 @@ from .data import sa_db, User
 from .data import inicializar_y_migrar
 
 
-from .config import Config
-from .data import sa_db, User, inicializar_y_migrar
 from .extensions import mail, login_manager
+from .admin.views import init_admin
 
 from app.routes.main import main_bp
 from app.routes.auth import auth_bp
@@ -67,11 +66,8 @@ def create_app(config_overrides=None):
     with app.app_context():
         inicializar_y_migrar()
 
-    #admin
-    admin = Admin(name="Admin") 
-    admin.init_app(app)
-    admin.add_view(ModelView(User, sa_db.session, name="Usuarios", endpoint="admin_users"))
-    print(app.url_map)
+    # Admin (Flask-Admin) con control de acceso por rol
+    init_admin(app)
 
     # =========================
     # THEME
