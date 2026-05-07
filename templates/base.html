@@ -72,9 +72,11 @@ Define la estructura general de la aplicación:
             <li class="nav-item">
               <a href="{{ url_for('auth.logout') }}" class="btn-logout" data-i18n="nav.salir">🔓 Salir</a>
             </li>
+            {% if user.role == 'admin' %}
             <li class="nav-item">
               <a href="{{ url_for('admin.index') }}" class="btn-login" data-i18n="nav.admin">Administrador</a>
             </li>
+            {% endif %}
             {% else %}
             <li class="nav-item">
               <a href="{{ url_for('auth.login') }}" class="btn-login" data-i18n="nav.login">Iniciar sesión</a>
@@ -1047,6 +1049,7 @@ document.addEventListener("DOMContentLoaded", function () {
           'nav.salir':             '🔓 Salir',
           'nav.login':             'Iniciar sesión',
           'nav.register':          'Registrarse',
+          'nav.admin':             'Administrador',
           'footer.copy':           '© 2026 Oposiciones BOE',
           'footer.cookies':        'Politica de Cookies',
           'footer.privacy':        'Politica de Privacidad',
