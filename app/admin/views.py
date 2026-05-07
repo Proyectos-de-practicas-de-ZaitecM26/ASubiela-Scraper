@@ -115,6 +115,10 @@ class UserModelView(SecureModelView):
         'apellidos': 'Apellidos',
         'is_active': 'Usuario Activo'
     }
+    
+    column_formatters = {
+        'is_active': lambda v, c, m, p: 'Sí' if m.is_active else 'No'
+    }
 
     form_columns = ['email', 'role', 'name', 'apellidos', 'telefono', 'nivel_estudios', 'titulacion']
 
@@ -130,15 +134,31 @@ class UserModelView(SecureModelView):
         LinkRowAction('fa fa-lock', '/admin/admin_users/block/?id={row_id}', 'Bloquear/Desbloquear')
     ]
     
-    @action('toggle_active', 'Bloquear/Desbloquear seleccionados', '¿Estás seguro?')
-    def action_toggle_active(self, ids):
-        users = self.session.query(User).filter(User.id.in_(ids)).all()
-        for u in users:
-            u.is_active = not u.is_active
-        self.session.commit()
-        flash("Estado de usuarios actualizado.", "success")
+    @expose('/block/')
+    def action_toggle_active(self):
+        user_id = request.args.get('id')
+        if user_id:
+            # Buscamos el objeto en la DB
+            user = sa_db.session.query(User).get(user_id)
+            
+            if user:
+                # Cambiamos el atributo 'is_active' (el interruptor)
+                # Si es True pasa a False, si es False pasa a True
+                user.is_active = not user.is_active
+                
+                # GUARDAR CAMBIOS: Importante para que no se pierdan
+                sa_db.session.commit()
+                
+                # Feedback visual
+                estado = "activado" if user.is_active else "bloqueado"
+                flash(f"Usuario {user.email} ha sido {estado}.", "success")
+            else:
+                flash("Usuario no encontrado.", "error")
         
-        
+        # REDIRECCIÓN: Esto evita que te quedes en la URL /block/
+        # .index_view es el nombre interno de la lista de Flask-Admin
+        return redirect(url_for('.index_view'))
+
     # Acción masiva adicional específica para usuarios: cambiar rol a viewer
     @action(
         'degradar_a_viewer',
