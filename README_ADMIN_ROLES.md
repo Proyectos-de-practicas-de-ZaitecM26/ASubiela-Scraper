@@ -16,7 +16,7 @@ Creación del administrador inicial (seed)
 venv\Scripts\python.exe -m pip install -r requirements.txt
 $env:SEED_ADMIN_EMAIL = "admin@example.com"
 $env:SEED_ADMIN_PASSWORD = "ContraseñaSegura123!"
-venv\Scripts\python.exe scripts\seed_admin.py --non-interactive
+venv\Scripts\python.exe seed_admin.py --non-interactive
 ```
 
 Buenas prácticas

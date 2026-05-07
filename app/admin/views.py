@@ -1,10 +1,10 @@
 from flask_admin import Admin, AdminIndexView, expose, BaseView
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.actions import action
-from flask import redirect, url_for, abort, flash
+from flask import redirect, request, url_for, abort, flash
 from flask_login import current_user
 from sqlalchemy import func
-
+from flask_admin.model.template import LinkRowAction
 from ..data import sa_db, User, Oposicion, Favorita, Visita, Suscripcion
 
 
@@ -105,14 +105,15 @@ class SecureModelView(ModelView):
 
 class UserModelView(SecureModelView):
 
-    column_list = ['id', 'email', 'role', 'name', 'apellidos']
+    column_list = ['id', 'email', 'role', 'name', 'apellidos', 'is_active']
 
     column_labels = {
         'id': 'ID',
         'email': 'Correo',
         'role': 'Rol',
         'name': 'Nombre',
-        'apellidos': 'Apellidos'
+        'apellidos': 'Apellidos',
+        'is_active': 'Usuario Activo'
     }
 
     form_columns = ['email', 'role', 'name', 'apellidos', 'telefono', 'nivel_estudios', 'titulacion']
@@ -124,7 +125,20 @@ class UserModelView(SecureModelView):
     column_default_sort = ('id', True)
 
     column_exclude_list = ['password_hash']
-
+    
+    column_extra_row_actions = [
+        LinkRowAction('fa fa-lock', '/admin/admin_users/block/?id={row_id}', 'Bloquear/Desbloquear')
+    ]
+    
+    @action('toggle_active', 'Bloquear/Desbloquear seleccionados', '¿Estás seguro?')
+    def action_toggle_active(self, ids):
+        users = self.session.query(User).filter(User.id.in_(ids)).all()
+        for u in users:
+            u.is_active = not u.is_active
+        self.session.commit()
+        flash("Estado de usuarios actualizado.", "success")
+        
+        
     # Acción masiva adicional específica para usuarios: cambiar rol a viewer
     @action(
         'degradar_a_viewer',
