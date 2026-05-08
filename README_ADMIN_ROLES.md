@@ -36,6 +36,10 @@ Buenas prácticas
 - Limitar la creación/edición de roles sólo a la UI admin o a procesos internos.
 - Registrar cambios críticos en cuentas (pendiente: auditoría).
 
+Moderación manual de imágenes (panel admin)
+- En la lista de usuarios se muestra una miniatura (50px) de `foto_perfil`.
+- Acción masiva **"Moderar Imagen"**: elimina la imagen de perfil de los usuarios seleccionados (`foto_perfil = None`).
+
 Comprobaciones recomendadas tras cambios
 - Ejecutar tests:
 

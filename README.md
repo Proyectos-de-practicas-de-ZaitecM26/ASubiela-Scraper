@@ -429,6 +429,10 @@ Botón flotante con icono de accesibilidad universal, visible en todas las pági
 
 - Validación de roles (`admin`, `manager`, `viewer`)
 
+- Moderación manual de imágenes (Flask-Admin):
+  - En el listado de usuarios se muestra una **miniatura (50px)** de `foto_perfil` para detectar contenido ofensivo rápidamente.
+  - Acción masiva **"Moderar Imagen"**: elimina la imagen de perfil (`foto_perfil = None`) de los usuarios seleccionados.
+
 - Añadidas ModelViews para:
   - Oposiciones
   - Favoritas
