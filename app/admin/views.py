@@ -1,11 +1,12 @@
 from flask_admin import Admin, AdminIndexView, expose, BaseView
 from flask_admin.contrib.sqla import ModelView
+from flask_admin.contrib.sqla.view import tools, sql_cast, Unicode, or_
 from flask_admin.actions import action
 from flask import redirect, url_for, abort, flash, request
 from flask_login import current_user
 from sqlalchemy import func
-from markupsafe import Markup
-
+import unicodedata
+from datetime import datetime
 from ..data import sa_db, User, Oposicion, Favorita, Visita, Suscripcion
 
 
@@ -71,11 +72,6 @@ class SecureModelView(ModelView):
     can_export = True   
     export_types = ['csv']     
 
-    def __init__(self, model, session, **kwargs):
-        super().__init__(model, session, **kwargs)
-        # Flask-Admin 2.x requires explicit initialization for bulk actions
-        self.init_actions()
-
     def is_accessible(self):
         return current_user.is_authenticated and getattr(current_user, "role", None) == "admin"
 
@@ -111,8 +107,7 @@ class SecureModelView(ModelView):
 
 class UserModelView(SecureModelView):
 
-    # `foto_perfil` se renderiza como botón (sin "-") al final
-    column_list = ['id', 'email', 'role', 'name', 'apellidos', 'foto_perfil']
+    column_list = ['id', 'email', 'role', 'name', 'apellidos', 'is_active']
 
     column_labels = {
         'id': 'ID',
@@ -120,10 +115,14 @@ class UserModelView(SecureModelView):
         'role': 'Rol',
         'name': 'Nombre',
         'apellidos': 'Apellidos',
-        'foto_perfil': 'Imagen de perfil',
+        'is_active': 'Usuario Activo'
+    }
+    
+    column_formatters = {
+        'is_active': lambda v, c, m, p: 'Sí' if m.is_active else 'No'
     }
 
-    form_columns = ['email', 'role', 'name', 'apellidos', 'telefono', 'nivel_estudios', 'titulacion', 'foto_perfil']
+    form_columns = ['email', 'role', 'name', 'apellidos', 'telefono', 'nivel_estudios', 'titulacion']
 
     column_searchable_list = ['email', 'name', 'apellidos']
 
@@ -132,104 +131,35 @@ class UserModelView(SecureModelView):
     column_default_sort = ('id', True)
 
     column_exclude_list = ['password_hash']
-
-    def _foto_perfil_button(self, context, model, name):
-        src = getattr(model, "foto_perfil", None)
-        if not src:
-            return Markup("Sin imagen")
-
-        modal_id = f"fotoPerfilModal_{getattr(model, 'id', '')}"
-        remove_url = self.get_url(".remove_profile_image")
-        return_url = request.url
-        return Markup(
-            f'<div style="display:flex;align-items:center;gap:12px;">'
-            f'  <img src="{src}" alt="foto_perfil" '
-            f'       style="width:64px;height:64px;object-fit:cover;border-radius:10px;" />'
-            f'  <div style="display:flex;flex-direction:column;gap:8px;">'
-            f'    <button type="button" class="btn btn-sm btn-primary" '
-            f'            data-bs-toggle="modal" data-bs-target="#{modal_id}">'
-            f'      Moderar Imagen de perfil'
-            f'    </button>'
-            f'    <form method="post" action="{remove_url}" style="margin:0;">'
-            f'      <input type="hidden" name="id" value="{getattr(model, "id", "")}" />'
-            f'      <input type="hidden" name="url" value="{return_url}" />'
-            f'      <button type="submit" class="btn btn-sm btn-danger">Eliminar imagen</button>'
-            f'    </form>'
-            f'  </div>'
-            f'</div>'
-            f'<div class="modal fade" id="{modal_id}" tabindex="-1" aria-hidden="true">'
-            f'  <div class="modal-dialog modal-dialog-centered">'
-            f'    <div class="modal-content">'
-            f'      <div class="modal-header">'
-            f'        <h5 class="modal-title">Imagen de perfil</h5>'
-            f'        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>'
-            f'      </div>'
-            f'      <div class="modal-body" style="text-align:center;">'
-            f'        <img src="{src}" alt="foto_perfil" style="max-width:100%;height:auto;border-radius:10px;" />'
-            f'      </div>'
-            f'    </div>'
-            f'  </div>'
-            f'</div>'
-        )
-
-    column_formatters = {
-        "foto_perfil": _foto_perfil_button,
-    }
-
-    @expose("/remove_profile_image", methods=("POST",))
-    def remove_profile_image(self):
-        user_id = request.form.get("id")
-        return_url = request.form.get("url") or self.get_url(".index_view")
-
-        try:
-            user = User.query.get(user_id)
-            if not user:
+    
+    column_extra_row_actions = [
+        LinkRowAction('fa fa-lock', '/admin/admin_users/block/?id={row_id}', 'Bloquear/Desbloquear')
+    ]
+    
+    @expose('/block/')
+    def action_toggle_active(self):
+        user_id = request.args.get('id')
+        if user_id:
+            # Buscamos el objeto en la DB
+            user = sa_db.session.query(User).get(user_id)
+            
+            if user:
+                # Cambiamos el atributo 'is_active' (el interruptor)
+                # Si es True pasa a False, si es False pasa a True
+                user.is_active = not user.is_active
+                
+                # GUARDAR CAMBIOS: Importante para que no se pierdan
+                sa_db.session.commit()
+                
+                # Feedback visual
+                estado = "activado" if user.is_active else "bloqueado"
+                flash(f"Usuario {user.email} ha sido {estado}.", "success")
+            else:
                 flash("Usuario no encontrado.", "error")
-                return redirect(return_url)
-
-            user.foto_perfil = None
-
-            if hasattr(user, "admin_notes"):
-                note = "Imagen eliminada por el admin por contenido ofensivo."
-                existing = getattr(user, "admin_notes", "") or ""
-                user.admin_notes = existing + (("\n" if existing else "") + note)
-
-            sa_db.session.commit()
-            flash("Imagen eliminada correctamente.", "success")
-        except Exception as e:
-            sa_db.session.rollback()
-            flash(f"Error al eliminar la imagen: {str(e)}", "error")
-
-        return redirect(return_url)
-
-    @action(
-        "moderar_imagen",
-        "Moderar Imagen",
-        "¿Seguro que quieres eliminar la imagen de perfil de los usuarios seleccionados?",
-    )
-    def action_moderar_imagen(self, ids):
-        try:
-            count = 0
-            for record_id in ids:
-                user = User.query.get(record_id)
-                if not user:
-                    continue
-
-                user.foto_perfil = None
-
-                # Optional: only applies if you later add this column to the model
-                if hasattr(user, "admin_notes"):
-                    note = "Imagen eliminada por el admin por contenido ofensivo."
-                    existing = getattr(user, "admin_notes", "") or ""
-                    user.admin_notes = existing + (("\n" if existing else "") + note)
-
-                count += 1
-
-            sa_db.session.commit()
-            flash(f"Imagen eliminada correctamente en {count} usuario(s).", "success")
-        except Exception as e:
-            sa_db.session.rollback()
-            flash(f"Error al moderar imágenes: {str(e)}", "error")
+        
+        # REDIRECCIÓN: Esto evita que te quedes en la URL /block/
+        # .index_view es el nombre interno de la lista de Flask-Admin
+        return redirect(url_for('.index_view'))
 
     # Acción masiva adicional específica para usuarios: cambiar rol a viewer
     @action(
@@ -255,11 +185,112 @@ class UserModelView(SecureModelView):
         if model.role not in User.ROLES:
             raise ValueError("Rol inválido")
 
-    def scaffold_form(self):
-        form_class = super().scaffold_form()
-        if hasattr(self.model, "admin_notes") and "admin_notes" not in self.form_columns:
-            self.form_columns = list(self.form_columns) + ["admin_notes"]
-        return form_class
+
+# =========================
+# 📄 OPOSICIONES ADMIN
+# =========================
+
+class OposicionModelView(SecureModelView):
+    list_template = 'admin/oposiciones_list.html'
+
+    # Mostrar 10 resultados por página por defecto
+    page_size = 10
+    can_set_page_size = False
+    page_size_options = [10, 25, 50]
+
+    column_list = ['id', 'fecha', 'departamento', 'provincia', 'identificador', 'titulo']
+
+    column_labels = {
+        'id': 'ID',
+        'fecha': 'Fecha',
+        'departamento': 'Departamento',
+        'provincia': 'Provincia',
+        'identificador': 'Identificador',
+        'titulo': 'Título',
+    }
+
+    column_filters = []
+    column_searchable_list = ['titulo', 'identificador', 'departamento', 'provincia']
+    column_default_sort = ('fecha', True)
+    action_disallowed_list = ['delete', 'eliminar_seleccionados']
+
+    @staticmethod
+    def _normalize_text(value):
+        if not value:
+            return ""
+        normalized = unicodedata.normalize("NFD", value)
+        without_accents = "".join(ch for ch in normalized if not unicodedata.combining(ch))
+        return without_accents.lower().strip()
+
+    @staticmethod
+    def _normalize_sql_expr(column):
+        expr = func.lower(sql_cast(column, Unicode))
+        for src, dst in (("á", "a"), ("é", "e"), ("í", "i"), ("ó", "o"), ("ú", "u"), ("ü", "u"), ("ñ", "n")):
+            expr = func.replace(expr, src, dst)
+        return expr
+
+    def _apply_search(self, query, count_query, joins, count_joins, search):
+        terms = search.split(" ")
+
+        for term in terms:
+            normalized_term = self._normalize_text(term)
+            if not normalized_term:
+                continue
+
+            stmt = tools.parse_like_term(normalized_term)
+
+            filter_stmt = []
+            count_filter_stmt = []
+
+            for field, path in self._search_fields:
+                query, joins, alias = self._apply_path_joins(query, joins, path, inner_join=False)
+
+                count_alias = None
+                if count_query is not None:
+                    count_query, count_joins, count_alias = self._apply_path_joins(
+                        count_query, count_joins, path, inner_join=False
+                    )
+
+                column = field if alias is None else getattr(alias, field.key)
+                normalized_column = self._normalize_sql_expr(column)
+                filter_stmt.append(normalized_column.ilike(stmt))
+
+                if count_query is not None:
+                    column = field if count_alias is None else getattr(count_alias, field.key)
+                    normalized_count_column = self._normalize_sql_expr(column)
+                    count_filter_stmt.append(normalized_count_column.ilike(stmt))
+
+            query = query.filter(or_(*filter_stmt))
+
+            if count_query is not None:
+                count_query = count_query.filter(or_(*count_filter_stmt))
+
+        return query, count_query, joins, count_joins
+
+    @expose('/guardar_favorita/<int:oposicion_id>', methods=('POST',))
+    def guardar_favorita(self, oposicion_id):
+        if not self.is_accessible():
+            return self.inaccessible_callback('guardar_favorita')
+
+        existente = Favorita.query.filter_by(
+            user_id=current_user.id,
+            oposicion_id=oposicion_id,
+        ).first()
+
+        if existente:
+            flash('La oposición ya estaba en favoritos.', 'info')
+            return redirect(request.referrer or self.get_url('.index_view'))
+
+        favorita = Favorita(
+            user_id=current_user.id,
+            oposicion_id=oposicion_id,
+            fecha_favorito=datetime.now().isoformat(),
+        )
+        sa_db.session.add(favorita)
+        sa_db.session.commit()
+        flash('Oposición guardada en favoritos.', 'success')
+
+        return redirect(request.referrer or self.get_url('.index_view'))
 
 
 # =========================
@@ -332,7 +363,7 @@ def init_admin(app):
 
     # 📄 Oposiciones
     admin.add_view(
-        SecureModelView(
+        OposicionModelView(
             Oposicion,
             sa_db.session,
             name="Oposiciones",

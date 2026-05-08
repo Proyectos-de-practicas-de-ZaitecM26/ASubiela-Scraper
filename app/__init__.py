@@ -3,21 +3,18 @@ from flask import Flask, session, request, redirect, url_for
 from flask_login import current_user
 from datetime import datetime, date, timedelta
 
-
+from app.admin.views import init_admin
 from .config import Config
 from .data import sa_db, User
 from .data import inicializar_y_migrar
-
-
-from .extensions import mail, login_manager
-from .admin.views import init_admin
-
+from .config import Config
+from .data import sa_db, User, inicializar_y_migrar
+from .extensions import mail, login_manager, limiter
 from app.routes.main import main_bp
 from app.routes.auth import auth_bp
 from app.routes.user import user_bp
 from app.routes.chat import chat_bp
-
-from .extensions import mail, login_manager, limiter
+from app.admin.views import init_admin
 
 
 def create_app(config_overrides=None):
@@ -26,9 +23,6 @@ def create_app(config_overrides=None):
         template_folder=os.path.join(os.path.dirname(__file__), "..", "templates"),
         static_folder=os.path.join(os.path.dirname(__file__), "..", "static"),
     )
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite3"
-
-    # DB
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite3"
 
     # Config
@@ -66,8 +60,9 @@ def create_app(config_overrides=None):
     with app.app_context():
         inicializar_y_migrar()
 
-    # Admin (Flask-Admin) con control de acceso por rol
+    # Admin
     init_admin(app)
+    print(app.url_map)
 
     # =========================
     # THEME

@@ -414,6 +414,68 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
+    /* Resetear el icono original para que no interfiera */
+    .fa-pencil::before, 
+    .fa-trash:before, 
+    .glyphicon-pencil:before,
+    .glyphicon-trash:before,
+    .fa-lock:before,
+    .glyphicon-lock:before {
+        content: "" !important; 
+    }
+
+    /* 2. Inyectar el icono de Bootstrap Icons */
+    .fa-pencil, .glyphicon-pencil,
+    .fa-trash, .glyphicon-trash,
+    .fa-lock, .glyphicon-lock {
+        display: inline-block;
+        font-family: bootstrap-icons !important;
+        font-style: normal;
+        font-weight: normal !important;
+        font-variant: normal;
+        text-transform: none;
+        line-height: 1;
+        font-size: 1.1rem;
+        vertical-align: -.125em;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    .fa-pencil:before, .glyphicon-pencil:before {
+        content: "\f4ca" !important;
+        color: var(--primary);
+        
+    }
+
+    .fa-trash:before, .glyphicon-trash:before {
+        content: "\F5DE" !important;
+        color: var(--danger);
+    }
+
+    .fa-lock:before, .glyphicon-lock:before {
+        content: "\F47A" !important;
+        color: var(--primary);
+    }
+
+    .table-responsive table > tbody > tr > td.list-buttons-column > * {
+      display: inherit;
+    }
+
+    .list-buttons-column a.icon span,
+    .list-buttons-column form button {
+        background: transparent !important;
+        border: none !important;
+        padding: 0;
+        margin-left: 10px;
+        font-size: 1.1rem;
+        transition: transform 0.2s;
+        line-height: 0px;
+    }
+
+    .list-buttons-column a.icon span:hover,
+    .list-buttons-column form button:hover {
+        transform: scale(1.2);
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       #sidebar { transform: translateX(-100%); }
