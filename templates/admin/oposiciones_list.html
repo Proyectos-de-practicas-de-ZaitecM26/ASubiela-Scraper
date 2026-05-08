@@ -231,7 +231,7 @@ Acciones
                         </button>
                     </form>
 
-                    <form method="POST" action="{{ get_url('.delete_view') }}" onsubmit="return faHelpers.safeConfirm('¿Seguro que quieres eliminar esta oposición?');">
+                    <form method="POST" action="{{ get_url('.delete_view') }}" onsubmit="return confirm('¿Está seguro que quiere eliminar esta oposición?');">
                         {{ delete_form.id(value=get_pk_value(row)) }}
                         {{ delete_form.url(value=return_url) }}
                         {% if delete_form.csrf_token is defined and delete_form.csrf_token %}
