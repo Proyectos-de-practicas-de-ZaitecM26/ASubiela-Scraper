@@ -429,6 +429,10 @@ Botón flotante con icono de accesibilidad universal, visible en todas las pági
 
 - Validación de roles (`admin`, `manager`, `viewer`)
 
+- Moderación manual de imágenes (Flask-Admin):
+  - En el listado de usuarios se muestra una **miniatura (50px)** de `foto_perfil` para detectar contenido ofensivo rápidamente.
+  - Acción masiva **"Moderar Imagen"**: elimina la imagen de perfil (`foto_perfil = None`) de los usuarios seleccionados.
+
 - Añadidas ModelViews para:
   - Oposiciones
   - Favoritas
@@ -536,6 +540,23 @@ tests/
 - `app/nvidia_chat.py` – NVIDIA NIM
 - `app/elephant_chat.py` – ElephantSQL / modelos propios
 - `app/groq_chat.py` – Wrapper alternativo de Groq
+
+## 🔐 CAPTCHA en el sistema de login
+
+Se ha integrado Google reCAPTCHA en el sistema de inicio de sesión para mejorar la seguridad y prevenir accesos automatizados.
+
+🧠 Cambios realizados
+Implementación de reCAPTCHA v2 (“No soy un robot”) en el formulario de login.
+Añadido el widget en el frontend (login.html) mediante data-sitekey.
+Validación del token de reCAPTCHA en el backend con Flask.
+Uso de variables de entorno (.env) para almacenar las claves de forma segura.
+⚙️ Backend
+Verificación del reCAPTCHA mediante la API de Google antes de autenticar al usuario.
+Uso de requests para validar la respuesta del usuario.
+🔒 Seguridad
+Protección contra bots en el inicio de sesión.
+Separación de claves sensibles usando variables de entorno.
+Mejora general del sistema de autenticación.
 
 ---
 

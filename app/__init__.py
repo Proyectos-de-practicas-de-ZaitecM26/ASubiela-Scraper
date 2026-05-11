@@ -14,6 +14,7 @@ from app.routes.main import main_bp
 from app.routes.auth import auth_bp
 from app.routes.user import user_bp
 from app.routes.chat import chat_bp
+from app.admin.views import init_admin
 
 
 def create_app(config_overrides=None):
@@ -59,8 +60,9 @@ def create_app(config_overrides=None):
     with app.app_context():
         inicializar_y_migrar()
 
-    #admin
+    # Admin
     init_admin(app)
+    print(app.url_map)
 
     # =========================
     # THEME

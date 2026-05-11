@@ -1,5 +1,6 @@
 from datetime import datetime
 import os
+import requests
 
 from flask import (
     Blueprint,
@@ -107,7 +108,9 @@ def login():
 
         password = request.form.get("password") or ""
 
+
         user = find_user_by_email(email)
+
 
         if not user or not check_password_hash(user.password_hash, password):
 
@@ -124,6 +127,7 @@ def login():
             )
 
             return redirect(url_for("auth.login"))
+
 
         login_user(user)
 

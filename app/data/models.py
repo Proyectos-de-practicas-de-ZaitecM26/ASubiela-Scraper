@@ -65,6 +65,7 @@ class User(sa_db.Model, UserMixin):
     nivel_estudios = sa_db.Column(sa_db.String)
 
     titulacion = sa_db.Column(sa_db.String)
+    is_active = sa_db.Column(sa_db.Boolean, default=True)
 
     # Relaciones
     visitas = sa_db.relationship(

@@ -20,7 +20,11 @@
   <div class="d-flex justify-content-between align-items-center mb-3">
     <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none small" data-i18n="login.forgot">¿Olvidaste tu contraseña?</a>
   </div>
+ <div class="g-recaptcha mb-3"
+     data-sitekey="{{ site_key }}">
+</div>
 
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <button class="btn btn-primary w-100" data-i18n="login.submit">Entrar</button>
 </form>
 {% endblock %}
