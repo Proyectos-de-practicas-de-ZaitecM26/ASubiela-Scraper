@@ -63,6 +63,7 @@ def inicializar_y_migrar():
         # Garantizar que la columna 'role' exista y hacer backfill si falta.
         agregar_columna_role_en_users(sa_db)
         agregar_columna_is_active_en_users(sa_db)
+        agregar_columna_is_verified_en_users(sa_db)
 
         current_app.logger.info("✅ No es necesario ejecutar la migración, ya estamos usando SqlAlchemy")
 
@@ -86,4 +87,13 @@ def agregar_columna_is_active_en_users(sa_db):
         # Si da error es porque la columna ya existe, así que no hacemos nada
         sa_db.session.rollback()
         current_app.logger.warning("Columna 'is_active' ya existe.")
-        
+
+def agregar_columna_is_verified_en_users(sa_db):
+    try:
+        sa_db.session.execute(text('ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 0'))
+        sa_db.session.commit()
+        current_app.logger.info("Columna is_verified añadida con éxito.")
+    except Exception:
+        # Si da error es porque la columna ya existe, así que no hacemos nada
+        sa_db.session.rollback()
+        current_app.logger.warning("Columna 'is_verified' ya existe.")       
