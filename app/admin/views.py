@@ -2,7 +2,7 @@ from flask_admin import Admin, AdminIndexView, expose, BaseView
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.view import tools, sql_cast, Unicode, or_
 from flask_admin.actions import action
-from flask import redirect, url_for, abort, flash, request
+from flask import redirect, url_for, abort, flash, request, jsonify
 from flask_login import current_user
 from sqlalchemy import func
 import unicodedata
@@ -197,8 +197,8 @@ class OposicionModelView(SecureModelView):
 
     # Mostrar 10 resultados por página por defecto
     page_size = 10
-    can_set_page_size = False
-    page_size_options = [10, 25, 50]
+    can_set_page_size = True
+    page_size_options = [10, 50, 100]
 
     column_list = ['id', 'fecha', 'departamento', 'provincia', 'identificador', 'titulo']
 
@@ -280,7 +280,12 @@ class OposicionModelView(SecureModelView):
         ).first()
 
         if existente:
-            flash('La oposición ya estaba en favoritos.', 'info')
+            sa_db.session.delete(existente)
+            sa_db.session.commit()
+            message = 'Oposición eliminada de favoritos.'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify(success=True, action='removed', message=message), 200
+            flash(message, 'success')
             return redirect(request.referrer or self.get_url('.index_view'))
 
         favorita = Favorita(
@@ -290,8 +295,10 @@ class OposicionModelView(SecureModelView):
         )
         sa_db.session.add(favorita)
         sa_db.session.commit()
-        flash('Oposición guardada en favoritos.', 'success')
-
+        message = 'Oposición guardada en favoritos.'
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify(success=True, action='added', message=message), 200
+        flash(message, 'success')
         return redirect(request.referrer or self.get_url('.index_view'))
 
 
