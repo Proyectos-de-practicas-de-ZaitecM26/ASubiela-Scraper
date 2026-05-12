@@ -8,6 +8,8 @@ from sqlalchemy import func
 import unicodedata
 from datetime import datetime
 from ..data import sa_db, User, Oposicion, Favorita, Visita, Suscripcion
+from flask_admin.model.template import LinkRowAction
+
 
 
 # =========================
