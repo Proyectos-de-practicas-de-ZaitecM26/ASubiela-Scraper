@@ -3,6 +3,7 @@ import sqlite3
 from flask import current_app
 from .models import sa_db, User, Oposicion, Visita, VisitaGlobal, Favorita, Suscripcion
 from ..config import Config
+from sqlalchemy import text
 
 def inicializar_y_migrar():
     """Crea la DB y migra datos si es la primera vez que se ejecuta."""
@@ -59,4 +60,30 @@ def inicializar_y_migrar():
             conn_o.close()
             current_app.logger.info("✅ Migración finalizada. Ya puedes borrar los archivos .db antiguos.")
     else:
+        # Garantizar que la columna 'role' exista y hacer backfill si falta.
+        agregar_columna_role_en_users(sa_db)
+        agregar_columna_is_active_en_users(sa_db)
+
         current_app.logger.info("✅ No es necesario ejecutar la migración, ya estamos usando SqlAlchemy")
+
+def agregar_columna_role_en_users(sa_db):
+    try:
+        sa_db.session.execute(text("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'viewer'"))
+        sa_db.session.commit()
+        current_app.logger.info("Columna role añadida con éxito.")
+    except Exception:
+        # Si da error es porque la columna ya existe, así que no hacemos nada
+        sa_db.session.rollback()
+        current_app.logger.warning("Columna 'role' ya existe.")
+        
+
+def agregar_columna_is_active_en_users(sa_db):
+    try:
+        sa_db.session.execute(text('ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT 1'))
+        sa_db.session.commit()
+        current_app.logger.info("Columna is_active añadida con éxito.")
+    except Exception:
+        # Si da error es porque la columna ya existe, así que no hacemos nada
+        sa_db.session.rollback()
+        current_app.logger.warning("Columna 'is_active' ya existe.")
+        

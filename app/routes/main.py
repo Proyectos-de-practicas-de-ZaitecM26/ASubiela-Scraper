@@ -1,9 +1,11 @@
 import os
 from datetime import datetime
-from flask import Blueprint, render_template, flash, redirect, url_for, request, jsonify, current_app
+from flask import Blueprint, render_template, flash, redirect, url_for, request, jsonify, current_app, session
+
 from flask_login import current_user, login_required
+from ..auth_utils import require_role
 from ..services.chatbot import chatbot
-from .. import limiter
+from app.extensions import limiter 
 from ..data import sa_db, Oposicion, User, Visita, VisitaGlobal, Favorita
 from sqlalchemy import or_, func
 from ..scraping.boe_scraper import (
@@ -131,7 +133,7 @@ def resultados():
 
 
 @main_bp.route("/admin/scrape_ultimos_30")
-@login_required
+@require_role('admin')
 def admin_scrape_ultimos_30():
     nuevas = scrape_boe_ultimos_dias(30)
     flash(
@@ -216,7 +218,7 @@ def aviso_legal():
 
 
 @main_bp.route("/admin/sync_boe")
-@login_required
+@require_role('admin')
 def admin_sync_boe():
     """
     Sincroniza la BBDD del BOE SOLO con los días que falten hasta hoy.
@@ -228,3 +230,15 @@ def admin_sync_boe():
         "success",
     )
     return redirect(url_for("user.oposiciones_vigentes"))
+
+@main_bp.route('/toggle-theme')
+def toggle_theme():
+    # Cambiamos el tema en la sesión
+    current_theme = session.get('theme', 'dark')
+    session['theme'] = 'light' if current_theme == 'dark' else 'dark'
+    
+    # Esto obliga a Flask a guardar la sesión inmediatamente
+    session.modified = True 
+    
+    # Volvemos a donde estaba el usuario
+    return redirect(request.referrer or url_for('main.index'))

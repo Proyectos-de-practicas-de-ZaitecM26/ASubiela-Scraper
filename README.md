@@ -1,5 +1,3 @@
-
-
 # 📚 BOE Oposiciones – Web Scraping y Portal de Usuarios
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
@@ -16,8 +14,8 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
 - [📚 BOE Oposiciones – Web Scraping y Portal de Usuarios](#-boe-oposiciones--web-scraping-y-portal-de-usuarios)
   - [📑 Tabla de Contenidos](#-tabla-de-contenidos)
   - [✨ Características principales](#-características-principales)
-  - [�️ Migración a SQLAlchemy (2026-04-28)](#-migración-a-sqlalchemy-2026-04-28)
-  - [�📋 Requisitos previos](#-requisitos-previos)
+  - [🗄️ Migración a SQLAlchemy (2026-04-28)](#-migración-a-sqlalchemy-2026-04-28)
+  - [📋 Requisitos previos](#-requisitos-previos)
   - [🚀 Instalación y configuración](#-instalación-y-configuración)
     - [Puesta en marcha rápida](#puesta-en-marcha-rápida)
       - [1. Clonar o descargar el proyecto](#1-clonar-o-descargar-el-proyecto)
@@ -37,8 +35,11 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
   - [🌐 Selector de idioma (ES / EN)](#-selector-de-idioma-es--en)
   - [♿ Panel de accesibilidad visual](#-panel-de-accesibilidad-visual)
   - [🤖 Chatbot asistente BOE](#-chatbot-asistente-boe)
-  - [� Página de estadísticas](#-página-de-estadísticas)
-  - [�🛠️ Scripts útiles](#️-scripts-útiles)
+  - [🧪 Tests](#-tests)
+    - [Pruebas unitarias del chatbot](#pruebas-unitarias-del-chatbot)
+    - [Pruebas E2E del panel de administración](#pruebas-e2e-del-panel-de-administración)
+  - [📊 Página de estadísticas](#-página-de-estadísticas)
+  - [🛠️ Scripts útiles](#️-scripts-útiles)
   - [📁 Estructura de archivos](#-estructura-de-archivos)
   - [🔮 Próximos pasos recomendados](#-próximos-pasos-recomendados)
   - [🤝 Contribución](#-contribución)
@@ -202,7 +203,7 @@ El chatbot usa siempre el prompt completo del BOE. Cada compañero solo necesita
 
 ```powershell
 venv\Scripts\activate
- $env:GROQ_API_KEY="tu_api_key"
+$env:GROQ_API_KEY="tu_api_key"
 python run.py
 ```
 
@@ -218,10 +219,10 @@ Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:5000/api/chatbot" -Content
 - Si falta contexto: aplica fallback y no inventa datos.
 
 4. **Casos recomendados de validación rápida**:
-- `como hacer una paella?` -> bloqueo por fuera de dominio.
-- `resumen del boe-a-2026-8444` -> respuesta directa orientada a resumen de referencia.
-- `Busca oposiciones en Madrid para hoy` -> respuesta IA (requiere `GROQ_API_KEY`).
-- `resumen del artículo 5 de esa norma` -> no bloquea y aplica fallback si falta contexto.
+- `como hacer una paella?` → bloqueo por fuera de dominio.
+- `resumen del boe-a-2026-8444` → respuesta directa orientada a resumen de referencia.
+- `Busca oposiciones en Madrid para hoy` → respuesta IA (requiere `GROQ_API_KEY`).
+- `resumen del artículo 5 de esa norma` → no bloquea y aplica fallback si falta contexto.
 
 ---
 
@@ -237,7 +238,6 @@ app/
   services/
     chat_skills.py     # Capa de skills: bloqueo de dominio + ruteo de intención.
   email_utils.py       # Helpers para enviar newsletters.
-  chatbot.py           # Función principal del chatbot (llama a Groq API).
   scraping/
     boe_scraper.py     # Lógica de scraping y sincronización del BOE.
   routes/
@@ -255,6 +255,7 @@ bootstrap.(bat|sh)     # Scripts para preparar el entorno.
 requirements.txt       # Dependencias de Python.
 tests/
   test_chat_skills.py  # Pruebas unitarias de las habilidades del chatbot.
+  test_admin_e2e.py    # Pruebas E2E del panel de administración con Playwright.
 ```
 
 ---
@@ -342,6 +343,7 @@ Además del banner de cookies, la aplicación incorpora páginas legales accesib
 - `Politica de Cookies` → `/politica-cookies`
 - `Politica de Privacidad` → `/politica-privacidad`
 - `Aviso Legal` → `/aviso-legal`
+- Los tres enlaces se muestran en blanco para mantener una coloración uniforme en el footer.
 
 **Implementación técnica:**
 
@@ -412,6 +414,86 @@ Botón flotante con icono de accesibilidad universal, visible en todas las pági
 
 ---
 
+## 🧩 Panel de Administración (Isidro)
+
+- Integración de Flask-Admin en la aplicación (`/admin`)
+- Creación de ModelViews para la gestión de datos
+- Implementación de CRUD completo en las entidades
+
+- Desarrollo de `UserModelView` con:
+  - Columnas configuradas
+  - Búsqueda por email, nombre y apellidos
+  - Filtro por rol
+  - Ordenación de registros
+  - Ocultación de contraseña
+
+- Validación de roles (`admin`, `manager`, `viewer`)
+
+- Moderación manual de imágenes (Flask-Admin):
+  - En el listado de usuarios se muestra una **miniatura (50px)** de `foto_perfil` para detectar contenido ofensivo rápidamente.
+  - Acción masiva **"Moderar Imagen"**: elimina la imagen de perfil (`foto_perfil = None`) de los usuarios seleccionados.
+
+- Añadidas ModelViews para:
+  - Oposiciones
+  - Favoritas
+  - Visitas
+  - Suscripciones
+
+- Integración con relaciones de SQLAlchemy
+- Acceso restringido solo a usuarios con rol `admin`
+- Panel completamente funcional para administración
+
+### ✨ UI, Dashboard y Tema (Anas)
+
+#### Plantilla base personalizada (`templates/admin/master.html`)
+
+Se ha sobrescrito la plantilla base de Flask-Admin para reemplazar su interfaz genérica por un diseño moderno basado en **Bootstrap 5**. Los elementos principales son:
+
+- **Sidebar fijo** con navegación a todos los modelos, agrupada por secciones (General / Modelos / Sistema).
+- **Topbar fija** con breadcrumb de navegación, indicador de estado del sistema y botón de logout.
+- **Sistema de tema claro/oscuro** gestionado 100% en el cliente mediante `localStorage` (clave `theme`), sin ninguna llamada al servidor.
+- Variables CSS (`--bg-base`, `--accent`, `--text-primary`, etc.) que unifican toda la paleta de colores.
+- Overrides completos de los componentes de Flask-Admin: tablas, botones, formularios, paginación, alertas, modales y dropdowns.
+
+#### Dashboard con datos reales (`templates/admin/index.html` + `app/admin/views.py`)
+
+- **5 tarjetas de estadísticas** con conteos reales de la BD (`COUNT(*)` sobre cada tabla), enlazando a su `ModelView`.
+- **Tabla de últimos 5 usuarios** con badges de color por rol (`admin` / `manager` / `viewer`).
+- **Tabla de últimas 5 oposiciones** scrapeadas con identificador y fecha.
+
+#### Archivos modificados
+
+| Archivo | Cambios |
+|---------|---------|
+| `templates/admin/master.html` | Plantilla base reescrita con Bootstrap 5, sidebar, topbar y tema claro/oscuro |
+| `templates/admin/index.html` | Dashboard con tarjetas de stats reales y tablas de registros recientes |
+| `app/admin/views.py` | Añadido `@expose('/')` con consultas SQLAlchemy y `self.render()` |
+
+### 📊 Analíticas (Anas)
+
+- Vista personalizada (`BaseView`) accesible en `/admin/analytics` desde el sidebar del panel.
+- **Gráfico de dona** con el reparto de oposiciones por departamento (Top 7).
+- **Gráfico de barras vertical** con el perfil de nivel de estudios de los usuarios registrados.
+- **Gráfico de barras horizontal** con las 5 oposiciones más visitadas.
+- Los gráficos se redibujan automáticamente al cambiar entre tema claro y oscuro.
+
+| Archivo | Cambios |
+|---------|---------|
+| `app/admin/views.py` | Añadida clase `AnalyticsView` con queries SQLAlchemy y registrada en `init_admin` |
+| `templates/admin/analytics.html` | Template con 3 gráficos Chart.js adaptados al tema claro/oscuro |
+
+### 📤 Exportación CSV y acciones masivas (Anas)
+
+- Exportación a CSV habilitada en todos los `ModelView` con el botón **Export** en la parte superior de cada lista.
+- **Acción masiva general** — "Eliminar seleccionados": elimina los registros marcados con confirmación previa y rollback automático si algo falla. Disponible en todos los modelos.
+- **Acción masiva específica de usuarios** — "Cambiar rol a Viewer": cambia el rol de los usuarios seleccionados a `viewer`, protegiendo siempre a los `admin`.
+
+| Archivo | Cambios |
+|---------|---------|
+| `app/admin/views.py` | `can_export = True`, `export_types = ['csv']` en `SecureModelView` y dos acciones `@action` |
+
+---
+
 ## 🤖 Chatbot asistente BOE
 
 Asistente conversacional flotante especializado en el contenido del BOE, accesible desde cualquier página de la aplicación.
@@ -478,6 +560,57 @@ Mejora general del sistema de autenticación.
 
 ---
 
+## 🧪 Tests
+
+### Pruebas unitarias del chatbot
+
+El archivo `tests/test_chat_skills.py` cubre las habilidades del chatbot: detección de intención, bloqueo de temas fuera de BOE y búsqueda en base de datos.
+
+```bash
+pytest tests/test_chat_skills.py -v
+```
+
+### Pruebas E2E del panel de administración
+
+El archivo `tests/test_admin_e2e.py` contiene **15 pruebas de extremo a extremo** con Playwright que simulan un navegador real interactuando con el panel de administración.
+
+**Instalación de dependencias:**
+
+```bash
+pip install playwright pytest-playwright
+playwright install chromium
+```
+
+**Ejecución** (la app Flask debe estar corriendo en paralelo):
+
+```bash
+# Terminal 1 — arranca la app
+python run.py
+
+# Terminal 2 — ejecuta los tests
+pytest tests/test_admin_e2e.py -v
+```
+
+**Variables de entorno opcionales:**
+
+| Variable | Descripción | Valor por defecto |
+|---|---|---|
+| `BASE_URL` | URL base de la aplicación | `http://127.0.0.1:5000` |
+| `ADMIN_EMAIL` | Email del usuario administrador | `amm0246@alu.medac.es` |
+| `ADMIN_PASSWORD` | Contraseña del administrador | `Anas1234` |
+
+**Clases de tests incluidas:**
+
+| Clase | Tests | Descripción |
+|---|---|---|
+| `TestLogin` | 3 | Carga del formulario, credenciales incorrectas y login correcto |
+| `TestAccesoAdmin` | 4 | Dashboard accesible, mensaje de bienvenida, sidebar y topbar visibles |
+| `TestNavegacionModelos` | 4 | Navegación a Usuarios, Oposiciones, Analíticas y presencia de gráficos |
+| `TestControlAcceso` | 2 | Redirección al login para usuarios sin sesión |
+| `TestExportCSV` | 2 | Botón Export visible en Usuarios y Oposiciones |
+
+---
+
 ## 🛠️ Scripts útiles
 
 - **`bootstrap.bat` / `bootstrap.sh`**: Crea venv, instala dependencias y carpetas necesarias.
@@ -533,7 +666,8 @@ I_S25_Web_Scraping/
 │   └── emails/
 │       └── nuevas_oposiciones.html
 ├── tests/
-│   └── test_chat_skills.py  # Pruebas unitarias de las habilidades del chatbot
+│   ├── test_chat_skills.py  # Pruebas unitarias de las habilidades del chatbot
+│   └── test_admin_e2e.py    # Pruebas E2E del panel de administración (Playwright)
 ├── bootstrap.bat            # Script de bootstrap (Windows)
 ├── bootstrap.sh             # Script de bootstrap (Linux/macOS)
 ├── run.py                   # Punto de entrada de la aplicación
