@@ -57,6 +57,7 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
 - **👤 Gestión de usuarios**: Registro con campos avanzados, login con `Flask-Login`, edición completa del perfil y cambio de contraseña.
 - **📧 Alertas y newsletters**: Configuración de alertas diarias o por favoritos y envío de emails con `Flask-Mail`.
 - **📊 Seguimiento de actividad**: Cada click marca visitas y favoritos para personalizar las tarjetas. Las visitas se registran tanto para usuarios autenticados como anónimos.
+- **📋 Log de actividad**: Panel de administración con registro automático de `login`, `logout` y eventos internos, con fecha legible, badges por acción y detalles compactos.
 - **📈 Página de estadísticas**: Vista pública en `/estadisticas` con gráfico de barras por departamento, resumen desglosado de visitas autenticadas, anónimas y total combinado.
 - **🎨 Tema claro/oscuro** y subida de foto de perfil almacenada en `static/uploads/profiles`.
 - **🍪 Banner de cookies**: Aviso de política de cookies con preferencias granulares, persistido en `localStorage`.
@@ -436,6 +437,7 @@ Botón flotante con icono de accesibilidad universal, visible en todas las pági
 - Añadidas ModelViews para:
   - Oposiciones
   - Favoritas
+  - Log de actividad
   - Visitas
   - Suscripciones
 

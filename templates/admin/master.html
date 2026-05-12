@@ -530,6 +530,11 @@
         <i class="bi bi-star"></i> Favoritas
       </a>
 
+      <a href="{{ url_for('admin_auditlog.index_view') }}"
+         class="nav-item {% if 'admin_auditlog' in request.endpoint %}active{% endif %}">
+        <i class="bi bi-activity"></i> Actividad
+      </a>
+
       <a href="{{ url_for('admin_visitas.index_view') }}"
          class="nav-item {% if 'admin_visitas' in request.endpoint %}active{% endif %}">
         <i class="bi bi-eye"></i> Visitas
