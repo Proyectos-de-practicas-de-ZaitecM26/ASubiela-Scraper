@@ -8,7 +8,7 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(120deg, #e9f1ff, #d6e4f0, #f0fdf4);
+    background: linear-gradient(120deg, #eaf2ff, #d6e4ff, #e9eef5);
     background-attachment: fixed;
     background-size: cover;
     color: #1a1a1a;
@@ -57,6 +57,11 @@ body {
     height: 50px;
     object-fit: contain;
     border-radius: 6px;
+
+    transform: scale(4); 
+    transform-origin: center;
+    margin-left: 50px;
+    margin-right: 20px;
 }
 
 .nav-right {
