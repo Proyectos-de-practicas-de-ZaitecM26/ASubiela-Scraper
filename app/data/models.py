@@ -34,31 +34,57 @@ class User(sa_db.Model, UserMixin):
     __tablename__ = 'users'
     
     id = sa_db.Column(sa_db.Integer, primary_key=True, autoincrement=True)
+
     email = sa_db.Column(sa_db.String, unique=True, nullable=False)
+
     password_hash = sa_db.Column(sa_db.String, nullable=False)
 
-    # 🔥 ROLE CORRECTO (SOLO UNO)
-    ROLES = ('admin', 'manager', 'viewer')
-    role = sa_db.Column(sa_db.String(20), nullable=False, default='viewer')
+    # 🔥 Verificación email
+    is_verified = sa_db.Column(sa_db.Boolean, default=False)
 
+    # 🔥 Roles
+    ROLES = ('admin', 'manager', 'viewer')
+
+    role = sa_db.Column(
+        sa_db.String(20),
+        nullable=False,
+        default='viewer'
+    )
+
+    # Datos usuario
     name = sa_db.Column(sa_db.String)
+
     apellidos = sa_db.Column(sa_db.String)
+
     age = sa_db.Column(sa_db.Integer)
+
     telefono = sa_db.Column(sa_db.String)
+
     foto_perfil = sa_db.Column(sa_db.String)
+
     nivel_estudios = sa_db.Column(sa_db.String)
+
     titulacion = sa_db.Column(sa_db.String)
     is_active = sa_db.Column(sa_db.Boolean, default=True)
 
     # Relaciones
     visitas = sa_db.relationship(
-        'Visita', backref='user', cascade="all, delete-orphan"
+        'Visita',
+        backref='user',
+        cascade="all, delete-orphan"
     )
+
     favoritas = sa_db.relationship(
-        'Favorita', backref='user', cascade="all, delete-orphan"
+        'Favorita',
+        backref='user',
+        cascade="all, delete-orphan"
     )
+
     suscripcion = sa_db.relationship(
-        'Suscripcion', backref='user', uselist=False, cascade="all, delete-orphan"
+        'Suscripcion',
+        backref='user',
+        uselist=False,
+        cascade="all, delete-orphan"
     )
 
 

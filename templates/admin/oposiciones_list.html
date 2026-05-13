@@ -56,6 +56,11 @@
         margin: 0;
     }
 
+    .favorite-star-button {
+        color: inherit;
+        text-decoration: none;
+    }
+
     .oposiciones-row-actions .dropdown-item {
         cursor: pointer;
     }
@@ -64,6 +69,17 @@
         width: 1.1rem;
         margin-right: 0.4rem;
         text-align: center;
+    }
+
+    .oposiciones-page-size-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .oposiciones-page-size-form button {
+        min-width: 52px;
     }
 
     @media (max-width: 767.98px) {
@@ -139,6 +155,28 @@
                 Exportar CSV
             </a>
         {% endif %}
+
+        <form method="GET" action="{{ return_url }}" class="oposiciones-page-size-form mt-2">
+            {% for flt_name, flt_value in filter_args.items() %}
+            <input type="hidden" name="{{ flt_name }}" value="{{ flt_value }}">
+            {% endfor %}
+            {% for arg_name, arg_value in extra_args.items() %}
+            <input type="hidden" name="{{ arg_name }}" value="{{ arg_value }}">
+            {% endfor %}
+            {% if search %}
+            <input type="hidden" name="search" value="{{ search }}">
+            {% endif %}
+            {% if sort_column is not none %}
+            <input type="hidden" name="sort" value="{{ sort_column }}">
+            {% endif %}
+            {% if sort_desc %}
+            <input type="hidden" name="desc" value="1">
+            {% endif %}
+            <span class="me-2">Filas:</span>
+            {% for option in admin_view.page_size_options %}
+            <button type="submit" name="page_size" value="{{ option }}" class="btn btn-outline-secondary btn-sm {% if page_size == option %}active{% endif %}">{{ option }}</button>
+            {% endfor %}
+        </form>
     </div>
     </div>
 </div>
@@ -201,9 +239,22 @@ Acciones
         </td>
         {% endif %}
 
+        {% set favoritos_ids = current_user.favoritas | map(attribute='oposicion_id') | list %}
         {% for c, name in list_columns %}
         <td class="col-{{c}}">
-            {% if admin_view.is_editable(c) %}
+            {% if c == 'id' %}
+                <div class="d-flex align-items-center gap-2">
+                    <span>{{ get_value(row, c) }}</span>
+                    <form method="POST" action="{{ get_url('.guardar_favorita', oposicion_id=get_pk_value(row)) }}">
+                        {% if csrf_token is defined and csrf_token %}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% endif %}
+                        <button type="submit" class="btn btn-link p-0 favorite-star-button" title="Guardar en favoritos">
+                            <i class="bi {% if (get_pk_value(row) | int) in favoritos_ids %}bi-star-fill text-warning{% else %}bi-star{% endif %}"></i>
+                        </button>
+                    </form>
+                </div>
+            {% elif admin_view.is_editable(c) %}
                 {% set form = list_forms[get_pk_value(row)] %}
                 {% if form.csrf_token is defined and form.csrf_token %}
                 {{ form[c](pk=get_pk_value(row), display_value=get_value(row, c), csrf=form.csrf_token._value()) }}
@@ -225,12 +276,6 @@ Acciones
                     Acciones
                 </button>
                 <div class="dropdown-menu dropdown-menu-end">
-                    <form method="POST" action="{{ get_url('.guardar_favorita', oposicion_id=get_pk_value(row)) }}">
-                        <button type="submit" class="dropdown-item">
-                            <i class="bi bi-star item-icon" aria-hidden="true"></i>Guardar en favoritos
-                        </button>
-                    </form>
-
                     <form method="POST" action="{{ get_url('.delete_view') }}" onsubmit="return confirm('¿Está seguro que quiere eliminar esta oposición?');">
                         {{ delete_form.id(value=get_pk_value(row)) }}
                         {{ delete_form.url(value=return_url) }}
@@ -268,13 +313,117 @@ Acciones
     </tr>
     {% endfor %}
 </table>
+
+<div class="d-flex justify-content-end mt-3">
+    <form method="GET" action="{{ return_url }}" class="oposiciones-page-size-form">
+        {% for flt_name, flt_value in filter_args.items() %}
+        <input type="hidden" name="{{ flt_name }}" value="{{ flt_value }}">
+        {% endfor %}
+        {% for arg_name, arg_value in extra_args.items() %}
+        <input type="hidden" name="{{ arg_name }}" value="{{ arg_value }}">
+        {% endfor %}
+        {% if search %}
+        <input type="hidden" name="search" value="{{ search }}">
+        {% endif %}
+        {% if sort_column is not none %}
+        <input type="hidden" name="sort" value="{{ sort_column }}">
+        {% endif %}
+        {% if sort_desc %}
+        <input type="hidden" name="desc" value="1">
+        {% endif %}
+        <span class="me-2">Filas:</span>
+        {% for option in admin_view.page_size_options %}
+        <button type="submit" name="page_size" value="{{ option }}" class="btn btn-outline-secondary btn-sm {% if page_size == option %}active{% endif %}">{{ option }}</button>
+        {% endfor %}
+    </form>
+</div>
 </div>
 
-{% block list_pager %}
-{% if num_pages is not none %}
-{{ lib.pager(page, num_pages, pager_url) }}
-{% else %}
-{{ lib.simple_pager(page, data|length == page_size, pager_url) }}
-{% endif %}
+<script>
+    function showFavoritePopup(message, type) {
+        var container = document.getElementById('favorite-popup-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'favorite-popup-container';
+            container.style.position = 'fixed';
+            container.style.top = '1rem';
+            container.style.left = '50%';
+            container.style.transform = 'translateX(-50%)';
+            container.style.zIndex = 1050;
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.alignItems = 'center';
+            container.style.justifyContent = 'center';
+            container.style.width = 'auto';
+            document.body.appendChild(container);
+        }
+
+        var alert = document.createElement('div');
+        alert.className = 'alert alert-' + type + ' alert-dismissible fade show';
+        alert.role = 'alert';
+        alert.style.minWidth = '240px';
+        alert.style.textAlign = 'center';
+        alert.innerHTML = message +
+            '<button type="button" class="btn-close" aria-label="Close"></button>';
+
+        alert.querySelector('.btn-close').addEventListener('click', function () {
+            alert.remove();
+        });
+
+        container.appendChild(alert);
+        setTimeout(function () {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 4500);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.favorite-star-button').forEach(function(button) {
+            var form = button.closest('form');
+            var icon = button.querySelector('i.bi');
+            if (!form || !icon) return;
+
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                if (button.disabled) return;
+
+                var isFavorite = icon.classList.contains('bi-star-fill');
+                button.disabled = true;
+
+                fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: new FormData(form),
+                }).then(function (response) {
+                    return response.json().then(function (data) {
+                        if (!response.ok || !data.success) {
+                            button.disabled = false;
+                            showFavoritePopup(data.message || 'Error al guardar en favoritos.', 'danger');
+                            return;
+                        }
+
+                        if (data.action === 'removed') {
+                            icon.classList.remove('bi-star-fill', 'text-warning');
+                            icon.classList.add('bi-star');
+                        } else {
+                            icon.classList.remove('bi-star');
+                            icon.classList.add('bi-star-fill', 'text-warning');
+                        }
+
+                        showFavoritePopup(data.message || 'Favorita actualizada.', 'success');
+                        button.disabled = false;
+                    });
+                }).catch(function () {
+                    button.disabled = false;
+                    showFavoritePopup('Error de red al guardar.', 'danger');
+                });
+            });
+        });
+    });
+</script>
+
 {% endblock %}
-{% endblock %}
+

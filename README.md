@@ -545,40 +545,20 @@ tests/
 
 ## 🔐 CAPTCHA en el sistema de login
 
-Este proyecto incluye un sistema de CAPTCHA personalizado implementado con Flask para mejorar la seguridad del inicio de sesión y prevenir accesos automatizados (bots).
+Se ha integrado Google reCAPTCHA en el sistema de inicio de sesión para mejorar la seguridad y prevenir accesos automatizados.
 
-🧠 Funcionamiento
-Cuando el usuario accede al formulario de login, se genera un CAPTCHA dinámico en el backend.
-El CAPTCHA consiste en una imagen con un código aleatorio de 6 caracteres (letras y números).
-La imagen se sirve desde una ruta específica del servidor Flask (/captcha).
-El texto generado se guarda en la sesión del usuario.
-El usuario debe introducir el código mostrado en la imagen para poder iniciar sesión.
-🖼️ Generación de la imagen
-
-El CAPTCHA se genera utilizando la librería Pillow y Flask, creando una imagen en memoria con:
-
-Texto aleatorio
-Ruido básico (líneas aleatorias)
-Fondo blanco
-
-La imagen no se guarda en disco, se genera dinámicamente en cada petición.
-
-🔄 Recarga del CAPTCHA
-
-El usuario puede hacer clic sobre la imagen para generar un nuevo CAPTCHA sin recargar la página, evitando problemas de caché mediante un parámetro aleatorio.
-
-🔒 Validación
-
-Durante el proceso de login:
-
-Se compara el valor introducido por el usuario con el valor almacenado en sesión.
-Si no coincide, el acceso es denegado.
-El CAPTCHA se invalida tras cada intento para evitar reutilización.
-🛠️ Tecnologías usadas
-Flask (rutas y sesiones)
-Flask-Login (autenticación)
-Pillow (generación de imágenes)
-Sesiones de Flask (almacenamiento temporal del CAPTCHA)
+🧠 Cambios realizados
+Implementación de reCAPTCHA v2 (“No soy un robot”) en el formulario de login.
+Añadido el widget en el frontend (login.html) mediante data-sitekey.
+Validación del token de reCAPTCHA en el backend con Flask.
+Uso de variables de entorno (.env) para almacenar las claves de forma segura.
+⚙️ Backend
+Verificación del reCAPTCHA mediante la API de Google antes de autenticar al usuario.
+Uso de requests para validar la respuesta del usuario.
+🔒 Seguridad
+Protección contra bots en el inicio de sesión.
+Separación de claves sensibles usando variables de entorno.
+Mejora general del sistema de autenticación.
 
 ---
 

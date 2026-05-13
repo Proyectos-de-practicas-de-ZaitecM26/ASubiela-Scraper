@@ -1,9 +1,10 @@
 import os
 
+RECAPTCHA_SITE_KEY = os.getenv("RECAPTCHA_SITE_KEY")
+RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY")
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "cambia-esto-en-produccion")
-
     # Configuracion SQLAlchemy    
     SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI", "sqlite:///boe_scraper.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
