@@ -1,6 +1,6 @@
 import os
 from flask import Flask, session, request, redirect, url_for
-from flask_login import current_user
+from flask_login import current_user, user_logged_in, user_logged_out
 from datetime import datetime, date, timedelta
 
 from app.admin.views import init_admin
@@ -10,6 +10,7 @@ from .data import inicializar_y_migrar
 from .config import Config
 from .data import sa_db, User, inicializar_y_migrar
 from .extensions import mail, login_manager, limiter
+from .audit_utils import log_audit
 from app.routes.main import main_bp
 from app.routes.auth import auth_bp
 from app.routes.user import user_bp
@@ -49,6 +50,25 @@ def create_app(config_overrides=None):
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
+
+    # =========================
+    # 🔐 AUDIT LOG SIGNALS
+    # =========================
+    @user_logged_in.connect_via(app)
+    def log_login(sender, user, **extra):
+        log_audit(
+            user_id=user.id,
+            action='login',
+            audit_metadata={'email': user.email}
+        )
+
+    @user_logged_out.connect_via(app)
+    def log_logout(sender, user, **extra):
+        log_audit(
+            user_id=user.id,
+            action='logout',
+            audit_metadata={'email': user.email}
+        )
 
     # 🧩 BLUEPRINTS
     app.register_blueprint(main_bp)

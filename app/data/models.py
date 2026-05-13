@@ -135,3 +135,22 @@ class Suscripcion(sa_db.Model):
     alerta_diaria = sa_db.Column(sa_db.Integer, default=0)
     alerta_favoritos = sa_db.Column(sa_db.Integer, default=0)
     departamento_filtro = sa_db.Column(sa_db.String)
+
+
+class AuditLog(sa_db.Model):
+    __tablename__ = 'audit_logs'
+    
+    id = sa_db.Column(sa_db.Integer, primary_key=True, autoincrement=True)
+    user_id = sa_db.Column(sa_db.Integer, sa_db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    action = sa_db.Column(sa_db.String, nullable=False, index=True)
+    audit_metadata = sa_db.Column(sa_db.JSON, nullable=True)
+    ip_address = sa_db.Column(sa_db.String, nullable=False)
+    timestamp = sa_db.Column(
+        sa_db.String,
+        nullable=False,
+        default=lambda: datetime.now().isoformat(),
+        index=True
+    )
+    
+    # Relación opcional con User
+    user = sa_db.relationship('User', backref='audit_logs')
