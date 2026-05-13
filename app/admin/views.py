@@ -10,6 +10,7 @@ import json
 from calendar import month_abbr
 from datetime import datetime
 from ..data import sa_db, User, Oposicion, Favorita, Visita, Suscripcion, AuditLog
+from flask_admin.model.template import LinkRowAction
 
 
 # =========================
@@ -134,11 +135,9 @@ class UserModelView(SecureModelView):
 
     column_exclude_list = ['password_hash']
     
-    # Eliminar temporalmente LinkRowAction — puede no existir en la versión
-    # de Flask-Admin instalada. Si se quiere recuperar, importar y activar.
-    # column_extra_row_actions = [
-    #     LinkRowAction('fa fa-lock', '/admin/admin_users/block/?id={row_id}', 'Bloquear/Desbloquear')
-    # ]
+    column_extra_row_actions = [
+      LinkRowAction('fa fa-lock', '/admin/admin_users/block/?id={row_id}', 'Bloquear/Desbloquear')
+    ]
     
     @expose('/block/')
     def action_toggle_active(self):
