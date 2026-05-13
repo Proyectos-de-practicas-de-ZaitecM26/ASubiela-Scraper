@@ -357,7 +357,7 @@ class AuditLogModelView(SecureModelView):
         'user': 'Usuario',
         'action': 'Acción',
         'ip_address': 'Dirección IP',
-        'audit_metadata': 'Details'
+        'audit_metadata': 'Detalles'
     }
     
     column_formatters = {
@@ -388,7 +388,7 @@ class AuditLogModelView(SecureModelView):
         return sa_db.session.query(sa_db.func.count(AuditLog.id))
 
     def search_placeholder(self):
-        return 'Search'
+        return 'Buscar'
 
     def format_timestamp(self, value):
         if not value:
