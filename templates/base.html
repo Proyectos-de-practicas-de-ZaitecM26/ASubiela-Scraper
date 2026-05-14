@@ -81,6 +81,13 @@ Define la estructura general de la aplicación:
             <li class="nav-item">
               <a href="{{ url_for('auth.register') }}" class="btn-register" data-i18n="nav.register">Registrarse</a>
             </li>
+            <li class="nav-item">
+             <a href="{{ url_for('main.estadisticas') }}"
+               class="btn-login"
+               data-i18n="nav.stats">
+              📊 Estadísticas
+            </a>
+</li>
             {% endif %}
           </ul>
         </div>
