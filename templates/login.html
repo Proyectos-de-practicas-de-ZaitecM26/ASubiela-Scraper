@@ -21,7 +21,7 @@
     <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none small" data-i18n="login.forgot">¿Olvidaste tu contraseña?</a>
   </div>
  <div class="g-recaptcha mb-3"
-     data-sitekey="{{ site_key }}">
+     data-sitekey="{{ config['RECAPTCHA_SITE_KEY'] }}">
 </div>
 
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
