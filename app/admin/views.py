@@ -2,6 +2,7 @@ from flask_admin import Admin, AdminIndexView, expose, BaseView
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.view import tools, sql_cast, Unicode, or_
 from flask_admin.actions import action
+from flask_admin.model.template import LinkRowAction
 from flask import redirect, url_for, abort, flash, request, jsonify
 from flask_login import current_user
 from sqlalchemy import func
