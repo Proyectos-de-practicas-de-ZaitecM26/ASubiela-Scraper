@@ -104,41 +104,97 @@ def login():
 
     if request.method == "POST":
 
-        email = (request.form.get("email") or "").strip()
+        # =========================
+        # RECAPTCHA
+        # =========================
 
-        password = request.form.get("password") or ""
+        recaptcha_response = request.form.get(
+            "g-recaptcha-response"
+        )
 
+        data = {
+            "secret": current_app.config[
+                "RECAPTCHA_SECRET_KEY"
+            ],
+            "response": recaptcha_response,
+            "remoteip": request.remote_addr
+        }
 
-        user = find_user_by_email(email)
+        google_response = requests.post(
+            "https://www.google.com/recaptcha/api/siteverify",
+            data=data
+        )
 
+        result = google_response.json()
 
-        if not user or not check_password_hash(user.password_hash, password):
+        if not result.get("success"):
 
-            flash("Credenciales inválidas.", "danger")
+            flash(
+                "Debes completar el reCAPTCHA.",
+                "danger"
+            )
 
             return redirect(url_for("auth.login"))
 
-        # 🔥 Verificación email
+        # =========================
+        # LOGIN NORMAL
+        # =========================
+
+        email = (
+            request.form.get("email") or ""
+        ).strip()
+
+        password = (
+            request.form.get("password") or ""
+        )
+
+        user = find_user_by_email(email)
+
+        if not user or not check_password_hash(
+            user.password_hash,
+            password
+        ):
+
+            flash(
+                "Credenciales inválidas.",
+                "danger"
+            )
+
+            return redirect(url_for("auth.login"))
+
+        # =========================
+        # EMAIL VERIFICADO
+        # =========================
+
         if not user.is_verified:
 
             flash(
-                "Debes verificar tu correo electrónico antes de iniciar sesión.",
+                "Debes verificar tu correo "
+                "electrónico antes de iniciar sesión.",
                 "warning"
             )
 
             return redirect(url_for("auth.login"))
 
-
         login_user(user)
 
-        flash("Sesión iniciada.", "success")
+        flash(
+            "Sesión iniciada.",
+            "success"
+        )
 
-        next_url = request.args.get("next") or url_for("main.index")
+        next_url = request.args.get(
+            "next"
+        ) or url_for("main.index")
 
         return redirect(next_url)
 
-    return render_template("login.html")
-
+    return render_template(
+        "login.html",
+        site_key=current_app.config[
+            "RECAPTCHA_SITE_KEY"
+        ]
+    )
 
 # =====================================================
 # LOGOUT
