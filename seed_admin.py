@@ -23,16 +23,18 @@ def create_admin(app, email, password, name="Admin"):
         if user:
             user.password_hash = generate_password_hash(password)
             user.role = 'admin'
-            print(f"Actualizado usuario existente {email} como admin.")
+            user.is_verified = True
+            print(f"Actualizado usuario existente {email} como admin y verificado.")
         else:
             user = User(
                 email=email,
                 password_hash=generate_password_hash(password),
                 name=name,
-                role='admin'
+                role='admin',
+                is_verified=True
             )
             sa_db.session.add(user)
-            print(f"Creado usuario admin {email}.")
+            print(f"Creado usuario admin {email} y verificado.")
         sa_db.session.commit()
 
 
