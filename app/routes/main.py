@@ -4,40 +4,41 @@ from datetime import datetime
 
 from flask import (
     Blueprint,
-    render_template,
-    flash,
-    redirect,
-    url_for,
-    request,
-    jsonify,
     current_app,
-    session
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for
 )
 
-from flask_login import current_user, login_required
+from flask_login import current_user
 
-from sqlalchemy import or_, func
-
-from ..auth_utils import require_role
-
-from ..services.chatbot import chatbot
+from sqlalchemy import func, or_
 
 from app.extensions import limiter
 
+from ..auth_utils import require_role
+
 from ..data import (
-    sa_db,
+    AuditLog,
+    Favorita,
     Oposicion,
     User,
     Visita,
     VisitaGlobal,
-    Favorita,
-    AuditLog
+    sa_db
 )
 
 from ..scraping.boe_scraper import (
     scrape_boe_ultimos_dias,
     sync_boe_hasta_hoy,
 )
+
+from ..services.chatbot import chatbot
+
 
 main_bp = Blueprint("main", __name__)
 
@@ -52,7 +53,9 @@ def chatbot_api():
 
     payload = request.get_json(silent=True) or {}
 
-    user_message = (payload.get("message") or "").strip()
+    user_message = (
+        payload.get("message") or ""
+    ).strip()
 
     if not user_message:
 
@@ -122,9 +125,11 @@ def index():
             f"Error al actualizar datos: {e}"
         )
 
-    hoy = datetime.today().strftime("%Y%m%d")
+    today = datetime.today()
 
-    fecha_mostrar = datetime.today().strftime("%d/%m/%Y")
+    hoy = today.strftime("%Y%m%d")
+
+    fecha_mostrar = today.strftime("%d/%m/%Y")
 
     opos = Oposicion.query.filter_by(
         fecha=hoy
@@ -161,9 +166,14 @@ def resultados():
 
     provincia = request.args.get("provincia", "")
 
-    orden = request.args.get("orden", "fecha_desc")
+    orden = request.args.get(
+        "orden",
+        "fecha_desc"
+    )
 
-    page = int(request.args.get("page", 1))
+    page = int(
+        request.args.get("page", 1)
+    )
 
     por_pagina = 10
 
@@ -186,17 +196,11 @@ def resultados():
             Oposicion.provincia == provincia
         )
 
-    if orden == "fecha_asc":
-
-        query = query.order_by(
-            Oposicion.fecha.asc()
-        )
-
-    else:
-
-        query = query.order_by(
-            Oposicion.fecha.desc()
-        )
+    query = query.order_by(
+        Oposicion.fecha.asc()
+        if orden == "fecha_asc"
+        else Oposicion.fecha.desc()
+    )
 
     pagination = query.paginate(
         page=page,
@@ -253,7 +257,7 @@ def resultados():
 # =====================================================
 
 @main_bp.route("/admin/scrape_ultimos_30")
-@require_role('admin')
+@require_role("admin")
 def admin_scrape_ultimos_30():
 
     nuevas = scrape_boe_ultimos_dias(30)
@@ -277,19 +281,21 @@ def estadisticas():
 
     visitas_autenticadas = sa_db.session.query(
         Oposicion.departamento,
-        func.count(Visita.id).label('total_visitas')
+        func.count(Visita.id).label("total_visitas")
     ).join(
         Visita,
         Visita.oposicion_id == Oposicion.id
     ).group_by(
         Oposicion.departamento
     ).order_by(
-        sa_db.desc('total_visitas')
+        sa_db.desc("total_visitas")
     ).all()
 
     visitas_anonimas = sa_db.session.query(
         Oposicion.departamento,
-        func.sum(VisitaGlobal.total_visitas).label('total_visitas')
+        func.sum(
+            VisitaGlobal.total_visitas
+        ).label("total_visitas")
     ).join(
         VisitaGlobal,
         VisitaGlobal.oposicion_id == Oposicion.id
@@ -355,7 +361,6 @@ def estadisticas():
         for fila in stats
     ]
 
-    # 🔥 NUEVO: AUDITORÍA
     logs = AuditLog.query.order_by(
         AuditLog.timestamp.desc()
     ).limit(100).all()
@@ -378,19 +383,25 @@ def estadisticas():
 @main_bp.route("/politica-cookies")
 def politica_cookies():
 
-    return render_template("politica_cookies.html")
+    return render_template(
+        "politica_cookies.html"
+    )
 
 
 @main_bp.route("/politica-privacidad")
 def politica_privacidad():
 
-    return render_template("politica_privacidad.html")
+    return render_template(
+        "politica_privacidad.html"
+    )
 
 
 @main_bp.route("/aviso-legal")
 def aviso_legal():
 
-    return render_template("aviso_legal.html")
+    return render_template(
+        "aviso_legal.html"
+    )
 
 
 # =====================================================
@@ -398,13 +409,14 @@ def aviso_legal():
 # =====================================================
 
 @main_bp.route("/admin/sync_boe")
-@require_role('admin')
+@require_role("admin")
 def admin_sync_boe():
 
     nuevas = sync_boe_hasta_hoy()
 
     flash(
-        f"Sincronización completada. Insertadas {len(nuevas)} oposiciones nuevas.",
+        f"Sincronización completada. "
+        f"Insertadas {len(nuevas)} oposiciones nuevas.",
         "success",
     )
 
@@ -417,19 +429,22 @@ def admin_sync_boe():
 # THEME
 # =====================================================
 
-@main_bp.route('/toggle-theme')
+@main_bp.route("/toggle-theme")
 def toggle_theme():
 
-    current_theme = session.get('theme', 'dark')
+    current_theme = session.get(
+        "theme",
+        "dark"
+    )
 
-    session['theme'] = (
-        'light'
-        if current_theme == 'dark'
-        else 'dark'
+    session["theme"] = (
+        "light"
+        if current_theme == "dark"
+        else "dark"
     )
 
     session.modified = True
 
     return redirect(
-        request.referrer or url_for('main.index')
+        request.referrer or url_for("main.index")
     )
