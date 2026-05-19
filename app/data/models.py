@@ -4,7 +4,6 @@ from datetime import datetime
 
 sa_db = SQLAlchemy()
 
-
 class Oposicion(sa_db.Model):
     __tablename__ = 'oposiciones'
     
@@ -18,7 +17,6 @@ class Oposicion(sa_db.Model):
     fecha = sa_db.Column(sa_db.String, index=True)
     provincia = sa_db.Column(sa_db.String)
 
-    # Relaciones inversas
     usuarios_visitas = sa_db.relationship(
         'Visita', backref='oposicion', cascade="all, delete-orphan"
     )
@@ -34,15 +32,10 @@ class User(sa_db.Model, UserMixin):
     __tablename__ = 'users'
     
     id = sa_db.Column(sa_db.Integer, primary_key=True, autoincrement=True)
-
     email = sa_db.Column(sa_db.String, unique=True, nullable=False)
-
     password_hash = sa_db.Column(sa_db.String, nullable=False)
-
-    # 🔥 Verificación email
     is_verified = sa_db.Column(sa_db.Boolean, default=False)
-
-    # 🔥 Roles
+    
     ROLES = ('admin', 'manager', 'viewer')
 
     role = sa_db.Column(
@@ -51,23 +44,16 @@ class User(sa_db.Model, UserMixin):
         default='viewer'
     )
 
-    # Datos usuario
     name = sa_db.Column(sa_db.String)
-
     apellidos = sa_db.Column(sa_db.String)
-
     age = sa_db.Column(sa_db.Integer)
-
     telefono = sa_db.Column(sa_db.String)
-
     foto_perfil = sa_db.Column(sa_db.String)
-
     nivel_estudios = sa_db.Column(sa_db.String)
-
     titulacion = sa_db.Column(sa_db.String)
     is_active = sa_db.Column(sa_db.Boolean, default=True)
 
-    # Relaciones
+    
     visitas = sa_db.relationship(
         'Visita',
         backref='user',
@@ -152,5 +138,4 @@ class AuditLog(sa_db.Model):
         index=True
     )
     
-    # Relación opcional con User
     user = sa_db.relationship('User', backref='audit_logs')

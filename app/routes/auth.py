@@ -1,47 +1,16 @@
 from datetime import datetime
 import os
 import requests
-
-from flask import (
-    Blueprint,
-    render_template,
-    request,
-    redirect,
-    url_for,
-    flash,
-    current_app,
-)
-
-from flask_login import (
-    login_user,
-    logout_user,
-    login_required,
-    current_user,
-)
-
-from werkzeug.security import (
-    generate_password_hash,
-    check_password_hash,
-)
-
+from flask import (Blueprint, render_template, request,redirect,url_for,flash,current_app)
+from flask_login import (login_user,logout_user,login_required,current_user)
+from werkzeug.security import (generate_password_hash,check_password_hash)
 from werkzeug.utils import secure_filename
-
 from ..data import sa_db, User
-
-from ..email_utils import (
-    send_password_reset_email,
-    generate_reset_token,
-    verify_reset_token,
-    send_verification_email,
-    verify_email_token
-)
+from ..email_utils import (send_password_reset_email,generate_reset_token,verify_reset_token,send_verification_email,verify_email_token)
+from ..file_utils import upload_profile_photo
 
 auth_bp = Blueprint("auth", __name__)
 
-
-# =====================================================
-# HELPERS
-# =====================================================
 
 def create_user(
     email,
@@ -74,40 +43,26 @@ def create_user(
     try:
 
         sa_db.session.add(nuevo_usuario)
-
         sa_db.session.commit()
-
         return nuevo_usuario
 
     except Exception as e:
 
         sa_db.session.rollback()
-
         print(f"Error al crear usuario: {e}")
-
         raise e
 
 
 def find_user_by_email(email):
 
     user = User.query.filter_by(email=email.lower()).first()
-
     return user
 
-
-# =====================================================
-# LOGIN
-# =====================================================
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
 
     if request.method == "POST":
-
-        # =========================
-        # RECAPTCHA
-        # =========================
-
         recaptcha_response = request.form.get(
             "g-recaptcha-response"
         )
@@ -136,10 +91,6 @@ def login():
 
             return redirect(url_for("auth.login"))
 
-        # =========================
-        # LOGIN NORMAL
-        # =========================
-
         email = (
             request.form.get("email") or ""
         ).strip()
@@ -162,10 +113,7 @@ def login():
 
             return redirect(url_for("auth.login"))
 
-        # =========================
-        # EMAIL VERIFICADO
-        # =========================
-
+    
         if not user.is_verified:
 
             flash(
@@ -196,9 +144,6 @@ def login():
         ]
     )
 
-# =====================================================
-# LOGOUT
-# =====================================================
 
 @auth_bp.route("/logout")
 @login_required
@@ -211,23 +156,15 @@ def logout():
     return redirect(url_for("main.index"))
 
 
-# =====================================================
-# REGISTER
-# =====================================================
-
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
 
     if request.method == "POST":
 
         email = (request.form.get("email") or "").strip()
-
         password = request.form.get("password") or ""
-
         name = (request.form.get("nombre") or "").strip()
-
         apellidos = (request.form.get("apellidos") or "").strip()
-
         age = request.form.get("edad") or ""
 
         nivel_estudios = (
@@ -273,84 +210,17 @@ def register():
                 user=current_user
             )
 
-        create_user(
-            email,
-            password,
-            name,
-            apellidos,
-            age,
-            telefono,
-            nivel_estudios,
-            titulacion,
-        )
-
+        create_user(email,password,name,apellidos,age,telefono,nivel_estudios,titulacion,)
         user = find_user_by_email(email)
 
-        # =====================================================
-        # FOTO PERFIL
-        # =====================================================
-
-        foto_perfil = None
-
-        if "foto_perfil" in request.files:
-
-            file = request.files["foto_perfil"]
-
-            if file and file.filename:
-
-                allowed_extensions = {
-                    "png",
-                    "jpg",
-                    "jpeg",
-                    "gif",
-                    "webp"
-                }
-
-                filename = file.filename.lower()
-
-                if "." in filename and \
-                   filename.rsplit(".", 1)[1] in allowed_extensions:
-
-                    filename = secure_filename(
-                        f"user_{user.id}_{int(datetime.now().timestamp())}."
-                        f"{filename.rsplit('.', 1)[1]}"
-                    )
-
-                    upload_folder = current_app.config["UPLOAD_FOLDER"]
-
-                    filepath = os.path.join(
-                        upload_folder,
-                        filename
-                    )
-
-                    os.makedirs(
-                        os.path.dirname(filepath),
-                        exist_ok=True
-                    )
-
-                    file.save(filepath)
-
-                    foto_perfil = (
-                        f"/static/uploads/profiles/{filename}"
-                    )
-
-                    user.foto_perfil = foto_perfil
-
-                    try:
-
-                        sa_db.session.commit()
-
-                    except Exception as e:
-
-                        sa_db.session.rollback()
-
-                        print(
-                            f"Error al actualizar foto: {e}"
-                        )
-
-        # =====================================================
-        # EMAIL VERIFICACIÓN
-        # =====================================================
+        foto_perfil = upload_profile_photo(request, user)
+        if foto_perfil is not None:
+            user.foto_perfil = foto_perfil
+            try:
+                sa_db.session.commit()
+            except Exception as e:
+                sa_db.session.rollback()
+                print(f"Error al actualizar foto: {e}")
 
         try:
 
@@ -377,9 +247,6 @@ def register():
     return render_template("register.html")
 
 
-# =====================================================
-# VERIFY EMAIL
-# =====================================================
 
 @auth_bp.route("/verify_email/<token>")
 def verify_email(token):
@@ -431,9 +298,7 @@ def verify_email(token):
     except Exception as e:
 
         sa_db.session.rollback()
-
         print(f"Error verificando usuario: {e}")
-
         flash(
             "Error al verificar la cuenta.",
             "danger"
@@ -442,9 +307,6 @@ def verify_email(token):
     return redirect(url_for("auth.login"))
 
 
-# =====================================================
-# CHANGE PASSWORD
-# =====================================================
 
 @auth_bp.route("/change_password", methods=["POST"])
 @login_required
@@ -523,9 +385,6 @@ def change_password():
     )
 
 
-# =====================================================
-# FORGOT PASSWORD
-# =====================================================
 
 @auth_bp.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
@@ -583,9 +442,6 @@ def forgot_password():
     return render_template("forgot_password.html")
 
 
-# =====================================================
-# RESET PASSWORD
-# =====================================================
 
 @auth_bp.route("/reset_password/<token>", methods=["GET", "POST"])
 def reset_password(token):

@@ -3,6 +3,8 @@ from sqlalchemy import or_
 from werkzeug.utils import secure_filename
 from app.email_utils import send_new_oposiciones_email
 from datetime import datetime, timedelta
+
+from app.file_utils import upload_profile_photo
 from ..data import (sa_db,User, Visita, VisitaGlobal,Favorita,Oposicion,Suscripcion, AuditLog)
 from ..extensions import login_manager
 from flask_login import login_required, current_user
@@ -313,23 +315,9 @@ def update_profile():
     user.discapacidad = 1 if request.form.get("discapacidad") == "si" else 0
     user.porcentaje_discapacidad = int(request.form.get("porcentaje_discapacidad", 0) or 0)
 
-    if "foto_perfil" in request.files:
-        file = request.files["foto_perfil"]
-        if file and file.filename:
-            allowed_extensions = {"png", "jpg", "jpeg", "gif", "webp"}
-            filename_orig = file.filename.lower()
-            if "." in filename_orig and filename_orig.rsplit(".", 1)[1] in allowed_extensions:
-
-                extension = filename_orig.rsplit(".", 1)[1]
-                filename = secure_filename(f"user_{user.id}_{int(datetime.now().timestamp())}.{extension}")
-
-                upload_folder = os.path.join(current_app.config["UPLOAD_FOLDER"], "profiles")
-                os.makedirs(upload_folder, exist_ok=True)
-
-                filepath = os.path.join(upload_folder, filename)
-                file.save(filepath)
-
-                user.foto_perfil = f"/static/uploads/profiles/{filename}"
+    foto_perfil = upload_profile_photo(request, user)
+    if foto_perfil is not None:
+        user.foto_perfil = foto_perfil
 
     try:
         sa_db.session.commit()
