@@ -2,11 +2,6 @@ import os
 from flask import Flask, session, request, redirect, url_for
 from flask_login import current_user, user_logged_in, user_logged_out
 from datetime import datetime, date, timedelta
-
-from app.admin.views import init_admin
-from .config import Config
-from .data import sa_db, User
-from .data import inicializar_y_migrar
 from .config import Config
 from .data import sa_db, User, inicializar_y_migrar
 from .extensions import mail, login_manager, limiter
@@ -15,7 +10,7 @@ from app.routes.main import main_bp
 from app.routes.auth import auth_bp
 from app.routes.user import user_bp
 from app.routes.chat import chat_bp
-from app.admin.views import init_admin
+from app.routes.admin import init_admin
 
 
 def create_app(config_overrides=None):
@@ -25,8 +20,6 @@ def create_app(config_overrides=None):
         static_folder=os.path.join(os.path.dirname(__file__), "..", "static"),
     )
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite3"
-
-    # Config
     app.config.from_object(Config)
     app.config.update(
         SESSION_COOKIE_HTTPONLY=True,
@@ -37,23 +30,18 @@ def create_app(config_overrides=None):
     if config_overrides:
         app.config.update(config_overrides)
 
-    # Extensiones
     mail.init_app(app)
     login_manager.init_app(app)
     limiter.init_app(app)
     login_manager.login_view = "auth.login"
 
-    # DB
     sa_db.init_app(app)
 
-    # 🔐 USER LOADER
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # =========================
-    # 🔐 AUDIT LOG SIGNALS
-    # =========================
+
     @user_logged_in.connect_via(app)
     def log_login(sender, user, **extra):
         log_audit(
@@ -70,13 +58,11 @@ def create_app(config_overrides=None):
             audit_metadata={'email': user.email}
         )
 
-    # 🧩 BLUEPRINTS
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(chat_bp)
 
-    # 🛠️ DB INIT
     with app.app_context():
         inicializar_y_migrar()
 
@@ -84,9 +70,6 @@ def create_app(config_overrides=None):
     init_admin(app)
     print(app.url_map)
 
-    # =========================
-    # THEME
-    # =========================
     @app.before_request
     def ensure_theme():
         if "theme" not in session:
