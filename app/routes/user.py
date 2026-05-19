@@ -3,39 +3,21 @@ from sqlalchemy import or_
 from werkzeug.utils import secure_filename
 from app.email_utils import send_new_oposiciones_email
 from datetime import datetime, timedelta
-
-from ..data import (
-    sa_db,
-    Visita,
-    VisitaGlobal,
-    Favorita,
-    Oposicion,
-    Suscripcion,
-    AuditLog
-)
-
+from ..data import (sa_db,User, Visita, VisitaGlobal,Favorita,Oposicion,Suscripcion, AuditLog)
+from ..extensions import login_manager
 from flask_login import login_required, current_user
-
 from ..audit_utils import log_audit
+from flask import (Blueprint,render_template,request,redirect,url_for,flash,jsonify,current_app)
 
-from flask import (
-    Blueprint,
-    render_template,
-    request,
-    redirect,
-    url_for,
-    flash,
-    jsonify,
-    current_app,
-)
 
 user_bp = Blueprint("user", __name__)
 
-
-# =====================================================
-# FUNCIONES AUXILIARES
-# =====================================================
-
+def register_login_handlers():
+    
+    @login_manager.user_loader
+    def load_user(user_id):
+        return sa_db.session.get(User, int(user_id))
+    
 def registrar_visita(user_id, oposicion_id):
 
     visita = Visita.query.filter_by(

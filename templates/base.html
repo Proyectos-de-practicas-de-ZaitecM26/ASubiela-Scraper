@@ -97,7 +97,7 @@ Define la estructura general de la aplicación:
           <span class="lang-code">EN</span>
         </button>
 
-        <a href="{{ url_for('toggle_theme') }}" class="btn-toggle-theme" aria-label="Toggle theme">
+        <a href="{{ url_for('filters.toggle_theme') }}" class="btn-toggle-theme" aria-label="Toggle theme">
           {% if theme == 'dark' %}🔆{% else %}🌓{% endif %}
         </a>
       </div>
