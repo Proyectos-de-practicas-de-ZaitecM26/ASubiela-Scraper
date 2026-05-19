@@ -11,22 +11,18 @@ import json
 from calendar import month_abbr
 from datetime import datetime
 from ..data import sa_db, User, Oposicion, Favorita, Visita, Suscripcion, AuditLog
-from flask_admin.model.template import LinkRowAction
 
 
-# =========================
-# 🔐 SEGURIDAD ADMIN
-# =========================
-
-class SecureAdminIndexView(AdminIndexView):
-
-    def is_accessible(self):
+class AdminViewMixin():
+    def is_accessible (self):
         return current_user.is_authenticated and getattr(current_user, "role", None) == "admin"
-
+    
     def inaccessible_callback(self, name, **kwargs):
         if not current_user.is_authenticated:
             return redirect(url_for('auth.login'))
         abort(403)
+        
+class SecureAdminIndexView(AdminViewMixin,AdminIndexView):
 
     @expose('/')
     def index(self):
@@ -58,13 +54,7 @@ class SecureAdminIndexView(AdminIndexView):
             ultimos_usuarios=ultimos_usuarios,
             ultimas_oposiciones=ultimas_oposiciones,
         )
-
-
-# =========================
-# 📦 BASE SEGURA CON CSV
-# =========================
-
-class SecureModelView(ModelView):
+class SecureModelView(AdminViewMixin,ModelView):
     """
     ModelView base con:
     - Control de acceso por rol admin
@@ -72,19 +62,9 @@ class SecureModelView(ModelView):
     - Acción masiva de eliminación con confirmación
     """
 
-    # ── Exportación CSV ────────────────────────────────────────────────
     can_export = True   
-    export_types = ['csv']     
+    export_types = ['csv']
 
-    def is_accessible(self):
-        return current_user.is_authenticated and getattr(current_user, "role", None) == "admin"
-
-    def inaccessible_callback(self, name, **kwargs):
-        if not current_user.is_authenticated:
-            return redirect(url_for('auth.login'))
-        abort(403)
-
-    # ── Acción masiva: eliminar seleccionados ──────────────────────────
     @action(
         'eliminar_seleccionados',
         'Eliminar seleccionados',
@@ -103,11 +83,6 @@ class SecureModelView(ModelView):
         except Exception as e:
             sa_db.session.rollback()
             flash(f'Error al eliminar: {str(e)}', 'error')
-
-
-# =========================
-# 👤 USERS ADMIN
-# =========================
 
 class UserModelView(SecureModelView):
 
@@ -144,28 +119,20 @@ class UserModelView(SecureModelView):
     def action_toggle_active(self):
         user_id = request.args.get('id')
         if user_id:
-            # Buscamos el objeto en la DB
             user = sa_db.session.query(User).get(user_id)
             
             if user:
-                # Cambiamos el atributo 'is_active' (el interruptor)
-                # Si es True pasa a False, si es False pasa a True
                 user.is_active = not user.is_active
                 
-                # GUARDAR CAMBIOS: Importante para que no se pierdan
                 sa_db.session.commit()
                 
-                # Feedback visual
                 estado = "activado" if user.is_active else "bloqueado"
                 flash(f"Usuario {user.email} ha sido {estado}.", "success")
             else:
                 flash("Usuario no encontrado.", "error")
-        
-        # REDIRECCIÓN: Esto evita que te quedes en la URL /block/
-        # .index_view es el nombre interno de la lista de Flask-Admin
+                
         return redirect(url_for('.index_view'))
 
-    # Acción masiva adicional específica para usuarios: cambiar rol a viewer
     @action(
         'degradar_a_viewer',
         'Cambiar rol a Viewer',
@@ -189,15 +156,9 @@ class UserModelView(SecureModelView):
         if model.role not in User.ROLES:
             raise ValueError("Rol inválido")
 
-
-# =========================
-# 📄 OPOSICIONES ADMIN
-# =========================
-
 class OposicionModelView(SecureModelView):
     list_template = 'admin/oposiciones_list.html'
 
-    # Mostrar 10 resultados por página por defecto
     page_size = 10
     can_set_page_size = True
     page_size_options = [10, 50, 100]
@@ -303,21 +264,8 @@ class OposicionModelView(SecureModelView):
         flash(message, 'success')
         return redirect(request.referrer or self.get_url('.index_view'))
 
-
-# =========================
-# 📊 ANALYTICS
-# =========================
-
-class AnalyticsView(BaseView):
-
-    def is_accessible(self):
-        return current_user.is_authenticated and getattr(current_user, "role", None) == "admin"
-
-    def inaccessible_callback(self, name, **kwargs):
-        if not current_user.is_authenticated:
-            return redirect(url_for('auth.login'))
-        abort(403)
-
+class AnalyticsView(AdminViewMixin, BaseView):
+    
     @expose('/')
     def index(self):
         dept_stats = sa_db.session.query(
@@ -341,11 +289,6 @@ class AnalyticsView(BaseView):
             estudios_stats=estudios_stats,
             top_visitadas=top_visitadas
         )
-
-
-# =========================
-# 📋 AUDIT LOG ADMIN
-# =========================
 
 class AuditLogModelView(SecureModelView):
     """Vista de solo lectura para audit logs"""
@@ -374,7 +317,6 @@ class AuditLogModelView(SecureModelView):
     can_set_page_size = True
     list_template = 'admin/auditlog_list.html'
     
-    # Read-only view
     can_create = False
     can_edit = False
     can_delete = False
@@ -453,10 +395,6 @@ class AuditLogModelView(SecureModelView):
             return str(value)
 
 
-# =========================
-# ⚙️ INIT ADMIN
-# =========================
-
 def init_admin(app):
     admin = Admin(
         app,
@@ -464,7 +402,6 @@ def init_admin(app):
         index_view=SecureAdminIndexView()
     )
 
-    # 📊 Analíticas
     admin.add_view(
         AnalyticsView(
             name="Analíticas",
@@ -472,7 +409,6 @@ def init_admin(app):
         )
     )
 
-    # 👤 Usuarios
     admin.add_view(
         UserModelView(
             User,
@@ -482,7 +418,6 @@ def init_admin(app):
         )
     )
 
-    # 📄 Oposiciones
     admin.add_view(
         OposicionModelView(
             Oposicion,
@@ -492,7 +427,6 @@ def init_admin(app):
         )
     )
 
-    # ⭐ Favoritas
     admin.add_view(
         SecureModelView(
             Favorita,
@@ -502,7 +436,6 @@ def init_admin(app):
         )
     )
 
-    # 📋 Audit Log
     admin.add_view(
         AuditLogModelView(
             AuditLog,
@@ -512,7 +445,6 @@ def init_admin(app):
         )
     )
 
-    # 👀 Visitas
     admin.add_view(
         SecureModelView(
             Visita,
@@ -522,7 +454,6 @@ def init_admin(app):
         )
     )
 
-    # 🔔 Suscripciones
     admin.add_view(
         SecureModelView(
             Suscripcion,
