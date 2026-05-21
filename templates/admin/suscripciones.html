@@ -5,7 +5,7 @@
 {% block head %}
 {{ super() }}
 <style>
-    .oposiciones-toolbar {
+    .suscripciones-toolbar {
         background: #ffffff;
         border: 1px solid #e8edf3;
         border-radius: 12px;
@@ -13,13 +13,13 @@
         box-shadow: 0 6px 18px rgba(16, 24, 40, 0.06);
     }
 
-    .oposiciones-search {
+    .suscripciones-search {
         display: flex;
         justify-content: center;
         width: 100%;
     }
 
-    .oposiciones-search-form {
+    .suscripciones-search-form {
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -27,7 +27,7 @@
         max-width: 520px;
     }
 
-    .oposiciones-search-input {
+    .suscripciones-search-input {
         flex: 1;
         min-width: 250px;
         border: 1px solid #d4dce6;
@@ -36,58 +36,54 @@
         background: #f8fafc;
     }
 
-    .oposiciones-search-btn {
+    .suscripciones-search-btn {
         border-radius: 999px;
         padding: 0.5rem 0.9rem;
         white-space: nowrap;
     }
 
-    .oposiciones-row-actions .dropdown-toggle {
+    .suscripcion-action-badge {
         border-radius: 999px;
-        padding: 0.2rem 0.7rem;
-        font-size: 0.85rem;
-    }
-
-    .oposiciones-row-actions .dropdown-menu {
-        min-width: 190px;
-    }
-
-    .oposiciones-row-actions form {
-        margin: 0;
-    }
-
-    .favorite-star-button {
-        color: inherit;
-        text-decoration: none;
-    }
-
-    .oposiciones-row-actions .dropdown-item {
-        cursor: pointer;
-    }
-
-    .oposiciones-row-actions .item-icon {
-        width: 1.1rem;
-        margin-right: 0.4rem;
-        text-align: center;
-    }
-
-    .oposiciones-page-size-form {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
+        padding: 0.35rem 0.7rem;
+        font-weight: 600;
+        font-size: 0.78rem;
+        letter-spacing: 0.01em;
+        display: inline-flex;
         align-items: center;
+        gap: 0.35rem;
     }
 
-    .oposiciones-page-size-form button {
-        min-width: 52px;
+    .suscripcion-badge-success {
+        background: rgba(62, 207, 142, 0.14);
+        color: #18794e;
+    }
+
+    .suscripcion-badge-secondary {
+        background: rgba(130, 138, 145, 0.16);
+        color: #5f6368;
+    }
+
+    .suscripcion-badge-danger {
+        background: rgba(242, 95, 92, 0.16);
+        color: #b42318;
+    }
+
+    .suscripcion-badge-primary {
+        background: rgba(79, 142, 247, 0.14);
+        color: #2158b0;
+    }
+
+    .suscripcion-badge-info {
+        background: rgba(13, 202, 240, 0.14);
+        color: #0b7285;
     }
 
     @media (max-width: 767.98px) {
-        .oposiciones-search {
+        .suscripciones-search {
             margin: 0.6rem 0;
         }
 
-        .oposiciones-search-input {
+        .suscripciones-search-input {
             min-width: 0;
         }
     }
@@ -95,7 +91,7 @@
 {% endblock %}
 
 {% block model_menu_bar %}
-<div class="oposiciones-toolbar mb-3">
+<div class="suscripciones-toolbar mb-3">
     <div class="row align-items-center">
         <div class="col-12 col-md-2 d-flex align-items-center mb-2 mb-md-0">
             <span class="btn btn-outline-primary disabled">{{ _gettext('List') }}{% if count %} ({{ count }}){% endif %}</span>
@@ -136,18 +132,6 @@
         </div>
 
         <div class="col-12 col-md-4 d-flex justify-content-md-end">
-            <div class="me-2">
-                <a href="{{ get_url('.accion_uno') }}" class="btn btn-success">
-                    Sincronizar BOE
-                </a>
-            </div>
-            
-            <div class="me-2">
-                <a href="{{ get_url('.accion_dos') }}" class="btn btn-info text-white">
-                    Últimos 30 días
-                </a>
-            </div>
-            
             {% if admin_view.can_export and admin_view.export_types %}
                 <div class="me-2">
                     <a href="{{ get_url('.export', export_type=admin_view.export_types[0]) }}" class="btn btn-outline-secondary" title="Exportar CSV">
@@ -160,21 +144,11 @@
 </div>
 {% endblock %}
 
-{% block list_row_actions_header %}
-Acciones
-{% endblock %}
-
 {% block model_list_table %}
 <div class="table-responsive">
 <table class="table table-striped table-bordered table-hover model-list">
     <thead>
         <tr>
-            {% if actions %}
-            <th class="list-checkbox-column">
-                <input type="checkbox" name="rowtoggle" class="action-rowtoggle" title="{{ _gettext('Select all records') }}" />
-            </th>
-            {% endif %}
-
             {% for c, name in list_columns %}
             {% set column = loop.index0 %}
             <th class="column-header col-{{c}}">
@@ -194,12 +168,6 @@ Acciones
                 {% else %}
                     {{ name }}
                 {% endif %}
-                {% if admin_view.column_descriptions.get(c) %}
-                    <a class="fa fa-question-circle glyphicon glyphicon-question-sign"
-                       title="{{ admin_view.column_descriptions[c] }}"
-                       href="javascript:void(0)" data-role="tooltip"
-                    ></a>
-                {% endif %}
             </th>
             {% endfor %}
         </tr>
@@ -209,8 +177,14 @@ Acciones
     <tr>
         {% for c, name in list_columns %}
         <td class="col-{{c}}">
-            {% if c == 'fecha' %}
-                {{ admin_view.format_date(row.fecha) }}
+            {% if c == 'user' %}
+                {{ row.user.email if row.user else 'Sistema' }}
+            {% elif c == 'timestamp' %}
+                {{ admin_view.format_timestamp(row.timestamp) }}
+            {% elif c == 'action' %}
+                <span class="badge suscripcion-action-badge {{ admin_view.action_badge_class(row.action) }}" style="{{ admin_view.action_badge_style(row.action) }}">
+                    {{ row.action }}
+                </span>
             {% else %}
                 {{ get_value(row, c) }}
             {% endif %}
@@ -227,6 +201,8 @@ Acciones
     </tr>
     {% endfor %}
 </table>
+</div>
+
 
 {% block list_pager %}
 <div class="d-flex justify-content-between align-items-center">
@@ -266,93 +242,4 @@ Acciones
     {% endif %}
 </div>
 {% endblock %}
-</div>
-
-<script>
-    function showFavoritePopup(message, type) {
-        var container = document.getElementById('favorite-popup-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'favorite-popup-container';
-            container.style.position = 'fixed';
-            container.style.top = '1rem';
-            container.style.left = '50%';
-            container.style.transform = 'translateX(-50%)';
-            container.style.zIndex = 1050;
-            container.style.display = 'flex';
-            container.style.flexDirection = 'column';
-            container.style.alignItems = 'center';
-            container.style.justifyContent = 'center';
-            container.style.width = 'auto';
-            document.body.appendChild(container);
-        }
-
-        var alert = document.createElement('div');
-        alert.className = 'alert alert-' + type + ' alert-dismissible fade show';
-        alert.role = 'alert';
-        alert.style.minWidth = '240px';
-        alert.style.textAlign = 'center';
-        alert.innerHTML = message +
-            '<button type="button" class="btn-close" aria-label="Close"></button>';
-
-        alert.querySelector('.btn-close').addEventListener('click', function () {
-            alert.remove();
-        });
-
-        container.appendChild(alert);
-        setTimeout(function () {
-            if (alert.parentNode) {
-                alert.remove();
-            }
-        }, 4500);
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('.favorite-star-button').forEach(function(button) {
-            var form = button.closest('form');
-            var icon = button.querySelector('i.bi');
-            if (!form || !icon) return;
-
-            form.addEventListener('submit', function (event) {
-                event.preventDefault();
-                if (button.disabled) return;
-
-                var isFavorite = icon.classList.contains('bi-star-fill');
-                button.disabled = true;
-
-                fetch(form.action, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: new FormData(form),
-                }).then(function (response) {
-                    return response.json().then(function (data) {
-                        if (!response.ok || !data.success) {
-                            button.disabled = false;
-                            showFavoritePopup(data.message || 'Error al guardar en favoritos.', 'danger');
-                            return;
-                        }
-
-                        if (data.action === 'removed') {
-                            icon.classList.remove('bi-star-fill', 'text-warning');
-                            icon.classList.add('bi-star');
-                        } else {
-                            icon.classList.remove('bi-star');
-                            icon.classList.add('bi-star-fill', 'text-warning');
-                        }
-
-                        showFavoritePopup(data.message || 'Favorita actualizada.', 'success');
-                        button.disabled = false;
-                    });
-                }).catch(function () {
-                    button.disabled = false;
-                    showFavoritePopup('Error de red al guardar.', 'danger');
-                });
-            });
-        });
-    });
-</script>
-
 {% endblock %}
-

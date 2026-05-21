@@ -165,10 +165,9 @@ class OposicionModelView(SecureModelView):
     can_set_page_size = True
     page_size_options = [10, 50, 100]
 
-    column_list = ['id', 'fecha', 'departamento', 'provincia', 'identificador', 'titulo']
+    column_list = ['fecha', 'departamento', 'provincia', 'identificador', 'titulo']
 
     column_labels = {
-        'id': 'ID',
         'fecha': 'Fecha',
         'departamento': 'Departamento',
         'provincia': 'Provincia',
@@ -180,6 +179,15 @@ class OposicionModelView(SecureModelView):
     column_searchable_list = ['titulo', 'identificador', 'departamento', 'provincia']
     column_default_sort = ('fecha', True)
     action_disallowed_list = ['delete', 'eliminar_seleccionados']
+    
+    def format_date(self, value):
+        if not value:
+            return '-'
+        try:
+            parsed = datetime.fromisoformat(value)
+            return f"{parsed.day:02d} {month_abbr[parsed.month]} {parsed.year}"
+        except Exception:
+            return value
 
     @staticmethod
     def _normalize_text(value):
@@ -259,39 +267,6 @@ class OposicionModelView(SecureModelView):
         )
         
         return redirect(self.get_url('.index_view'))
-    
-    
-    @expose('/guardar_favorita/<int:oposicion_id>', methods=('POST',))
-    def guardar_favorita(self, oposicion_id):
-        if not self.is_accessible():
-            return self.inaccessible_callback('guardar_favorita')
-
-        existente = Favorita.query.filter_by(
-            user_id=current_user.id,
-            oposicion_id=oposicion_id,
-        ).first()
-
-        if existente:
-            sa_db.session.delete(existente)
-            sa_db.session.commit()
-            message = 'Oposición eliminada de favoritos.'
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify(success=True, action='removed', message=message), 200
-            flash(message, 'success')
-            return redirect(request.referrer or self.get_url('.index_view'))
-
-        favorita = Favorita(
-            user_id=current_user.id,
-            oposicion_id=oposicion_id,
-            fecha_favorito=datetime.now().isoformat(),
-        )
-        sa_db.session.add(favorita)
-        sa_db.session.commit()
-        message = 'Oposición guardada en favoritos.'
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify(success=True, action='added', message=message), 200
-        flash(message, 'success')
-        return redirect(request.referrer or self.get_url('.index_view'))
 
 class AnalyticsView(AdminViewMixin, BaseView):
     
@@ -423,6 +398,194 @@ class ActividadesModelView(SecureModelView):
         except Exception:
             return str(value)
 
+class SuscripcionesModelView(SecureModelView):
+    """Vista de suscripciones"""
+    
+    column_list = ['alerta_diaria', 'alerta_favoritos', 'departamento_filtro', 'user']
+    
+    column_labels = {
+        'alerta_diaria': 'Alerta Diaria',
+        'alerta_favoritos': 'Alerta Favoritos',
+        'departamento_filtro': 'Departamento Filtro',
+        'user': 'Usuario'
+    }
+    
+    column_searchable_list = ['departamento_filtro', 'user.email']
+    column_filters = ['departamento_filtro', 'user_id']
+    column_sortable_list = ['departamento_filtro', 'user_id']
+    column_default_sort = ('departamento_filtro', True)
+    
+    page_size = 10
+    page_size_options = [10, 25, 50]
+    can_set_page_size = True
+    list_template = 'admin/suscripciones.html'
+    
+    can_create = False
+    can_edit = False
+    can_delete = False
+    can_export = True
+    export_types = ['csv']
+    
+    def get_query(self):
+        return sa_db.session.query(Suscripcion).outerjoin(User)
+    
+    def get_count_query(self):
+        return sa_db.session.query(sa_db.func.count(Suscripcion.user_id))
+
+    def search_placeholder(self):
+        return 'Buscar'
+
+    def action_badge_class(self, action):
+        action = (action or '').lower()
+        if action == 'login':
+            return 'suscripcion-badge-success'
+        if action == 'logout':
+            return 'suscripcion-badge-danger'
+        if action == 'scrape_run':
+            return 'suscripcion-badge-primary'
+        return 'suscripcion-badge-info'
+
+    def action_badge_style(self, action):
+        action = (action or '').lower()
+        if action == 'login':
+            return 'background-color: rgba(62, 207, 142, 0.18) !important; color: #18794e !important;'
+        if action == 'logout':
+            return 'background-color: rgba(242, 95, 92, 0.16) !important; color: #b42318 !important;'
+        if action == 'scrape_run':
+            return 'background-color: rgba(79, 142, 247, 0.18) !important; color: #2158b0 !important;'
+        return 'background-color: rgba(13, 202, 240, 0.14) !important; color: #0b7285 !important;'
+
+class VisitasModelView(SecureModelView):
+    """Vista de visitas"""
+
+    column_list = ['fecha_visita', 'oposicion', 'user']
+    
+    column_labels = {
+        'fecha_visita': 'Fecha de Visita',
+        'oposicion': 'Oposicion',
+        'user': 'Usuario'
+    }
+    
+    column_searchable_list = ['fecha_visita', 'oposicion.identificador', 'user.email']
+    column_filters = ['fecha_visita', 'oposicion_id', 'user_id']
+    column_sortable_list = ['fecha_visita', 'oposicion_id', 'user_id']
+    column_default_sort = ('fecha_visita', True)
+    
+    page_size = 10
+    page_size_options = [10, 25, 50]
+    can_set_page_size = True
+    list_template = 'admin/visitas.html'
+    
+    can_create = False
+    can_edit = False
+    can_delete = True
+    can_export = True
+    export_types = ['csv']
+    
+    def get_query(self):
+        return sa_db.session.query(Visita).outerjoin(User)
+    
+    def get_count_query(self):
+        return sa_db.session.query(sa_db.func.count(Visita.user_id))
+
+    def search_placeholder(self):
+        return 'Buscar'
+    
+    def format_date(self, value):
+        if not value:
+            return '-'
+        try:
+            parsed = datetime.fromisoformat(value)
+            return f"{parsed.day:02d} {month_abbr[parsed.month]}, {parsed.strftime('%H:%M:%S')}"
+        except Exception:
+            return value
+
+    def action_badge_class(self, action):
+        action = (action or '').lower()
+        if action == 'login':
+            return 'visita-badge-success'
+        if action == 'logout':
+            return 'visita-badge-danger'
+        if action == 'scrape_run':
+            return 'visita-badge-primary'
+        return 'visita-badge-info'
+
+    def action_badge_style(self, action):
+        action = (action or '').lower()
+        if action == 'login':
+            return 'background-color: rgba(62, 207, 142, 0.18) !important; color: #18794e !important;'
+        if action == 'logout':
+            return 'background-color: rgba(242, 95, 92, 0.16) !important; color: #b42318 !important;'
+        if action == 'scrape_run':
+            return 'background-color: rgba(79, 142, 247, 0.18) !important; color: #2158b0 !important;'
+        return 'background-color: rgba(13, 202, 240, 0.14) !important; color: #0b7285 !important;'
+
+class FavoritasModelView(SecureModelView):
+    """Vista de favoritas"""
+
+    column_list = ['acciones','fecha_favorito', 'oposicion', 'user']
+    
+    column_labels = {
+        'acciones': 'Acciones',
+        'fecha_favorito': 'Fecha de Favorito',
+        'oposicion': 'Oposicion',
+        'user': 'Usuario'
+    }
+    
+    column_searchable_list = ['fecha_favorito', 'oposicion.identificador', 'user.email']
+    column_filters = ['fecha_favorito', 'oposicion_id', 'user_id']
+    column_sortable_list = ['fecha_favorito', 'oposicion_id', 'user_id']
+    column_default_sort = ('fecha_favorito', True)
+    
+    page_size = 10
+    page_size_options = [10, 25, 50]
+    can_set_page_size = True
+    list_template = 'admin/favoritas.html'
+    
+    can_create = False
+    can_edit = False
+    can_delete = True
+    can_export = True
+    export_types = ['csv']
+    
+    def get_query(self):
+        return sa_db.session.query(Favorita).outerjoin(User)
+    
+    def get_count_query(self):
+        return sa_db.session.query(sa_db.func.count(Favorita.user_id))
+
+    def search_placeholder(self):
+        return 'Buscar'
+    
+    def format_date(self, value):
+        if not value:
+            return '-'
+        try:
+            parsed = datetime.fromisoformat(value)
+            return f"{parsed.day:02d} {month_abbr[parsed.month]}, {parsed.strftime('%H:%M:%S')}"
+        except Exception:
+            return value
+
+    def action_badge_class(self, action):
+        action = (action or '').lower()
+        if action == 'login':
+            return 'favorita-badge-success'
+        if action == 'logout':
+            return 'favorita-badge-danger'
+        if action == 'scrape_run':
+            return 'favorita-badge-primary'
+        return 'favorita-badge-info'
+
+    def action_badge_style(self, action):
+        action = (action or '').lower()
+        if action == 'login':
+            return 'background-color: rgba(62, 207, 142, 0.18) !important; color: #18794e !important;'
+        if action == 'logout':
+            return 'background-color: rgba(242, 95, 92, 0.16) !important; color: #b42318 !important;'
+        if action == 'scrape_run':
+            return 'background-color: rgba(79, 142, 247, 0.18) !important; color: #2158b0 !important;'
+        return 'background-color: rgba(13, 202, 240, 0.14) !important; color: #0b7285 !important;'
+
 
 def init_admin(app):
     admin = Admin(
@@ -457,7 +620,7 @@ def init_admin(app):
     )
 
     admin.add_view(
-        SecureModelView(
+        FavoritasModelView(
             Favorita,
             sa_db.session,
             name="Favoritas",
@@ -475,7 +638,7 @@ def init_admin(app):
     )
 
     admin.add_view(
-        SecureModelView(
+        VisitasModelView(
             Visita,
             sa_db.session,
             name="Visitas",
@@ -484,7 +647,7 @@ def init_admin(app):
     )
 
     admin.add_view(
-        SecureModelView(
+        SuscripcionesModelView(
             Suscripcion,
             sa_db.session,
             name="Suscripciones",

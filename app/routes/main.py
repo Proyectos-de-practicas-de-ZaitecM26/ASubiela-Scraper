@@ -1,36 +1,10 @@
 from datetime import datetime
-
-from flask import (
-    Blueprint,
-    current_app,
-    flash,
-    redirect,
-    render_template,
-    request,
-    session,
-    url_for
-)
-
+from flask import (Blueprint,current_app,render_template,request)
 from flask_login import current_user
-
 from sqlalchemy import func, or_
-
 from ..auth_utils import require_role
-
-from ..data import (
-    AuditLog,
-    Favorita,
-    Oposicion,
-    User,
-    Visita,
-    VisitaGlobal,
-    sa_db
-)
-
-from ..scraping.boe_scraper import (
-    scrape_boe_ultimos_dias,
-    sync_boe_hasta_hoy,
-)
+from ..data import ( Oposicion, sa_db)
+from ..scraping.boe_scraper import (sync_boe_hasta_hoy,)
 
 
 
