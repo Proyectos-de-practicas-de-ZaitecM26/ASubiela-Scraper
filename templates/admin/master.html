@@ -311,9 +311,11 @@
     }
 
     /* Botones */
+    .btn {
+      font-weight: 500; font-size: 13px; border-radius: 7px; text-wrap: nowrap;
+    }
     .btn-primary {
-      background: var(--accent); border-color: var(--accent);
-      font-weight: 500; font-size: 13px; border-radius: 7px; color: #fff;
+      background: var(--accent); border-color: var(--accent); color: #fff;
     }
     .btn-primary:hover { background: #6aa0f8; border-color: #6aa0f8; color: #fff; }
 
@@ -530,8 +532,8 @@
         <i class="bi bi-star"></i> Favoritas
       </a>
 
-      <a href="{{ url_for('admin_auditlog.index_view') }}"
-         class="nav-item {% if 'admin_auditlog' in request.endpoint %}active{% endif %}">
+      <a href="{{ url_for('admin_actividades.index_view') }}"
+         class="nav-item {% if 'admin_actividades' in request.endpoint %}active{% endif %}">
         <i class="bi bi-activity"></i> Actividad
       </a>
 

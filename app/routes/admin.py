@@ -231,7 +231,22 @@ class OposicionModelView(SecureModelView):
                 count_query = count_query.filter(or_(*count_filter_stmt))
 
         return query, count_query, joins, count_joins
+    
+    @expose('/accion_uno/', methods=['GET'])
+    def accion_uno(self):
+        flash("¡Acción 1 ejecutada correctamente!", "success")
+        
+        return redirect(self.get_url('.index_view'))
 
+
+
+    @expose('/accion_dos/', methods=['GET'])
+    def accion_dos(self):
+        flash("¡Acción 2 ejecutada correctamente!", "info")
+        
+        return redirect(self.get_url('.index_view'))
+    
+    
     @expose('/guardar_favorita/<int:oposicion_id>', methods=('POST',))
     def guardar_favorita(self, oposicion_id):
         if not self.is_accessible():
@@ -290,7 +305,7 @@ class AnalyticsView(AdminViewMixin, BaseView):
             top_visitadas=top_visitadas
         )
 
-class AuditLogModelView(SecureModelView):
+class ActividadesModelView(SecureModelView):
     """Vista de solo lectura para audit logs"""
     
     column_list = ['timestamp', 'user', 'action', 'ip_address', 'audit_metadata']
@@ -315,7 +330,7 @@ class AuditLogModelView(SecureModelView):
     page_size = 10
     page_size_options = [10, 25, 50]
     can_set_page_size = True
-    list_template = 'admin/auditlog_list.html'
+    list_template = 'admin/actividades.html'
     
     can_create = False
     can_edit = False
@@ -437,11 +452,11 @@ def init_admin(app):
     )
 
     admin.add_view(
-        AuditLogModelView(
+        ActividadesModelView(
             AuditLog,
             sa_db.session,
             name="Audit Log",
-            endpoint="admin_auditlog"
+            endpoint="admin_actividades"
         )
     )
 

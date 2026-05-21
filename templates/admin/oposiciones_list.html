@@ -97,87 +97,65 @@
 {% block model_menu_bar %}
 <div class="oposiciones-toolbar mb-3">
     <div class="row align-items-center">
-    <div class="col-12 col-md-3 d-flex align-items-center mb-2 mb-md-0">
-        <span class="badge bg-secondary me-2">{{ _gettext('List') }}{% if count %} ({{ count }}){% endif %}</span>
-    </div>
-
-    <div class="col-12 col-md-5">
-        {% if search_supported %}
-        <div class="oposiciones-search">
-            <form method="GET" action="{{ return_url }}" class="oposiciones-search-form" role="search">
-                {% for flt_name, flt_value in filter_args.items() %}
-                <input type="hidden" name="{{ flt_name }}" value="{{ flt_value }}">
-                {% endfor %}
-                {% if page_size != default_page_size %}
-                <input type="hidden" name="page_size" value="{{ page_size }}">
-                {% endif %}
-                {% for arg_name, arg_value in extra_args.items() %}
-                <input type="hidden" name="{{ arg_name }}" value="{{ arg_value }}">
-                {% endfor %}
-                {% if sort_column is not none %}
-                <input type="hidden" name="sort" value="{{ sort_column }}">
-                {% endif %}
-                {% if sort_desc %}
-                <input type="hidden" name="desc" value="1">
-                {% endif %}
-
-                <input
-                    class="form-control oposiciones-search-input"
-                    type="text"
-                    name="search"
-                    value="{{ search or '' }}"
-                    placeholder="{{ _gettext('%(placeholder)s', placeholder=search_placeholder) }}"
-                >
-                <button class="btn btn-secondary oposiciones-search-btn" type="submit">Buscar</button>
-            </form>
+        <div class="col-12 col-md-2 d-flex align-items-center mb-2 mb-md-0">
+            <span class="btn btn-outline-primary disabled">{{ _gettext('List') }}{% if count %} ({{ count }}){% endif %}</span>
         </div>
-        {% endif %}
-    </div>
 
-    <div class="col-12 col-md-4 d-flex justify-content-md-end">
-        {% if admin_view.can_create %}
-            {%- if admin_view.create_modal -%}
-                {{ lib.add_modal_button(
-                    url=get_url('.create_view', url=return_url, modal=True),
-                    btn_class='btn btn-primary me-2',
-                    title='Crear nuevo registro',
-                    content='Crear'
-                ) }}
-            {% else %}
-                <a href="{{ get_url('.create_view', url=return_url) }}" class="btn btn-primary me-2" title="Crear nuevo registro">
-                    Crear
+        <div class="col-12 col-md-6 d-flex gap-2">
+            {% if search_supported %}
+            <div class="oposiciones-search w-100">
+                <form method="GET" action="{{ return_url }}" class="oposiciones-search-form" role="search">
+                    {% for flt_name, flt_value in filter_args.items() %}
+                    <input type="hidden" name="{{ flt_name }}" value="{{ flt_value }}">
+                    {% endfor %}
+                    {% if page_size != default_page_size %}
+                    <input type="hidden" name="page_size" value="{{ page_size }}">
+                    {% endif %}
+                    {% for arg_name, arg_value in extra_args.items() %}
+                    <input type="hidden" name="{{ arg_name }}" value="{{ arg_value }}">
+                    {% endfor %}
+                    {% if sort_column is not none %}
+                    <input type="hidden" name="sort" value="{{ sort_column }}">
+                    {% endif %}
+                    {% if sort_desc %}
+                    <input type="hidden" name="desc" value="1">
+                    {% endif %}
+
+                    <input
+                        class="form-control oposiciones-search-input"
+                        type="text"
+                        name="search"
+                        value="{{ search or '' }}"
+                        placeholder="{{ _gettext('%(placeholder)s', placeholder=search_placeholder) }}"
+                    >
+                </form>
+            </div>
+            
+            <button class="btn btn-secondary oposiciones-search-btn" type="submit">Buscar</button>
+            {% endif %}
+        </div>
+
+        <div class="col-12 col-md-4 d-flex justify-content-md-end">
+            <div class="me-2">
+                <a href="{{ get_url('.accion_uno') }}" class="btn btn-success">
+                    Sincronizar BOE
                 </a>
-            {%- endif -%}
-        {% endif %}
-
-        {% if admin_view.can_export and admin_view.export_types %}
-            <a href="{{ get_url('.export', export_type=admin_view.export_types[0]) }}" class="btn btn-outline-secondary" title="Exportar CSV">
-                Exportar CSV
-            </a>
-        {% endif %}
-
-        <form method="GET" action="{{ return_url }}" class="oposiciones-page-size-form mt-2">
-            {% for flt_name, flt_value in filter_args.items() %}
-            <input type="hidden" name="{{ flt_name }}" value="{{ flt_value }}">
-            {% endfor %}
-            {% for arg_name, arg_value in extra_args.items() %}
-            <input type="hidden" name="{{ arg_name }}" value="{{ arg_value }}">
-            {% endfor %}
-            {% if search %}
-            <input type="hidden" name="search" value="{{ search }}">
+            </div>
+            
+            <div class="me-2">
+                <a href="{{ get_url('.accion_dos') }}" class="btn btn-info text-white">
+                    Últimos 30 días
+                </a>
+            </div>
+            
+            {% if admin_view.can_export and admin_view.export_types %}
+                <div class="me-2">
+                    <a href="{{ get_url('.export', export_type=admin_view.export_types[0]) }}" class="btn btn-outline-secondary" title="Exportar CSV">
+                        Exportar CSV
+                    </a>
+                </div>
             {% endif %}
-            {% if sort_column is not none %}
-            <input type="hidden" name="sort" value="{{ sort_column }}">
-            {% endif %}
-            {% if sort_desc %}
-            <input type="hidden" name="desc" value="1">
-            {% endif %}
-            <span class="me-2">Filas:</span>
-            {% for option in admin_view.page_size_options %}
-            <button type="submit" name="page_size" value="{{ option }}" class="btn btn-outline-secondary btn-sm {% if page_size == option %}active{% endif %}">{{ option }}</button>
-            {% endfor %}
-        </form>
-    </div>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -314,29 +292,44 @@ Acciones
     {% endfor %}
 </table>
 
-<div class="d-flex justify-content-end mt-3">
-    <form method="GET" action="{{ return_url }}" class="oposiciones-page-size-form">
-        {% for flt_name, flt_value in filter_args.items() %}
-        <input type="hidden" name="{{ flt_name }}" value="{{ flt_value }}">
-        {% endfor %}
-        {% for arg_name, arg_value in extra_args.items() %}
-        <input type="hidden" name="{{ arg_name }}" value="{{ arg_value }}">
-        {% endfor %}
-        {% if search %}
-        <input type="hidden" name="search" value="{{ search }}">
-        {% endif %}
-        {% if sort_column is not none %}
-        <input type="hidden" name="sort" value="{{ sort_column }}">
-        {% endif %}
-        {% if sort_desc %}
-        <input type="hidden" name="desc" value="1">
-        {% endif %}
-        <span class="me-2">Filas:</span>
-        {% for option in admin_view.page_size_options %}
-        <button type="submit" name="page_size" value="{{ option }}" class="btn btn-outline-secondary btn-sm {% if page_size == option %}active{% endif %}">{{ option }}</button>
-        {% endfor %}
-    </form>
+{% block list_pager %}
+<div class="d-flex justify-content-between align-items-center">
+    {% if num_pages > 1 %}
+        {{ lib.pager(page, num_pages, pager_url) }}
+    {% else %}
+        <ul></ul>
+    {% endif %}
+
+    {% if admin_view.page_size_options %}
+    <ul class="pagination">
+        <form method="GET" action="{{ return_url }}" class="d-flex flex-wrap align-items-center">
+            {% for flt_name, flt_value in filter_args.items() %}
+                <input type="hidden" name="{{ flt_name }}" value="{{ flt_value }}">
+            {% endfor %}
+            {% for arg_name, arg_value in extra_args.items() %}
+                <input type="hidden" name="{{ arg_name }}" value="{{ arg_value }}">
+            {% endfor %}
+            {% if search %}
+                <input type="hidden" name="search" value="{{ search }}">
+            {% endif %}
+            {% if sort_column is not none %}
+                <input type="hidden" name="sort" value="{{ sort_column }}">
+            {% endif %}
+            {% if sort_desc %}
+                <input type="hidden" name="desc" value="1">
+            {% endif %}
+
+            <li class="page-item disabled"><span class="page-link">Filas:</span></li>
+            {% for size in admin_view.page_size_options %}
+                <li class="page-item {% if page_size == size %}active{% endif %}">
+                    <button type="submit" name="page_size" value="{{ size }}" class="page-link">{{ size }}</button>
+                </li>
+            {% endfor %}
+        </form>
+    </div>
+    {% endif %}
 </div>
+{% endblock %}
 </div>
 
 <script>

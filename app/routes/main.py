@@ -188,9 +188,9 @@ def resultados():
 # ADMIN SCRAPING
 # =====================================================
 
-@main_bp.route("/admin/scrape_ultimos_30")
-@require_role("admin")
-def admin_scrape_ultimos_30():
+#@main_bp.route("/admin/scrape_ultimos_30")
+#@require_role("admin")
+#def admin_scrape_ultimos_30():
 
     nuevas = scrape_boe_ultimos_dias(30)
 
@@ -207,9 +207,9 @@ def admin_scrape_ultimos_30():
 # ADMIN SYNC
 # =====================================================
 
-@main_bp.route("/admin/sync_boe")
-@require_role("admin")
-def admin_sync_boe():
+#@main_bp.route("/admin/sync_boe")
+#@require_role("admin")
+#def admin_sync_boe():
 
     nuevas = sync_boe_hasta_hoy()
 

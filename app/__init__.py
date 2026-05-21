@@ -11,7 +11,6 @@ from app.routes.chat import chat_bp
 from app.routes.filters import filters_bp
 from app.routes.policies import policies_bp
 from app.routes.theme import theme_bp
-
 from app.routes.admin import init_admin
 from app.routes.user import user_bp, register_login_handlers
 from .audit_utils import register_audit_signals
