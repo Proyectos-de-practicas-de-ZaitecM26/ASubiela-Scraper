@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import (Blueprint,current_app,render_template,request)
 from flask_login import current_user
-from sqlalchemy import func, or_
+from sqlalchemy import or_
 from ..auth_utils import require_role
 from ..data import ( Oposicion, sa_db)
 from ..scraping.boe_scraper import (sync_boe_hasta_hoy,)
