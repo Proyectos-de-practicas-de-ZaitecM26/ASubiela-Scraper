@@ -10,6 +10,8 @@ import unicodedata
 import json
 from calendar import month_abbr
 from datetime import datetime
+
+from app.scraping.boe_scraper import scrape_boe_ultimos_dias, sync_boe_hasta_hoy
 from ..data import sa_db, User, Oposicion, Favorita, Visita, Suscripcion, AuditLog
 
 
@@ -232,17 +234,29 @@ class OposicionModelView(SecureModelView):
 
         return query, count_query, joins, count_joins
     
-    @expose('/accion_uno/', methods=['GET'])
+    @expose('/sync_boe', methods=['GET'])
     def accion_uno(self):
-        flash("¡Acción 1 ejecutada correctamente!", "success")
+
+        nuevas = sync_boe_hasta_hoy()
+
+        flash(
+            f"Sincronización completada. "
+            f"Insertadas {len(nuevas)} oposiciones nuevas.",
+            "success",
+        )
         
         return redirect(self.get_url('.index_view'))
 
 
 
-    @expose('/accion_dos/', methods=['GET'])
+    @expose('/scrape_ultimos_30', methods=['GET'])
     def accion_dos(self):
-        flash("¡Acción 2 ejecutada correctamente!", "info")
+        nuevas = scrape_boe_ultimos_dias(30)
+
+        flash(
+            f"Se han insertado {len(nuevas)} oposiciones nuevas.",
+            "success"
+        )
         
         return redirect(self.get_url('.index_view'))
     
