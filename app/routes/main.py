@@ -327,28 +327,3 @@ def admin_sync_boe():
     return redirect(
         url_for("user.oposiciones_vigentes")
     )
-
-
-# =====================================================
-# THEME
-# =====================================================
-
-@main_bp.route("/toggle-theme")
-def toggle_theme():
-
-    current_theme = session.get(
-        "theme",
-        "dark"
-    )
-
-    session["theme"] = (
-        "light"
-        if current_theme == "dark"
-        else "dark"
-    )
-
-    session.modified = True
-
-    return redirect(
-        request.referrer or url_for("main.index")
-    )

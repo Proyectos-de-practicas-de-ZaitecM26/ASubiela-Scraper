@@ -30,12 +30,6 @@ def ensure_theme():
     if "theme" not in session:
         session["theme"] = "light"
 
-@filters_bp.route("/toggle_theme")
-def toggle_theme():
-    current = session.get("theme", "light")
-    session["theme"] = "dark" if current == "light" else "light"
-    return redirect(request.referrer or url_for("main.index"))
-
 @filters_bp.app_context_processor
 def inject_theme():
     return {"theme": session.get("theme", "light")}
