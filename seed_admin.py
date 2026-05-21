@@ -3,19 +3,18 @@ import sys
 import argparse
 from getpass import getpass
 from werkzeug.security import generate_password_hash
-
-# Permite ejecutar el script desde cualquier directorio.
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
-
 from app import create_app
 from app.data import sa_db, User
 
 
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+
+
 def create_admin(app, email, password, name="Admin"):
     with app.app_context():
-        # sa_db.init_app(app)
         sa_db.create_all()
         print(f"DB activa: {app.config.get('SQLALCHEMY_DATABASE_URI')}")
         email = email.lower().strip()

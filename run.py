@@ -1,7 +1,3 @@
-# =========================================================
-# Pequeña mejora: dejo preparado el modo debug para desarrollo
-# =========================================================
-
 from app import create_app
 
 app = create_app()

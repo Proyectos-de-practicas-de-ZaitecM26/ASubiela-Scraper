@@ -6,18 +6,12 @@ from itsdangerous import URLSafeTimedSerializer
 import os
 
 
-# =====================================================
-# SERIALIZER
-# =====================================================
-
 serializer = URLSafeTimedSerializer(
     os.environ.get('SECRET_KEY', 'dev-secret-key')
 )
 
 
-# =====================================================
-# RESET PASSWORD
-# =====================================================
+
 
 def generate_reset_token(email):
     """Genera token seguro para resetear contraseña"""
@@ -87,9 +81,9 @@ def send_password_reset_email(email, token):
     mail.send(msg)
 
 
-# =====================================================
-# EMAIL VERIFICATION
-# =====================================================
+
+
+
 
 def generate_verification_token(email):
     """Genera token de verificación"""
@@ -200,9 +194,8 @@ def send_new_oposiciones_email(recipients, oposiciones):
     mail.send(msg)
 
 
-# =====================================================
-# HELPERS
-# =====================================================
+
+
 
 def all_user_emails():
 

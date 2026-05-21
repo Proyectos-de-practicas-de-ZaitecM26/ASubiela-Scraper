@@ -1,53 +1,18 @@
 from datetime import datetime, timedelta
-
-from flask import (
-    Blueprint,
-    current_app,
-    flash,
-    jsonify,
-    redirect,
-    render_template,
-    request,
-    url_for
-)
-
-from flask_login import (
-    current_user,
-    login_required
-)
-
+from flask import (Blueprint, current_app, flash, jsonify, redirect, render_template, request, url_for)
+from flask_login import (current_user, login_required )
 from sqlalchemy import or_
-
-from app.email_utils import (
-    send_new_oposiciones_email
-)
-
-from app.file_utils import (
-    upload_profile_photo
-)
-
+from app.email_utils import (send_new_oposiciones_email)
+from app.file_utils import (upload_profile_photo)
 from ..audit_utils import log_audit
-
-from ..data import (
-    AuditLog,
-    Favorita,
-    Oposicion,
-    Suscripcion,
-    User,
-    Visita,
-    VisitaGlobal,
-    sa_db
-)
-
+from ..data import (Favorita, Oposicion, Suscripcion, User, Visita, VisitaGlobal, sa_db )
 from ..extensions import login_manager
 
 
 user_bp = Blueprint("user", __name__)
 
 
-# =====================================================
-# LOGIN MANAGER
-# =====================================================
+
 
 def register_login_handlers():
 
@@ -60,9 +25,9 @@ def register_login_handlers():
         )
 
 
-# =====================================================
-# VISITAS
-# =====================================================
+
+
+
 
 def registrar_visita(user_id, oposicion_id):
 
@@ -135,9 +100,9 @@ def registrar_visita_global(oposicion_id):
         )
 
 
-# =====================================================
-# FAVORITOS
-# =====================================================
+
+
+
 
 def toggle_favorito(user_id, oposicion_id):
 
@@ -179,9 +144,11 @@ def toggle_favorito(user_id, oposicion_id):
         return False
 
 
-# =====================================================
-# USER HOME
-# =====================================================
+
+
+
+
+
 
 @user_bp.route("/user", methods=["GET", "POST"])
 @login_required
@@ -190,9 +157,12 @@ def user_home():
     return render_template("user.html")
 
 
-# =====================================================
-# OPOSICIONES VIGENTES
-# =====================================================
+
+
+
+
+
+
 
 @user_bp.route("/user_oposiciones")
 @login_required
@@ -360,7 +330,7 @@ def oposiciones_vigentes():
         favoritas=favoritas,
         hoy=today.strftime("%Y%m%d"),
         titulo_pagina=(
-            f"📢 Oposiciones Vigentes "
+            f"Oposiciones Vigentes "
             f"de {user.name} {user.apellidos}"
         ),
         total=total
@@ -581,12 +551,12 @@ def enviar_resumen_ahora():
         try:
             send_new_oposiciones_email([user.email], oposiciones)
             flash(
-                f"✅ Email enviado correctamente a {user.email} con {len(oposiciones)} oposiciones recientes.",
+                f"Email enviado correctamente a {user.email} con {len(oposiciones)} oposiciones recientes.",
                 "success",
             )
         except Exception as e:
             current_app.logger.error(f"Error al enviar email: {e}")
-            flash(f"❌ Error al enviar email: {e}", "danger")
+            flash(f"Error al enviar email: {e}", "danger")
     else:
         flash(f"⚠️ No se encontraron oposiciones publicadas hoy para: {dept_filter_str}", "warning")
 

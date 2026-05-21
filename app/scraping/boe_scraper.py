@@ -1,6 +1,8 @@
 # app/scraping/boe.py
-
+from dotenv.main import logger
 import requests
+import re as _re
+import logging
 from datetime import datetime, date, timedelta
 from bs4 import BeautifulSoup
 from sqlalchemy.exc import IntegrityError
@@ -8,14 +10,13 @@ from sqlalchemy import func
 from ..data import sa_db, Oposicion
 
 
-def extraer_provincia(texto):
-    if not texto:
-        return None
-    import re as _re
 
-    texto = _re.sub(r"\s+", " ", texto).strip()
 
-    provincias = [
+logging.basicConfig(level=logging.INFO)
+
+BOE_SUMARIO_URL = "https://www.boe.es/datosabiertos/api/boe/sumario/{fecha}"
+
+PROVINCIAS_LIST = [ 
         "Álava", "Albacete", "Alicante", "Almería", "Asturias",
         "Ávila", "Badajoz", "Barcelona", "Bizkaia", "Burgos",
         "Cáceres", "Cádiz", "Cantabria", "Castellón", "Ciudad Real",
@@ -28,18 +29,32 @@ def extraer_provincia(texto):
         "Tarragona", "Teruel", "Toledo", "Valencia", "Valladolid",
         "Zamora", "Zaragoza", "Ceuta", "Melilla"
     ]
-    for p in provincias:
-        if _re.search(rf"\b{_re.escape(p)}\b", texto, _re.IGNORECASE):
-            return p
 
-    caps = _re.findall(r"\b[A-ZÑ]{4,15}\b", texto)
+PROVINCIAS_MAP = {p.lower(): p for p in PROVINCIAS_LIST}
+REGEX_PROVINCIAS = rf"\b({'|'.join(_re.escape(p) for p in PROVINCIAS_LIST)})\b"
+PATRON_PROVINCIAS = _re.compile(REGEX_PROVINCIAS, flags=_re.IGNORECASE)
+PATRON_MAYUSCULAS = _re.compile(r"\b[A-ZÑ]{4,15}\b")
+
+
+
+def extraer_provincia(texto):
+    if not texto:
+        return None
+    
+    texto_limpio = _re.sub(r"\s+", " ", texto).strip()
+    
+    match = PATRON_PROVINCIAS.search(texto_limpio)
+    if match:
+        # Recuperamos el nombre original mapeando la minúscula
+        provincia_encontrada = match.group(1).lower()
+        return PROVINCIAS_MAP.get(provincia_encontrada)
+
+    caps = PATRON_MAYUSCULAS.findall(texto_limpio)
     if caps:
         return caps[0].capitalize()
+        
     return None
-
-
-BOE_SUMARIO_URL = "https://www.boe.es/datosabiertos/api/boe/sumario/{fecha}"
-
+    
 
 def scrape_boe_dia(fecha: date):
     """
@@ -60,6 +75,7 @@ def scrape_boe_dia(fecha: date):
         if r.status_code != 200 or not r.content:
             return []
     except requests.RequestException:
+        logger.error(f"[BOE] Error de red al consultar {fecha_str}: {e}")
         return []
 
     try:
@@ -72,32 +88,33 @@ def scrape_boe_dia(fecha: date):
         return []
 
     items = seccion.find_all("item")
-    newly_inserted = []
+    existentes = sa_db.session.query(Oposicion.identificador).filter_by(fecha=fecha_str).all()
+    set_existentes = {e[0] for e in existentes}
+    nuevas_oposiciones_db = []
+    newly_inserted_dicts = []
 
     for item in items:
         identificador_tag = item.find("identificador")
+        identificador = identificador_tag.text.strip() if identificador_tag else None
+        if not identificador or identificador in set_existentes:
+            continue
+        
         control_tag = item.find("control")
         titulo_tag = item.find("titulo")
         url_html_tag = item.find("url_html")
         url_pdf_tag = item.find("url_pdf")
-
-        identificador = identificador_tag.text.strip() if identificador_tag else None
+        dept_parent = item.find_parent("departamento")
+        
         control = control_tag.text.strip() if control_tag else None
         titulo = titulo_tag.text.strip() if titulo_tag else None
         url_html = url_html_tag.text.strip() if url_html_tag else None
         url_pdf = url_pdf_tag.text.strip() if url_pdf_tag else None
+        departamento = dept_parent.get("nombre") if dept_parent and dept_parent.has_attr("nombre") else None
 
-        dept_parent = item.find_parent("departamento")
-        departamento = (
-            dept_parent.get("nombre")
-            if dept_parent and dept_parent.has_attr("nombre")
-            else None
-        )
 
         provincia = extraer_provincia(titulo) or extraer_provincia(control)
-
-        try:
-            nueva_opo = Oposicion(
+        
+        nueva_opo = Oposicion(
                 identificador=identificador,
                 control=control,
                 titulo=titulo,
@@ -107,12 +124,8 @@ def scrape_boe_dia(fecha: date):
                 fecha=fecha_str,
                 provincia=provincia
             )
-            
-            sa_db.session.add(nueva_opo)
-            # Hacemos commit individual para replicar el comportamiento de tu script original
-            sa_db.session.commit()
-
-            newly_inserted.append({
+        nuevas_oposiciones_db.append(nueva_opo)
+        newly_inserted.append({
                 "identificador": identificador,
                 "control": control,
                 "titulo": titulo,
@@ -123,20 +136,21 @@ def scrape_boe_dia(fecha: date):
                 "provincia": provincia,
             })
 
-        except IntegrityError:
-            # Si el registro ya existe (url_html UNIQUE), limpiamos la sesión y saltamos
+    if nuevas_oposiciones_db:
+        try:
+            sa_db.session.add_all(nuevas_oposiciones_db)
+            sa_db.session.commit()
+        except Exception as e:
             sa_db.session.rollback()
-            continue
-        except Exception:
-            # Para cualquier otro error, revertimos para no dejar la sesión bloqueada
-            sa_db.session.rollback()
-            continue
+            logger.error(f"[BOE] Error masivo al guardar oposiciones el {fecha_str}: {e}")
+            return []
 
-    return newly_inserted
+    return newly_inserted_dicts
+
 
 def scrape_boe_ultimos_dias(dias: int = 30):
     """
-    Hace scraping del BOE para los últimos `dias` días (incluyendo hoy)
+    Hace scraping del BOE para los últimos días (incluyendo hoy)
     usando SQLAlchemy.
     """
     hoy = date.today()
@@ -146,7 +160,7 @@ def scrape_boe_ultimos_dias(dias: int = 30):
         fecha_obj = hoy - timedelta(days=i)
         nuevas = scrape_boe_dia(fecha_obj)
         if nuevas:
-            print(f"[BOE] {fecha_obj} -> {len(nuevas)} oposiciones nuevas")
+            logger.info(f"[BOE] {fecha_obj} -> {len(nuevas)} oposiciones nuevas")
             todas_nuevas.extend(nuevas)
 
     return todas_nuevas
@@ -169,7 +183,7 @@ def get_last_boe_date() -> date | None:
 
 
 def sync_boe_hasta_hoy(max_dias_inicial: int = 30,
-                        max_dias_guardados: int = 30):
+    max_dias_guardados: int = 30):
     """
     Sincroniza la BBDD del BOE usando SQLAlchemy.
     Mantiene la lógica de inicio desde la última fecha y limpieza de antiguos.
@@ -183,7 +197,7 @@ def sync_boe_hasta_hoy(max_dias_inicial: int = 30,
         start_date = last_date + timedelta(days=1)
         
     if start_date > hoy:
-        print("[BOE] BBDD ya está sincronizada hasta hoy")
+        logger.info("[BOE] BBDD ya está sincronizada hasta hoy")
         return []
 
     todas_nuevas = []
@@ -192,13 +206,13 @@ def sync_boe_hasta_hoy(max_dias_inicial: int = 30,
     while current <= hoy:
         nuevas = scrape_boe_dia(current)
         if nuevas:
-            print(f"[BOE] {current} -> {len(nuevas)} oposiciones nuevas")
+            logger.info(f"[BOE] {current} -> {len(nuevas)} oposiciones nuevas")
             todas_nuevas.extend(nuevas)
         else:
-            print(f"[BOE] {current} -> sin oposiciones nuevas o sin sección 2B")
+           logger.info(f"[BOE] {current} -> sin oposiciones nuevas o sin sección 2B")
         current += timedelta(days=1)
 
-    # --- Eliminar registros antiguos (Limpieza con SQLAlchemy) ---
+
     try:
         if max_dias_guardados and max_dias_guardados > 0:
             cutoff = hoy - timedelta(days=(max_dias_guardados - 1))
@@ -207,9 +221,9 @@ def sync_boe_hasta_hoy(max_dias_inicial: int = 30,
             num_borrados = sa_db.session.query(Oposicion).filter(Oposicion.fecha < cutoff_str).delete()
             sa_db.session.commit()
             
-            print(f"[BOE] Eliminados {num_borrados} registros anteriores a {cutoff_str}")
+        logger.info(f"[BOE] Eliminados {num_borrados} registros anteriores a {cutoff_str}")
     except Exception as e:
         sa_db.session.rollback()
-        print(f"[BOE] Error al eliminar registros antiguos: {e}")
+        logger.error(f"[BOE] Error al eliminar registros antiguos: {e}")
 
     return todas_nuevas

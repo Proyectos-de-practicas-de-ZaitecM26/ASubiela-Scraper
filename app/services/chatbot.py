@@ -1,7 +1,3 @@
-# =========================================================
-# Refactorización: Desacoplo el chatbot del proveedor de IA
-# =========================================================
-
 from app.services.ai_client import ask_ai
 
 

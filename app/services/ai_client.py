@@ -1,8 +1,3 @@
-# =========================================================
-# Refactorización: Centralizo todas las llamadas a IA en un solo punto
-# para evitar duplicación y permitir cambiar de proveedor fácilmente
-# =========================================================
-
 import os
 from dotenv import load_dotenv
 from groq import Groq
