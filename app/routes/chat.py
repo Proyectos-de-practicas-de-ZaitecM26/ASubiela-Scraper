@@ -1,50 +1,67 @@
-# =========================================================
-# Refactorización: separo validación, uso el cliente de IA unificado
-# y mejoro el control de errores para que el código sea más limpio
-# =========================================================
+from flask import (
+    Blueprint,
+    current_app,
+    jsonify,
+    request
+)
+from app.extensions import limiter
+from ..services.chatbot import chatbot
 
-from flask import Blueprint, request, jsonify
-from app.services.ai_client import ask_ai
+chat_bp = Blueprint("chatbot", __name__)
 
-chat_bp = Blueprint("chat", __name__)
-
-
-# =========================================================
-# Valido el mensaje del usuario para evitar errores y spam
-# =========================================================
-def validar_mensaje(message):
-    if not message or not message.strip():
-        return "Escribe algo 😊"
-
-    if len(message) > 500:
-        return "Mensaje demasiado largo"
-
-    return None
-
-
-# =========================================================
-# Endpoint principal del chatbot
-# =========================================================
-@chat_bp.route("/chatbot/api", methods=["POST"])
+@chat_bp.route("/api/chatbot", methods=["POST"])
+@limiter.limit("20 per minute")
 def chatbot_api():
+
+    payload = request.get_json(silent=True) or {}
+
+    user_message = (
+        payload.get("message") or ""
+    ).strip()
+
+    if not user_message:
+
+        return jsonify({
+            "ok": False,
+            "error": "Mensaje vacío."
+        }), 400
+
+    if len(user_message) > 1200:
+
+        return jsonify({
+            "ok": False,
+            "error": "Mensaje demasiado largo."
+        }), 400
+
     try:
-        data = request.get_json()
-        message = data.get("message", "")
 
-        # Validación separada (más limpio y reutilizable)
-        error = validar_mensaje(message)
-        if error:
-            return jsonify({"reply": error})
+        answer = chatbot(user_message)
 
-        # Uso del cliente centralizado de IA
-        reply = ask_ai(
-            message=message,
-            provider="groq"
+        return jsonify({
+            "ok": True,
+            "answer": answer
+        })
+
+    except ValueError as exc:
+
+        current_app.logger.exception(
+            "Error en /api/chatbot: %s",
+            exc
         )
 
-        return jsonify({"reply": reply})
+        return jsonify({
+            "ok": False,
+            "error": str(exc)
+        }), 500
 
-    except Exception as e:
-        # Evito romper la app y no expongo errores internos
-        print(f"[ERROR CHATBOT]: {e}")
-        return jsonify({"reply": "Error interno, inténtalo más tarde"})
+    except Exception as exc:
+
+        current_app.logger.exception(
+            "Error en /api/chatbot: %s",
+            exc
+        )
+
+        return jsonify({
+            "ok": False,
+            "error": "No se pudo generar respuesta."
+        }), 500

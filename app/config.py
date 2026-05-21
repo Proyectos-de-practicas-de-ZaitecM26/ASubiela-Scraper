@@ -2,7 +2,22 @@ import os
 
 
 class Config:
+    
+    # =====================================================
+    # AI PROVIDERS
+    # =====================================================
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    
+    DEFAULT_AI_PROVIDER = os.getenv(
+        "DEFAULT_AI_PROVIDER", 
+        "groq"
+    )
 
+    # =====================================================
+    # EMAIL 
+    # =====================================================
     SECRET_KEY = os.getenv(
         "SECRET_KEY",
         "cambia-esto-en-produccion"

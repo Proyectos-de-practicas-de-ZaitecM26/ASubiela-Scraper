@@ -117,7 +117,6 @@ def chatbot(user_message, extra_instructions=None):
     try:
         response = ask_ai(
             message=user_message,
-            provider="groq",
             system_prompt=system_prompt,
         )
 

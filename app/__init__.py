@@ -13,9 +13,6 @@ from app.routes.admin import init_admin
 from app.routes.user import user_bp, register_login_handlers
 from .audit_utils import register_audit_signals
 
-
-
-
 def create_app(config_overrides=None):
     app = Flask(
         __name__,
