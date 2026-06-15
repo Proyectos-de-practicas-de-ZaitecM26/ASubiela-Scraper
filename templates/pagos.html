@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Pagos - Scraper BOE{% endblock %}
+
+{% block content %}
+<div class="pricing-container">
+    <div class="pricing-header">
+        <h1>Acceso Premium al Scraper</h1>
+        <p>Desbloquea la extracción de datos ilimitada del Boletín Oficial del Estado.</p>
+    </div>
+
+    <div class="pricing-cards">
+        <div class="card premium-card"{% if is_subscribed %}card-subscribed{% endif %}">
+            {% if is_subscribed %}
+                <div class="status-badge">Ya suscrito</div>
+            {% endif %}
+            <h2>Plan Profesional</h2>
+            <div class="price">
+                <span class="amount">20€</span>
+                <span class="period">/mes</span>
+            </div>
+            
+            <ul class="features-list">
+                <li>Búsquedas ilimitadas en el BOE</li>
+                <li>Exportación de datos a CSV/JSON</li>
+                <li>Soporte prioritario</li>
+            </ul>
+
+            <form action="{{ url_for('stripe_pay.create_checkout_session') }}" method="POST">
+                <button type="submit" class="btn btn-primary btn-block"{% if is_subscribed %}disabled{% endif %}>
+                    {% if is_subscribed %}
+                        Suscripción Activa
+                    {% else %}
+                        Suscribirse Ahora
+                    {% endif %}
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos base para que Anas tenga un punto de partida limpio */
+    .pricing-container {
+        max-width: 800px;
+        margin: 40px auto;
+        text-align: center;
+        font-family: sans-serif;
+    }
+    .pricing-header { margin-bottom: 40px; }
+    .card {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 30px;
+        max-width: 350px;
+        margin: 0 auto;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .price { margin: 20px 0; }
+    .amount { font-size: 36px; font-weight: bold; color: #111827; }
+    .period { color: #6b7280; }
+    .features-list {
+        list-style: none;
+        padding: 0;
+        text-align: left;
+        margin-bottom: 30px;
+    }
+    .features-list li {
+        margin-bottom: 10px;
+        padding-left: 24px;
+        position: relative;
+    }
+    .features-list li::before {
+        content: "✓";
+        position: absolute;
+        left: 0;
+        color: #10b981;
+        font-weight: bold;
+    }
+    .btn-block { width: 100%; padding: 12px; font-size: 16px; cursor: pointer; 
+    }
+    .status-badge {
+        background-color: #d1fae5;
+        color: #065f46;
+        padding: 6px 12px;
+        border-radius: 50px;
+        font-size: 14px;
+        font-weight: bold;
+        display: inline-block;
+        margin-bottom: 15px;
+    }
+    .card-subscribed {
+        border-color: #10b981;
+        background-color: #f8fafc; /* Fondo un poco más claro para diferenciar */
+    }
+    .btn-block:disabled {
+        background-color: #e5e7eb;
+        color: #9ca3af;
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}

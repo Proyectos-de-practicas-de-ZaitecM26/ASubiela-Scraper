@@ -12,6 +12,7 @@ from ..data import sa_db, Oposicion
 
 
 
+
 logging.basicConfig(level=logging.INFO)
 
 BOE_SUMARIO_URL = "https://www.boe.es/datosabiertos/api/boe/sumario/{fecha}"
@@ -125,7 +126,7 @@ def scrape_boe_dia(fecha: date):
                 provincia=provincia
             )
         nuevas_oposiciones_db.append(nueva_opo)
-        newly_inserted.append({
+        newly_inserted_dicts.append({
                 "identificador": identificador,
                 "control": control,
                 "titulo": titulo,

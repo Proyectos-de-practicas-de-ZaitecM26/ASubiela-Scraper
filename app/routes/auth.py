@@ -61,35 +61,36 @@ def find_user_by_email(email):
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
-
+    
+    recaptcha_enabled = current_app.config.get("RECAPTCHA_ENABLED")
+    if isinstance(recaptcha_enabled, str):
+        recaptcha_enabled = recaptcha_enabled.lower() in ('true', '1', 'yes', 't')
+        
     if request.method == "POST":
-        recaptcha_response = request.form.get(
-            "g-recaptcha-response"
-        )
+        if recaptcha_enabled:
+            recaptcha_response = request.form.get("g-recaptcha-response")
 
-        data = {
-            "secret": current_app.config[
-                "RECAPTCHA_SECRET_KEY"
-            ],
-            "response": recaptcha_response,
-            "remoteip": request.remote_addr
-        }
+            data = {
+                "secret": current_app.config.get("RECAPTCHA_SECRET_KEY"),
+                "response": recaptcha_response,
+                "remoteip": request.remote_addr
+            }
 
-        google_response = requests.post(
-            "https://www.google.com/recaptcha/api/siteverify",
-            data=data
-        )
+            try:
+                google_response = requests.post(
+                    "https://www.google.com/recaptcha/api/siteverify",
+                    data=data,
+                    timeout=5  # Buena práctica: evitar que la app se cuelgue si Google tarda
+                )
+                result = google_response.json()
 
-        result = google_response.json()
-
-        if not result.get("success"):
-
-            flash(
-                "Debes completar el reCAPTCHA.",
-                "danger"
-            )
-
-            return redirect(url_for("auth.login"))
+                if not result.get("success"):
+                    flash("Debes completar el reCAPTCHA.", "danger")
+                    return redirect(url_for("auth.login"))
+                    
+            except requests.RequestException:
+                flash("Error al contactar con el servicio de reCAPTCHA.", "danger")
+                return redirect(url_for("auth.login"))
 
         email = (
             request.form.get("email") or ""
@@ -139,9 +140,8 @@ def login():
 
     return render_template(
         "login.html",
-        site_key=current_app.config[
-            "RECAPTCHA_SITE_KEY"
-        ]
+        site_key=current_app.config.get("RECAPTCHA_SITE_KEY"),
+        recaptcha_enabled=recaptcha_enabled
     )
 
 

@@ -2,6 +2,13 @@ import os
 
 
 class Config:
+    # =====================================================
+    # DEFAULT ADMIN USER
+    # =====================================================
+    
+    DEFAULT_ADMIN_EMAIL = os.getenv("DEFAULT_ADMIN_EMAIL")
+    DEFAULT_ADMIN_PASSWORD = os.getenv("DEFAULT_ADMIN_PASSWORD")
+    DEFAULT_ADMIN_NAME = os.getenv("DEFAULT_ADMIN_NAME")
     
     # =====================================================
     # AI PROVIDERS
@@ -14,6 +21,13 @@ class Config:
         "DEFAULT_AI_PROVIDER", 
         "groq"
     )
+    
+    
+     # =====================================================
+    # STRIPE
+    # =====================================================
+    
+    STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 
     # =====================================================
     # EMAIL 
@@ -46,7 +60,12 @@ class Config:
     # =====================================================
     # RECAPTCHA
     # =====================================================
-
+    
+    RECAPTCHA_ENABLED = os.getenv(
+        "RECAPTCHA_ENABLED",
+        "True"
+    )
+    
     RECAPTCHA_SITE_KEY = os.getenv(
         "RECAPTCHA_SITE_KEY"
     )

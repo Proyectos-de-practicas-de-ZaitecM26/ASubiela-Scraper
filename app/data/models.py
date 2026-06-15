@@ -35,6 +35,8 @@ class User(sa_db.Model, UserMixin):
     email = sa_db.Column(sa_db.String, unique=True, nullable=False)
     password_hash = sa_db.Column(sa_db.String, nullable=False)
     is_verified = sa_db.Column(sa_db.Boolean, default=False)
+    stripe_customer_id = sa_db.Column(sa_db.String(255), unique=True, nullable=True)
+    subscription_status = sa_db.Column(sa_db.String(50), default='inactive', nullable=False)
     
     ROLES = ('admin', 'manager', 'viewer')
 
@@ -72,6 +74,14 @@ class User(sa_db.Model, UserMixin):
         uselist=False,
         cascade="all, delete-orphan"
     )
+    
+    def has_active_access(self):
+        """
+        Verificar si el usuario tiene permiso 
+        para consultar o descargar los datos extraidos del BOE.
+        """
+        # Stripe considera validos tanto 'active' como 'trialing' (periodo de prueba)
+        return self.subscription_status in ['active', 'trialing']
 
 
 class Visita(sa_db.Model):

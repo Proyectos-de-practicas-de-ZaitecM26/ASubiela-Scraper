@@ -587,7 +587,7 @@ class FavoritasModelView(SecureModelView):
         return 'background-color: rgba(13, 202, 240, 0.14) !important; color: #0b7285 !important;'
 
 
-def init_admin(app):
+def init_admin_dashboard(app):
     admin = Admin(
         app,
         name="Panel Admin",
