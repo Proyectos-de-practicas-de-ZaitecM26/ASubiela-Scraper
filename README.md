@@ -22,7 +22,10 @@ Aplicación Flask que sincroniza diariamente la sección 2B del BOE (oposiciones
       - [2. Ejecutar el script de bootstrap](#2-ejecutar-el-script-de-bootstrap)
       - [3. Activar el entorno virtual (si no usaste el bootstrap)](#3-activar-el-entorno-virtual-si-no-usaste-el-bootstrap)
       - [4. Ejecutar la aplicación](#4-ejecutar-la-aplicación)
-    - [Configuración y variables de entorno](#configuración-y-variables-de-entorno)
+  - [Configuración y variables de entorno](#configuración-y-variables-de-entorno)
+  - [💳 Pagos (Stripe)]
+  - [🔐 reCAPTCHA (login)]
+  - [☁️ Despliegue en Vercel]
   - [🏗️ Arquitectura del proyecto](#️-arquitectura-del-proyecto)
   - [🧪 Guía corta: probar el chatbot en local](#-guía-corta-probar-el-chatbot-en-local)
   - [⚙️ Funcionalidades](#️-funcionalidades)
@@ -190,9 +193,13 @@ Puedes sobrescribir los valores definidos en `app/config.py`:
 | `BOE_DB_PATH`       | Ruta al SQLite con oposiciones                          | `oposiciones.db`              |
 | `MAIL_USERNAME`     | Cuenta SMTP para `Flask-Mail`                           | `notificaciones.scraper@...`  |
 | `MAIL_PASSWORD`     | Password o app-password del SMTP                        | `sqoj zfue ovcf dlhz`         |
-| `GROQ_API_KEY`      | API Key para respuestas IA del endpoint `/api/chatbot` | *(sin valor por defecto)*     |
+| `GROQ_API_KEY`      | API Key para respuestas IA del endpoint `/api/chatbot`  | *(sin valor por defecto)*              
+| `STRIPE_SECRET_KEY`   clave secreta Stripe                                                                    |
+| `RECAPTCHA_SITE_KEY`  clave pública reCAPTCHA                                                                 |
+| `RECAPTCHA_SECRET_KEY`clave secreta reCAPTCHA                                                                 |
+| `ADMIN_EMAIL / ADMIN_PASSWORD`    solo para entornos de desarrollo (si procede)                               | 
 
-**⚠️ IMPORTANTE:** En producción define estas variables antes de arrancar (`set VAR=...` en Windows o `export VAR=...` en Linux/macOS).
+**⚠️ IMPORTANTE:** En producción define estas variables antes de arrancar (`set VAR=...` en Windows o `export VAR=...` en Linux/macOS).Asegurar que las variables sensibles se definen en el entorno de despliegue.
 
 ---
 
@@ -227,37 +234,84 @@ Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:5000/api/chatbot" -Content
 
 ---
 
+## 💳 Pagos (Stripe)
+
+Rutas clave:
+- app/routes/payments.py — inicia checkout (crea sesión Stripe).
+- app/routes/stripe_pay.py — maneja confirmaciones y webhooks.
+
+Plantillas:
+- templates/pagos.html — formulario/botón de inicio de pago.
+- templates/success.html — página de éxito del pago.
+- templates/cancel.html — página de cancelación.
+
+Recomendaciones:
+Configurar STRIPE_SECRET_KEY y validar eventos entrantes.
+Añadir pruebas E2E del flujo de pago (usando el modo test de Stripe).
+
+
+---
+
+## 🔐 reCAPTCHA (login)
+
+1. Frontend: widget incluido en templates/login.html usando RECAPTCHA_SITE_KEY.
+2. Backend: verificación del token con la API de Google en app/routes/auth.py antes de autenticar.
+3. Habilitar/deshabilitar según exista la configuración RECAPTCHA_SITE_KEY/RECAPTCHA_SECRET_KEY.
+4. Asegura protección contra bots en endpoints de autenticación.
+
+---
+
+## ☁️ Despliegue en Vercel
+
+1. vercel.json incluido con pasos de build y rewrites.
+2. Definir variables de entorno en el panel de Vercel:
+  SECRET_KEY, SQLALCHEMY_DATABASE_URI, STRIPE_, RECAPTCHA_, GROQ_API_KEY, MAIL_
+
+- Para persistencia en producción se recomienda usar un servicio de BBDD (Postgres) y almacenamiento externo para uploads.
+- Revisar límites de tiempo/ejecución en Vercel si se ejecutan tareas largas; considerar externalizar tareas de scraping o usar jobs programados.
+
+
+---
+
 ## 🏗️ Arquitectura del proyecto
 
 ```
 app/
-  __init__.py          # Crea la app, registra blueprints, filtros y temas.
-  chatbot.py           # Cliente Groq + selector de system prompt (v1/v2).
-  config.py            # Configuración centralizada.
-  db.py                # Conexiones y migraciones SQLite.
-  models.py            # Modelo User (Flask-Login).
-  services/
-    chat_skills.py     # Capa de skills: bloqueo de dominio + ruteo de intención.
-  email_utils.py       # Helpers para enviar newsletters.
-  scraping/
-    boe_scraper.py     # Lógica de scraping y sincronización del BOE.
+  data/
+    models.py
   routes/
-    main.py            # Landing, scraping, estadísticas y páginas legales.
+    init.py
+    admin.py
     auth.py            # Autenticación (login, registro, logout).
-    user.py            # Panel del usuario, filtros, favoritos y perfil.
     chat.py            # Endpoint /chatbot/api.
+    filters.py
+    main.py            # Landing, scraping, estadísticas y páginas legales.
+    user.py            # Panel del usuario, filtros, favoritos y perfil.
+    payments.py
+    policies.py       
+    stripe_pay.py 
+    theme.py    
   services/
     ai_client.py       # Cliente unificado de IA (Groq + proveedores alternativos).
-    chat_skills.py     # Habilidades del chatbot: detección de intención y búsqueda en BD.
+    chatbot.py
+  scraping/
+    boe_scraper.py  
+  __init__.py          # Crea la app, registra blueprints, filtros y temas.
+  audit_utils.py
+  auth_utils.py
+  config.py            # Configuración centralizada.
+  email_utils.py       # Helpers para enviar newsletters.
+  extensions.py
+  file_utils.py
+  backend/
+    vercel.json
+  instance/
+    boe_scraper.db
 static/                # CSS, imágenes y uploads de perfiles.
-templates/             # Base + vistas (index, login, registro, user_*, chat ...).
-run.py                 # Punto de entrada (crea la app y lanza Flask).
+templates/             # Base + vistas (index, login, registro, user, chat ...).
 bootstrap.(bat|sh)     # Scripts para preparar el entorno.
-requirements.txt       # Dependencias de Python.
-tests/
-  test_chat_skills.py  # Pruebas unitarias de las habilidades del chatbot.
-  test_admin_e2e.py    # Pruebas E2E del panel de administración con Playwright.
-```
+requirements.txt       # Dependencias de Python, Flask, Stripe, etc necesarias para el proyecto.
+run.py                 # Punto de entrada (crea la app y lanza Flask).
 
 ---
 
@@ -562,57 +616,6 @@ Mejora general del sistema de autenticación.
 
 ---
 
-## 🧪 Tests
-
-### Pruebas unitarias del chatbot
-
-El archivo `tests/test_chat_skills.py` cubre las habilidades del chatbot: detección de intención, bloqueo de temas fuera de BOE y búsqueda en base de datos.
-
-```bash
-pytest tests/test_chat_skills.py -v
-```
-
-### Pruebas E2E del panel de administración
-
-El archivo `tests/test_admin_e2e.py` contiene **15 pruebas de extremo a extremo** con Playwright que simulan un navegador real interactuando con el panel de administración.
-
-**Instalación de dependencias:**
-
-```bash
-pip install playwright pytest-playwright
-playwright install chromium
-```
-
-**Ejecución** (la app Flask debe estar corriendo en paralelo):
-
-```bash
-# Terminal 1 — arranca la app
-python run.py
-
-# Terminal 2 — ejecuta los tests
-pytest tests/test_admin_e2e.py -v
-```
-
-**Variables de entorno opcionales:**
-
-| Variable | Descripción | Valor por defecto |
-|---|---|---|
-| `BASE_URL` | URL base de la aplicación | `http://127.0.0.1:5000` |
-| `ADMIN_EMAIL` | Email del usuario administrador | `amm0246@alu.medac.es` |
-| `ADMIN_PASSWORD` | Contraseña del administrador | `Anas1234` |
-
-**Clases de tests incluidas:**
-
-| Clase | Tests | Descripción |
-|---|---|---|
-| `TestLogin` | 3 | Carga del formulario, credenciales incorrectas y login correcto |
-| `TestAccesoAdmin` | 4 | Dashboard accesible, mensaje de bienvenida, sidebar y topbar visibles |
-| `TestNavegacionModelos` | 4 | Navegación a Usuarios, Oposiciones, Analíticas y presencia de gráficos |
-| `TestControlAcceso` | 2 | Redirección al login para usuarios sin sesión |
-| `TestExportCSV` | 2 | Botón Export visible en Usuarios y Oposiciones |
-
----
-
 ## 🛠️ Scripts útiles
 
 - **`bootstrap.bat` / `bootstrap.sh`**: Crea venv, instala dependencias y carpetas necesarias.
@@ -710,12 +713,11 @@ Vista pública accesible desde el menú de navegación en `/estadisticas` que mu
 ## �🔮 Próximos pasos recomendados
 
 - ✅ Migrar a PostgreSQL para producción (mejor rendimiento con múltiples workers).
-- ✅ Añadir tests unitarios y de integración.
-- ✅ Implementar rate limiting.
-- ✅ Configurar monitoreo y logging (Sentry, Loggly, etc.).
-- ✅ Añadir CI/CD con GitHub Actions o GitLab CI.
+    - Migrado a Neon (PostgreSQL)
 - ✅ Mejorar la interfaz de usuario con más filtros y opciones de búsqueda.
+    - Filtros de búsqueda, análisis de usuarios, etc
 - ✅ Implementar sistema de roles y permisos (admin, usuario, etc.).
+    - Sistema de roles y permisos (admin, viewer) implementado
 
 ---
 
